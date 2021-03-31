@@ -24,9 +24,8 @@ struct BlastDB : public SequenceFile {
 	virtual int db_version() const override;
 	virtual int program_build_version() const override;
 	virtual void read_seq(std::vector<Letter>& seq, std::string& id) override;
-	virtual void check_metadata(int flags) const override;
-	virtual int metadata() const override;
-	virtual TaxonList* taxon_list() override;
+	virtual void check_metadata(Metadata flags) const override;
+	virtual Metadata metadata() const override;
 	virtual TaxonomyNodes* taxon_nodes() override;
 	virtual std::vector<string>* taxon_scientific_names() override;
 	virtual int build_version() override;
@@ -38,9 +37,10 @@ struct BlastDB : public SequenceFile {
 	virtual void close_weakly() override;
 	virtual void reopen() override;
 	virtual BitVector filter_by_accession(const std::string& file_name) override;
-	virtual BitVector filter_by_taxonomy(const std::string& include, const std::string& exclude, const TaxonList& list, TaxonomyNodes& nodes) override;
+	virtual BitVector filter_by_taxonomy(const std::string& include, const std::string& exclude, TaxonomyNodes& nodes) override;
 	virtual const BitVector* builtin_filter() override;
 	virtual std::string file_name() override;
+	virtual std::vector<unsigned> taxids(size_t oid) const override;
 	virtual ~BlastDB();
 	
 private:

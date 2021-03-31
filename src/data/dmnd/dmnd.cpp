@@ -118,12 +118,28 @@ void DatabaseFile::init(Flags flags)
 	pos_array_offset = ref_header.pos_array_offset;
 }
 
-DatabaseFile::DatabaseFile(const string &input_file, Flags flags):
+DatabaseFile::DatabaseFile(const string &input_file, Metadata metadata, Flags flags):
 	SequenceFile(SequenceFile::Type::DMND),
 	InputFile(auto_append_extension_if_exists(input_file, FILE_EXTENSION), InputFile::BUFFERED),
 	temporary(false)
 {
 	init(flags);
+
+	vector<string> e;
+	if (flag_any(metadata, Metadata::TAXON_MAPPING) && !has_taxon_id_lists())
+		e.push_back("taxonomy mapping information (--taxonmap option)");
+	if (flag_any(metadata, Metadata::TAXON_NODES) && !has_taxon_nodes())
+		e.push_back("taxonomy nodes information (--taxonnodes option)");
+	if (flag_any(metadata, Metadata::TAXON_SCIENTIFIC_NAMES) && !has_taxon_scientific_names())
+		e.push_back("taxonomy names information (--taxonnames option)");
+	if (flag_any(metadata, Metadata::TAXON_RANKS) && build_version() < 131)
+		e.push_back("taxonomy ranks information (database needs to be built with diamond version >= 0.9.30");
+
+	if (!e.empty())
+		throw std::runtime_error("Options require taxonomy information included in the database. Please use the respective options to build this information into the database when running diamond makedb: " + join(", ", e));
+
+	if (flag_any(metadata, Metadata::TAXON_MAPPING))
+		taxon_list_.reset(new TaxonList(seek(header2.taxon_array_offset), ref_header.sequences, header2.taxon_array_size));
 }
 
 DatabaseFile::DatabaseFile(TempFile &tmp_file):
@@ -492,28 +508,15 @@ int DatabaseFile::program_build_version() const {
 	return ref_header.build;
 }
 
-void DatabaseFile::check_metadata(int flags) const {
-	if ((flags & TAXON_MAPPING) && !has_taxon_id_lists())
-		throw runtime_error("Output format requires taxonomy mapping information built into the database (use --taxonmap parameter for the makedb command).");
-	if ((flags & TAXON_NODES) && !has_taxon_nodes())
-		throw runtime_error("Output format requires taxonomy nodes information built into the database (use --taxonnodes parameter for the makedb command).");
-	if ((flags & TAXON_SCIENTIFIC_NAMES) && !has_taxon_scientific_names())
-		throw runtime_error("Output format requires taxonomy names information built into the database (use --taxonnames parameter for the makedb command).");
-}
-
-int DatabaseFile::metadata() const {
-	int flags = 0;
+SequenceFile::Metadata DatabaseFile::metadata() const {
+	Metadata flags = Metadata();
 	if (has_taxon_id_lists())
-		flags |= TAXON_MAPPING;
+		flags |= Metadata::TAXON_MAPPING;
 	if (has_taxon_nodes())
-		flags |= TAXON_NODES;
+		flags |= Metadata::TAXON_NODES;
 	if (has_taxon_scientific_names())
-		flags |= TAXON_SCIENTIFIC_NAMES;
+		flags |= Metadata::TAXON_SCIENTIFIC_NAMES;
 	return flags;
-}
-
-TaxonList* DatabaseFile::taxon_list() {
-	return new TaxonList(seek(header2.taxon_array_offset), ref_header.sequences, header2.taxon_array_size);
 }
 
 TaxonomyNodes* DatabaseFile::taxon_nodes() {
@@ -542,9 +545,11 @@ BitVector DatabaseFile::filter_by_accession(const std::string& file_name)
 	return BitVector();
 }
 
-BitVector DatabaseFile::filter_by_taxonomy(const std::string& include, const std::string& exclude, const TaxonList& list, TaxonomyNodes& nodes)
+BitVector DatabaseFile::filter_by_taxonomy(const std::string& include, const std::string& exclude, TaxonomyNodes& nodes)
 {
-	BitVector v(list.size());
+	if (!taxon_list_.get())
+		throw std::runtime_error("Database does not contain taxonomy mapping.");
+	BitVector v(taxon_list_->size());
 	if (!include.empty() && !exclude.empty())
 		throw std::runtime_error("Options --taxonlist and --taxon-exclude are mutually exclusive.");
 	const bool e = !exclude.empty();
@@ -553,8 +558,8 @@ BitVector DatabaseFile::filter_by_taxonomy(const std::string& include, const std
 		throw std::runtime_error("Option --taxonlist/--taxon-exclude used with empty list.");
 	if (taxon_filter_list.find(1) != taxon_filter_list.end() || taxon_filter_list.find(0) != taxon_filter_list.end())
 		throw std::runtime_error("Option --taxonlist/--taxon-exclude used with invalid argument (0 or 1).");
-	for (size_t i = 0; i < list.size(); ++i)
-		if (nodes.contained(list[i], taxon_filter_list) ^ e)
+	for (size_t i = 0; i < taxon_list_->size(); ++i)
+		if (nodes.contained((*taxon_list_)[i], taxon_filter_list) ^ e)
 			v.set(i);
 	return v;
 }
@@ -572,6 +577,11 @@ std::string DatabaseFile::file_name()
 size_t DatabaseFile::sparse_sequence_count() const
 {
 	return sequence_count();
+}
+
+std::vector<unsigned> DatabaseFile::taxids(size_t oid) const
+{
+	return (*taxon_list_)[oid];
 }
 
 std::vector<string>* DatabaseFile::taxon_scientific_names() {

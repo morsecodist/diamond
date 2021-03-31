@@ -140,9 +140,10 @@ void QueryMapper::load_targets()
 			if (n > 0) {
 				targets[n - 1].end = i;
 			}
+			const size_t oid = ReferenceDictionary::get().block_to_database_id(seed_hits[i].subject_);
 			targets.get(n) = new Target(i,
 				seed_hits[i].subject_,
-				config.taxon_k ? metadata.taxon_nodes->rank_taxid((*metadata.taxon_list)[ReferenceDictionary::get().block_to_database_id(seed_hits[i].subject_)], Rank::species) : set<unsigned>());
+				config.taxon_k ? metadata.taxon_nodes->rank_taxid(metadata.database->taxids(oid), Rank::species) : set<unsigned>());
 			++n;
 			subject_id = seed_hits[i].subject_;
 		}

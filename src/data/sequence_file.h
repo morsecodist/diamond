@@ -56,10 +56,11 @@ struct SequenceFile {
 
 	enum class Type { DMND = 0, BLAST = 1 };
 
-	enum Metadata : int {
+	enum class Metadata : int {
 		TAXON_MAPPING          = 1,
 		TAXON_NODES            = 1 << 1,
-		TAXON_SCIENTIFIC_NAMES = 1 << 2
+		TAXON_SCIENTIFIC_NAMES = 1 << 2,
+		TAXON_RANKS            = 1 << 3
 	};
 
 	enum class Flags : int {
@@ -88,9 +89,7 @@ struct SequenceFile {
 	virtual int db_version() const = 0;
 	virtual int program_build_version() const = 0;
 	virtual void read_seq(std::vector<Letter>& seq, std::string& id) = 0;
-	virtual void check_metadata(int flags) const = 0;
-	virtual int metadata() const = 0;
-	virtual TaxonList* taxon_list() = 0;
+	virtual Metadata metadata() const = 0;
 	virtual TaxonomyNodes* taxon_nodes() = 0;
 	virtual std::vector<string>* taxon_scientific_names() = 0;
 	virtual int build_version() = 0;
@@ -102,7 +101,8 @@ struct SequenceFile {
 	virtual void close_weakly() = 0;
 	virtual void reopen() = 0;
 	virtual BitVector filter_by_accession(const std::string& file_name) = 0;
-	virtual BitVector filter_by_taxonomy(const std::string& include, const std::string& exclude, const TaxonList& list, TaxonomyNodes& nodes) = 0;
+	virtual BitVector filter_by_taxonomy(const std::string& include, const std::string& exclude, TaxonomyNodes& nodes) = 0;
+	virtual std::vector<unsigned> taxids(size_t oid) const = 0;
 	virtual const BitVector* builtin_filter() = 0;
 	virtual std::string file_name() = 0;
 	virtual ~SequenceFile();
@@ -120,7 +120,7 @@ struct SequenceFile {
 	void get_seq();
 	size_t total_blocks() const;
 
-	static SequenceFile* auto_create(Flags flags = Flags::NONE);
+	static SequenceFile* auto_create(Flags flags = Flags::NONE, Metadata metadata = Metadata());
 
 private:
 
@@ -133,3 +133,4 @@ template<> struct EnumTraits<SequenceFile::Type> {
 };
 
 DEF_ENUM_FLAG_OPERATORS(SequenceFile::Flags)
+DEF_ENUM_FLAG_OPERATORS(SequenceFile::Metadata)

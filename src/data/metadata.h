@@ -16,35 +16,30 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ****/
 
-#ifndef METADATA_H_
-#define METADATA_H_
-
+#pragma once
 #include <vector>
 #include <string>
 #include "taxon_list.h"
 #include "taxonomy_nodes.h"
 #include "taxonomy.h"
+#include "sequence_file.h"
 
 struct Metadata
 {
 	Metadata():
-		taxon_list(nullptr),
+		database(nullptr),
 		taxon_nodes(nullptr),
 		taxonomy_scientific_names(nullptr)
 	{}
 	void free()
 	{
-		delete taxon_list;
 		delete taxon_nodes;
 		delete taxonomy_scientific_names;
-		taxon_list = nullptr;
 		taxon_nodes = nullptr;
 		taxonomy_scientific_names = nullptr;
 	}
-	TaxonList *taxon_list;
+	SequenceFile* database;
 	TaxonomyNodes *taxon_nodes;
 	BitVector taxon_filter;
 	std::vector<std::string> *taxonomy_scientific_names;
 };
-
-#endif

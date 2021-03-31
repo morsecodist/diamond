@@ -25,7 +25,7 @@ using std::endl;
 
 void Taxon_format::print_match(const Hsp_context &r, const Metadata &metadata, TextBuffer &out)
 {
-	const vector<unsigned> taxons((*metadata.taxon_list)[r.orig_subject_id]);
+	const vector<unsigned> taxons(metadata.database->taxids(r.orig_subject_id));
 	if (taxons.empty())
 		return;
 	evalue = std::min(evalue, r.evalue());

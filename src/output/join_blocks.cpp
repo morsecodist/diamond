@@ -221,7 +221,8 @@ void join_query(
 			dict_ptr = & dict;
 		}
 
-		const set<unsigned> rank_taxon_ids = config.taxon_k ? metadata.taxon_nodes->rank_taxid((*metadata.taxon_list)[dict_ptr->database_id(target_hsp.front().subject_dict_id)], Rank::species) : set<unsigned>();
+		const size_t oid = dict_ptr->database_id(target_hsp.front().subject_dict_id);
+		const set<unsigned> rank_taxon_ids = config.taxon_k ? metadata.taxon_nodes->rank_taxid(metadata.database->taxids(oid), Rank::species) : set<unsigned>();
 		const int c = culling->cull(target_hsp, rank_taxon_ids);
 		if (c == TargetCulling::FINISHED)
 			break;

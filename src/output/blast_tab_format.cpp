@@ -151,7 +151,7 @@ Blast_tab_format::Blast_tab_format() :
 
 void print_staxids(TextBuffer &out, unsigned subject_global_id, const Metadata &metadata)
 {
-	out.print((*metadata.taxon_list)[subject_global_id], ';');
+	out.print(metadata.database->taxids(subject_global_id), ';');
 }
 
 template<typename _it>
@@ -292,12 +292,12 @@ void Blast_tab_format::print_match(const Hsp_context& r, const Metadata &metadat
 			print_staxids(out, r.orig_subject_id, metadata);
 			break;
 		case 35: {
-			const vector<unsigned> tax_id = (*metadata.taxon_list)[r.orig_subject_id];
+			const vector<unsigned> tax_id = metadata.database->taxids(r.orig_subject_id);
 			print_taxon_names(tax_id.begin(), tax_id.end(), metadata, out);
 			break;
 		}
 		case 38: {
-			const set<unsigned> tax_id = metadata.taxon_nodes->rank_taxid((*metadata.taxon_list)[r.orig_subject_id], Rank::superkingdom);
+			const set<unsigned> tax_id = metadata.taxon_nodes->rank_taxid(metadata.database->taxids(r.orig_subject_id), Rank::superkingdom);
 			print_taxon_names(tax_id.begin(), tax_id.end(), metadata, out);
 			break;
 		}
@@ -369,12 +369,12 @@ void Blast_tab_format::print_match(const Hsp_context& r, const Metadata &metadat
 			print_cigar(r, out);
 			break;
 		case 59: {
-			const set<unsigned> tax_id = metadata.taxon_nodes->rank_taxid((*metadata.taxon_list)[r.orig_subject_id], Rank::kingdom);
+			const set<unsigned> tax_id = metadata.taxon_nodes->rank_taxid(metadata.database->taxids(r.orig_subject_id), Rank::kingdom);
 			print_taxon_names(tax_id.begin(), tax_id.end(), metadata, out);
 			break;
 		}
 		case 60: {
-			const set<unsigned> tax_id = metadata.taxon_nodes->rank_taxid((*metadata.taxon_list)[r.orig_subject_id], Rank::phylum);
+			const set<unsigned> tax_id = metadata.taxon_nodes->rank_taxid(metadata.database->taxids(r.orig_subject_id), Rank::phylum);
 			print_taxon_names(tax_id.begin(), tax_id.end(), metadata, out);
 			break;
 		}

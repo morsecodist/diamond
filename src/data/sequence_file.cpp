@@ -193,7 +193,7 @@ SequenceFile::~SequenceFile()
 {
 }
 
-SequenceFile* SequenceFile::auto_create(Flags flags) {
+SequenceFile* SequenceFile::auto_create(Flags flags, Metadata metadata) {
 	if (exists(config.database + ".pin") || exists(config.database + ".pal")) {
 #ifdef WITH_BLASTDB
 		if (config.multiprocessing)
@@ -209,7 +209,7 @@ SequenceFile* SequenceFile::auto_create(Flags flags) {
 	}
 	config.database = auto_append_extension_if_exists(config.database, DatabaseFile::FILE_EXTENSION);
 	if (DatabaseFile::is_diamond_db(config.database)) {
-		return new DatabaseFile(config.database, flags);
+		return new DatabaseFile(config.database, metadata, flags);
 	}
 	else if (!flag_any(flags, Flags::NO_FASTA)) {
 		message_stream << "Database file is not a DIAMOND or BLAST database, treating as FASTA." << std::endl;

@@ -600,8 +600,23 @@ void run(const Options &options)
 
 	init_output();
 
+	const bool taxon_filter = !config.taxonlist.empty() || !config.taxon_exclude.empty();
+	const bool taxon_culling = config.taxon_k != 0;
+	SequenceFile::Metadata metadata_flags = SequenceFile::Metadata();
+	if (output_format->needs_taxon_id_lists || taxon_filter || taxon_culling)
+		metadata_flags |= SequenceFile::Metadata::TAXON_MAPPING;
+	if (output_format->needs_taxon_nodes || taxon_filter || taxon_culling)
+		metadata_flags |= SequenceFile::Metadata::TAXON_NODES;
+	if (output_format->needs_taxon_scientific_names)
+		metadata_flags |= SequenceFile::Metadata::TAXON_SCIENTIFIC_NAMES;
+	if (output_format->needs_taxon_ranks || taxon_culling)
+		metadata_flags |= SequenceFile::Metadata::TAXON_RANKS;
+
 	task_timer timer("Opening the database", 1);
-	SequenceFile* db_file = options.db ? options.db : SequenceFile::auto_create(flag_any(output_format->flags, Output::Flags::FULL_SEQIDS) ? SequenceFile::Flags::FULL_SEQIDS : SequenceFile::Flags::NONE);
+	auto flags = flag_any(output_format->flags, Output::Flags::FULL_SEQIDS) ? SequenceFile::Flags::FULL_SEQIDS : SequenceFile::Flags::NONE;
+	SequenceFile* db_file = options.db ? options.db : SequenceFile::auto_create(flags, metadata_flags);
+	Metadata metadata;
+	metadata.database = db_file;
 	timer.finish();
 
 	message_stream << "Database: " << config.database << ' ';
@@ -611,51 +626,12 @@ void run(const Options &options)
 	message_stream << "Block size = " << (size_t)(config.chunk_size * 1e9) << endl;
 	score_matrix.set_db_letters(config.db_size ? config.db_size : db_file->letters());
 
-	Metadata metadata;
-	const bool taxon_filter = !config.taxonlist.empty() || !config.taxon_exclude.empty();
-	const bool taxon_culling = config.taxon_k != 0;
-	const int db_flags = db_file->metadata();
-
-	int flags = 0;
-	if (output_format->needs_taxon_id_lists || taxon_filter || taxon_culling)
-		flags |= SequenceFile::TAXON_MAPPING;
-	if (output_format->needs_taxon_nodes || taxon_filter || taxon_culling)
-		flags |= SequenceFile::TAXON_NODES;
-	if (output_format->needs_taxon_scientific_names)
-		flags |= SequenceFile::TAXON_SCIENTIFIC_NAMES;
-	db_file->check_metadata(flags);
-
-	if (output_format->needs_taxon_id_lists || taxon_filter || taxon_culling) {
-		if (!(db_flags & SequenceFile::TAXON_MAPPING)) {
-			if (taxon_filter)
-				throw std::runtime_error("--taxonlist/--taxon-exclude options require taxonomy mapping built into the database.");
-			if (taxon_culling)
-				throw std::runtime_error("--taxon-k option requires taxonomy mapping built into the database.");
-		}
-		timer.go("Loading taxonomy mapping");
-		metadata.taxon_list = db_file->taxon_list();
-		timer.finish();
-	}
 	if (output_format->needs_taxon_nodes || taxon_filter || taxon_culling) {
-		if (!(db_flags & SequenceFile::TAXON_NODES)) {
-			if (taxon_filter)
-				throw std::runtime_error("--taxonlist/--taxon-exclude options require taxonomy nodes built into the database.");
-			if (taxon_culling)
-				throw std::runtime_error("--taxon-k option require taxonomy nodes built into the database.");
-			if(output_format->needs_taxon_nodes)
-				throw std::runtime_error("Output format requires taxonomy nodes built into the database.");
-		}
-		if (db_file->type() == SequenceFile::Type::DMND && db_file->build_version() < 131) {
-			if (taxon_culling)
-				throw std::runtime_error("--taxon-k option requires a database built with diamond version >= 0.9.30");
-			if (output_format->needs_taxon_ranks)
-				throw std::runtime_error("Output fields sskingdoms, skingdoms and sphylums require a database built with diamond version >= 0.9.30");
-		}
 		timer.go("Loading taxonomy nodes");
 		metadata.taxon_nodes = db_file->taxon_nodes();
 		if (taxon_filter) {
 			timer.go("Building taxonomy filter");
-			metadata.taxon_filter = db_file->filter_by_taxonomy(config.taxonlist, config.taxon_exclude, *metadata.taxon_list, *metadata.taxon_nodes);
+			metadata.taxon_filter = db_file->filter_by_taxonomy(config.taxonlist, config.taxon_exclude, *metadata.taxon_nodes);
 		}
 		timer.finish();
 	}

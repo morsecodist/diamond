@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../util/io/serializer.h"
 #include "../util/io/input_file.h"
 #include "../sequence_file.h"
+#include "../taxon_list.h"
 
 struct ReferenceHeader
 {
@@ -72,7 +73,7 @@ struct Database_format_exception : public std::exception
 struct DatabaseFile : public SequenceFile, public InputFile
 {
 
-	DatabaseFile(const string &file_name, Flags flags = Flags::NONE);
+	DatabaseFile(const string &file_name, Metadata metadata = Metadata(), Flags flags = Flags::NONE);
 	DatabaseFile(TempFile &tmp_file);
 	static void read_header(InputFile &stream, ReferenceHeader &header);
 	static bool is_diamond_db(const string &file_name);
@@ -124,12 +125,10 @@ struct DatabaseFile : public SequenceFile, public InputFile
 	virtual void skip_id_data() override;
 	virtual size_t sequence_count() const override;
 	virtual void read_seq(std::vector<Letter>& seq, std::string& id) override;
-	virtual void check_metadata(int flags) const override;
 	virtual size_t letters() const override;
 	virtual int db_version() const override;
 	virtual int program_build_version() const override;
-	virtual int metadata() const override;
-	virtual TaxonList* taxon_list() override;
+	virtual Metadata metadata() const override;
 	virtual TaxonomyNodes* taxon_nodes() override;
 	virtual std::vector<string>* taxon_scientific_names() override;
 	virtual int build_version() override;
@@ -137,14 +136,17 @@ struct DatabaseFile : public SequenceFile, public InputFile
 	virtual void close_weakly() override;
 	virtual void reopen() override;
 	virtual BitVector filter_by_accession(const std::string& file_name) override;
-	virtual BitVector filter_by_taxonomy(const std::string& include, const std::string& exclude, const TaxonList& list, TaxonomyNodes& nodes) override;
+	virtual BitVector filter_by_taxonomy(const std::string& include, const std::string& exclude, TaxonomyNodes& nodes) override;
 	virtual const BitVector* builtin_filter() override;
 	virtual std::string file_name() override;
 	virtual size_t sparse_sequence_count() const override;
+	virtual std::vector<unsigned> taxids(size_t oid) const override;
 
 	static const char* FILE_EXTENSION;
 
 private:
 	void init(Flags flags = Flags::NONE);
+
+	std::unique_ptr<TaxonList> taxon_list_;
 
 };
