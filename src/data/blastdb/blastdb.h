@@ -5,7 +5,7 @@
 
 struct BlastDB : public SequenceFile {
 
-	BlastDB(const std::string& file_name, Flags flags);
+	BlastDB(const std::string& file_name, Metadata metadata, Flags flags);
 
 	virtual void init_seqinfo_access() override;
 	virtual void init_seq_access() override;
@@ -24,7 +24,6 @@ struct BlastDB : public SequenceFile {
 	virtual int db_version() const override;
 	virtual int program_build_version() const override;
 	virtual void read_seq(std::vector<Letter>& seq, std::string& id) override;
-	virtual void check_metadata(Metadata flags) const override;
 	virtual Metadata metadata() const override;
 	virtual TaxonomyNodes* taxon_nodes() override;
 	virtual std::vector<string>* taxon_scientific_names() override;

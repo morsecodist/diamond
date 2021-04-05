@@ -81,7 +81,7 @@ string best_id(const list<CRef<CSeq_id>>& ids) {
 	return (*min)->GetSeqIdString();
 }
 
-BlastDB::BlastDB(const std::string& file_name, Flags flags) :
+BlastDB::BlastDB(const std::string& file_name, Metadata metadata, Flags flags) :
 	SequenceFile(Type::BLAST),
 	file_name_(file_name),	
 	db_(new CSeqDBExpert(file_name, CSeqDB::eProtein)),
@@ -90,6 +90,8 @@ BlastDB::BlastDB(const std::string& file_name, Flags flags) :
 	long_seqids_(false),
 	flags_(flags)
 {
+	if (flag_any(metadata, Metadata::TAXON_NODES | Metadata::TAXON_MAPPING | Metadata::TAXON_SCIENTIFIC_NAMES | Metadata::TAXON_RANKS))
+		throw std::runtime_error("Taxonomy features are not supported for the BLAST database format.");
 }
 
 void BlastDB::init_seqinfo_access()
@@ -224,20 +226,9 @@ void BlastDB::read_seq(std::vector<Letter>& seq, std::string& id)
 	++oid_;
 }
 
-void BlastDB::check_metadata(int flags) const
+SequenceFile::Metadata BlastDB::metadata() const
 {
-	if ((flags & TAXON_NODES) || (flags & TAXON_MAPPING) || (flags & TAXON_SCIENTIFIC_NAMES))
-		throw std::runtime_error("Taxonomy features are not supported for the BLAST database format.");
-}
-
-int BlastDB::metadata() const
-{
-	return 0;
-}
-
-TaxonList* BlastDB::taxon_list()
-{
-	return nullptr;
+	return Metadata();
 }
 
 TaxonomyNodes* BlastDB::taxon_nodes()
@@ -319,7 +310,7 @@ BitVector BlastDB::filter_by_accession(const std::string& file_name)
 	return v;
 }
 
-BitVector BlastDB::filter_by_taxonomy(const std::string& include, const std::string& exclude, const TaxonList& list, TaxonomyNodes& nodes)
+BitVector BlastDB::filter_by_taxonomy(const std::string& include, const std::string& exclude, TaxonomyNodes& nodes)
 {
 	return BitVector();
 }
@@ -327,6 +318,11 @@ BitVector BlastDB::filter_by_taxonomy(const std::string& include, const std::str
 std::string BlastDB::file_name()
 {
 	return file_name_;
+}
+
+std::vector<unsigned> BlastDB::taxids(size_t oid) const
+{
+	return std::vector<unsigned>();
 }
 
 const BitVector* BlastDB::builtin_filter() {
