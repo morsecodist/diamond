@@ -96,7 +96,7 @@ struct WorkSet {
 	unsigned shape_id;
 	Statistics stats;
 	Trace_pt_buffer::Iterator out;
-	std::vector<FingerPrint, Util::Memory::AlignmentAllocator<FingerPrint, 16>> vq, vs;
+	std::vector<FingerPrint> vq, vs;
 	FlatArray<uint32_t> hits;
 };
 

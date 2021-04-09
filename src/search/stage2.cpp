@@ -151,7 +151,7 @@ static void FLATTEN search_tile(
 	}
 }
 
-typedef vector<FingerPrint, Util::Memory::AlignmentAllocator<FingerPrint, 16>> Container;
+typedef vector<FingerPrint> Container;
 
 static void all_vs_all(const FingerPrint* a, uint32_t na, const FingerPrint* b, uint32_t nb, FlatArray<uint32_t>& out) {
 	for (uint32_t i = 0; i < na; ++i) {
