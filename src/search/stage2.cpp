@@ -172,7 +172,7 @@ static void load_fps(const PackedLoc* p, size_t n, Container& v, const SequenceS
 		v.emplace_back(seqs.data(*p));
 }
 
-void FLATTEN stage1(const PackedLoc* q, size_t nq, const PackedLoc* s, size_t ns, WorkSet& work_set)
+void stage1(const PackedLoc* q, size_t nq, const PackedLoc* s, size_t ns, WorkSet& work_set)
 {
 	work_set.stats.inc(Statistics::SEED_HITS, nq * ns);
 	load_fps(q, nq, work_set.vq, *query_seqs::data_);
