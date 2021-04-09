@@ -38,6 +38,17 @@ using std::atomic;
 using std::endl;
 using std::unique_ptr;
 
+namespace Search {
+	struct WorkSet {
+		Context context;
+		unsigned shape_id;
+		Statistics stats;
+		Trace_pt_buffer::Iterator out;
+		std::vector<FingerPrint> vq, vs;
+		FlatArray<uint32_t> hits;
+	};
+}
+
 Trace_pt_buffer* Trace_pt_buffer::instance;
 
 void seed_join_worker(

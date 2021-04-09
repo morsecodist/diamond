@@ -91,14 +91,7 @@ void setup_search();
 
 namespace Search {
 
-struct WorkSet {
-	Context context;
-	unsigned shape_id;
-	Statistics stats;
-	Trace_pt_buffer::Iterator out;
-	std::vector<FingerPrint> vq, vs;
-	FlatArray<uint32_t> hits;
-};
+struct WorkSet;
 
 DECL_DISPATCH(void, stage1, (const PackedLoc* q, size_t nq, const PackedLoc* s, size_t ns, WorkSet& work_set))
 

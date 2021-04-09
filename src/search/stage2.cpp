@@ -36,6 +36,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 using std::vector;
 
 namespace Search {
+
+	struct WorkSet {
+		Context context;
+		unsigned shape_id;
+		Statistics stats;
+		Trace_pt_buffer::Iterator out;
+		std::vector<FingerPrint> vq, vs;
+		FlatArray<uint32_t> hits;
+	};
+
 namespace DISPATCH_ARCH {
 
 static const int SHORT_QUERY_LEN = 85;
