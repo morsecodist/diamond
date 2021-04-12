@@ -325,6 +325,16 @@ std::vector<unsigned> BlastDB::taxids(size_t oid) const
 	return std::vector<unsigned>();
 }
 
+void BlastDB::seq_data(size_t oid, std::vector<char>& dst) const
+{
+	const char* buf;
+	const int db_len = db_->GetSequence(oid, &buf);
+	dst.clear();
+	dst.resize(db_len);
+	std::copy(buf, buf + db_len, dst.data());
+	db_->RetSequence(&buf);
+}
+
 const BitVector* BlastDB::builtin_filter() {
 	if (sequence_count() == sparse_sequence_count())
 		return nullptr;

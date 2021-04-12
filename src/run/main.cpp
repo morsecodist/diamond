@@ -38,7 +38,6 @@ void view();
 void db_info();
 void test_main();
 void benchmark_sw();
-void test_io();
 void db_annot_stats();
 void read_sim();
 void info();
@@ -105,9 +104,6 @@ int main(int ac, const char* av[])
 			break;
 		case Config::dbinfo:
 			db_info();
-			break;
-		case Config::test_io:
-			test_io();
 			break;
 		case Config::read_sim:
 			read_sim();

@@ -584,6 +584,10 @@ std::vector<unsigned> DatabaseFile::taxids(size_t oid) const
 	return (*taxon_list_)[oid];
 }
 
+void DatabaseFile::seq_data(size_t oid, std::vector<char>& dst) const
+{
+}
+
 std::vector<string>* DatabaseFile::taxon_scientific_names() {
 	vector<string>* r = new vector<string>;
 	seek(header2.taxon_names_offset);

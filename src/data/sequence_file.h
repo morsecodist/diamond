@@ -105,6 +105,7 @@ struct SequenceFile {
 	virtual std::vector<unsigned> taxids(size_t oid) const = 0;
 	virtual const BitVector* builtin_filter() = 0;
 	virtual std::string file_name() = 0;
+	virtual void seq_data(size_t oid, std::vector<char>& dst) const = 0;
 	virtual ~SequenceFile();
 
 	Type type() const { return type_; }

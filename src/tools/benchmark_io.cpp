@@ -32,10 +32,10 @@ using std::vector;
 using std::string;
 using std::endl;
 
-void benchmark_io() {
+static void seed_hit_files() {
 	const string file_name = "diamond_io_benchmark.tmp";
 	const size_t total_count = 1000000000, query_count = 50;
-	
+
 	task_timer timer;
 
 	if (!exists(file_name)) {
@@ -84,6 +84,73 @@ void benchmark_io() {
 	}
 	in.close();
 	timer.finish();
-	delete ref_seqs::data_;	
+	delete ref_seqs::data_;
 	message_stream << "Throughput: " << (double)raw_size / (1 << 20) / timer.seconds() << " MB/s" << endl;
+}
+
+static void load_seqs() {
+	if (config.chunk_size == 0.0)
+		config.chunk_size = 2.0;
+	task_timer timer;
+	timer.go("Opening the database");
+	SequenceFile* db = SequenceFile::auto_create(SequenceFile::Flags::NONE);
+	timer.finish();
+	message_stream << "Type: " << to_string(db->type()) << endl;
+
+	while (true) {
+		timer.go("Loading sequences");
+		if (!db->load_seqs(nullptr, (size_t)(config.chunk_size * 1e9), &ref_seqs::data_, &ref_ids::data_, true, nullptr))
+			return;
+		size_t n = ref_seqs::data_->letters() + ref_ids::data_->letters();
+		message_stream << "Throughput: " << (double)n / (1 << 20) / timer.milliseconds() * 1000 << " MB/s" << endl;
+		timer.go("Deallocating");
+		delete ref_seqs::data_;
+		delete ref_ids::data_;
+	}
+
+	timer.go("Closing the database");
+	db->close();
+	delete db;
+}
+
+static void load_raw() {
+	const size_t N = 2 * GIGABYTES;
+	InputFile f(config.database);
+	vector<char> buf(N);
+	task_timer timer;
+	size_t n;
+	do {
+		timer.go("Loading data");
+		n = f.read_raw(buf.data(), N);
+		timer.finish();
+		message_stream << "Throughput: " << (double)n / (1 << 20) / timer.milliseconds() * 1000 << " MB/s" << endl;
+	} while (n == N);
+	f.close();
+}
+
+static void load_mmap() {
+	task_timer timer("Opening the database");
+	SequenceFile* db = SequenceFile::auto_create(SequenceFile::Flags::NONE);
+	timer.finish();
+	message_stream << "Type: " << to_string(db->type()) << endl;
+	size_t n = db->sequence_count(), l = 0;
+	vector<char> v;
+	for (size_t i = 0; i < n; ++i) {
+		db->seq_data(i, v);
+		l += v.size();
+		if ((i & ((1 << 20) - 1)) == 0)
+			message_stream << "Throughput: " << (double)l / (1 << 20) / timer.milliseconds() * 1000 << " MB/s" << endl;
+	}
+	message_stream << "Throughput: " << (double)l / (1 << 20) / timer.milliseconds() * 1000 << " MB/s" << endl;
+}
+
+void benchmark_io() {
+	if (config.type == "seedhit")
+		seed_hit_files();
+	else if (config.type == "loadseqs")
+		load_seqs();
+	else if (config.type == "loadraw")
+		load_raw();
+	else if (config.type == "mmap")
+		load_mmap();
 }

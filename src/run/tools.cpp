@@ -164,25 +164,6 @@ void fastq2fasta()
 	}
 }
 
-void test_io()
-{
-	const size_t buf_size = 1;
-	//Timer t;
-	//t.start();
-	/*InputFile f(config.query_file, InputFile::BUFFERED);
-	char buf[buf_size];	
-	size_t total = 0;
-	while (f.read(buf, buf_size) == buf_size)
-		total += buf_size;*/
-
-	DatabaseFile db(config.database);
-	db.load_seqs(nullptr, std::numeric_limits<size_t>::max(), &ref_seqs::data_, &ref_ids::data_);
-
-	size_t total = ref_seqs::get().raw_len() + ref_ids::get().raw_len();
-	//cout << "MBytes/sec = " << total / 1e6 / t.getElapsedTime() << endl;
-	//cout << "Time = " << t.getElapsedTime() << "s" << endl;
-}
-
 void read_sim()
 {
 	const double ID = 0.35;

@@ -40,6 +40,7 @@ struct BlastDB : public SequenceFile {
 	virtual const BitVector* builtin_filter() override;
 	virtual std::string file_name() override;
 	virtual std::vector<unsigned> taxids(size_t oid) const override;
+	virtual void seq_data(size_t oid, std::vector<char>& dst) const override;
 	virtual ~BlastDB();
 	
 private:

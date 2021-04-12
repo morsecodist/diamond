@@ -141,6 +141,7 @@ struct DatabaseFile : public SequenceFile, public InputFile
 	virtual std::string file_name() override;
 	virtual size_t sparse_sequence_count() const override;
 	virtual std::vector<unsigned> taxids(size_t oid) const override;
+	virtual void seq_data(size_t oid, std::vector<char>& dst) const override;
 
 	static const char* FILE_EXTENSION;
 
