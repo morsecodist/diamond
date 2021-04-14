@@ -79,8 +79,11 @@ int main(int ac, const char* av[])
 			break;
 		case Config::blastp:
 		case Config::blastx:
-			Search::run(Search::Config(true));
+		{
+			Search::Config cfg(true);
+			Search::run(cfg);
 			break;
+		}
 		case Config::view:
 			view();
 			break;
