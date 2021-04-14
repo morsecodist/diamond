@@ -381,7 +381,7 @@ SparseMatrixStream<float>* get_graph_handle(SequenceFile& db){
 		format = "qcovhsp*scovhsp*pident";
 	}
 	config.output_format = {"clus", format};
-	Workflow::Search::Options opt;
+	Search::Config opt(false);
 	opt.db = &db;
 	opt.self = true;
 	SparseMatrixStream<float>* ms = new SparseMatrixStream<float>(db.sequence_count(), config.cluster_graph_file);
@@ -389,7 +389,7 @@ SparseMatrixStream<float>* get_graph_handle(SequenceFile& db){
 		ms->set_max_mem(config.chunk_size);
 	}
 	opt.consumer = ms;
-	Workflow::Search::run(opt);
+	Search::run(opt);
 	ms->done();
 	return ms;
 }

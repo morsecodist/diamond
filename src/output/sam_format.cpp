@@ -77,7 +77,7 @@ void print_cigar(const Hsp_context &r, TextBuffer &buf)
 		buf << n << letter[op];
 }
 
-void Sam_format::print_query_intro(size_t query_num, const char *query_name, unsigned query_len, TextBuffer &out, bool unaligned) const
+void Sam_format::print_query_intro(size_t query_num, const char *query_name, unsigned query_len, TextBuffer &out, bool unaligned, const Search::Config& cfg) const
 {
 	if (unaligned) {
 		out.write_until(query_name, Const::id_delimiters);
@@ -85,7 +85,7 @@ void Sam_format::print_query_intro(size_t query_num, const char *query_name, uns
 	}
 }
 
-void Sam_format::print_match(const Hsp_context& r, const Metadata &metadata, TextBuffer &out)
+void Sam_format::print_match(const Hsp_context& r, const Search::Config&metadata, TextBuffer &out)
 {
 	out.write_until(r.query_name, Const::id_delimiters);
 	out << '\t' << '0' << '\t';

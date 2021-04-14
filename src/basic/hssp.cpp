@@ -24,6 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../output/output.h"
 #include "../output/output_format.h"
 
+using std::list;
+
 std::pair<int, int> Hsp::diagonal_bounds() const
 {
 	int d0 = std::numeric_limits<int>::max(), d1 = std::numeric_limits<int>::min();

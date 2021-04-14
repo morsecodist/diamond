@@ -33,7 +33,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../stats/hauser_correction.h"
 #include "extend.h"
 #include "../util/data_structures/flat_array.h"
-#include "../basic/parameters.h"
 #include "../stats/cbs.h"
 
 namespace Extension {
@@ -98,7 +97,7 @@ struct WorkTarget {
 	Stats::TargetMatrix matrix;
 };
 
-std::vector<WorkTarget> ungapped_stage(const Sequence* query_seq, const Bias_correction* query_cb, const Stats::Composition& query_comp, FlatArray<SeedHit>& seed_hits, const std::vector<uint32_t>& target_block_ids, int flags, Statistics& stat);
+std::vector<WorkTarget> ungapped_stage(const Sequence* query_seq, const Bias_correction* query_cb, const Stats::Composition& query_comp, FlatArray<SeedHit>& seed_hits, const std::vector<uint32_t>& target_block_ids, int flags, Statistics& stat, const Block& target_block);
 
 struct Target {
 
@@ -130,7 +129,7 @@ struct Target {
 		return !matrix.scores.empty();
 	}
 
-	void apply_filters(int source_query_len, const char *query_title, const Sequence& query_seq);
+	void apply_filters(int source_query_len, const char *query_title, const Sequence& query_seq, const Block& targets);
 	void inner_culling(int source_query_len);
 	void max_hsp_culling();
 
@@ -158,19 +157,18 @@ struct TargetScore {
 	}
 };
 
-void load_hits(hit* begin, hit* end, FlatArray<SeedHit> &hits, std::vector<uint32_t> &target_block_ids, std::vector<TargetScore> &target_scores, unsigned query_len);
-void culling(std::vector<Target>& targets, int source_query_len, const char* query_title, const Sequence& query_seq, size_t min_keep);
-bool append_hits(std::vector<Target>& targets, std::vector<Target>::const_iterator begin, std::vector<Target>::const_iterator end, size_t chunk_size, int source_query_len, const char* query_title, const Sequence& query_seq);
+void load_hits(hit* begin, hit* end, FlatArray<SeedHit> &hits, std::vector<uint32_t> &target_block_ids, std::vector<TargetScore> &target_scores, unsigned query_len, const SequenceSet& ref_seqs);
+void culling(std::vector<Target>& targets, int source_query_len, const char* query_title, const Sequence& query_seq, size_t min_keep, const Block& target_block);
+bool append_hits(std::vector<Target>& targets, std::vector<Target>::const_iterator begin, std::vector<Target>::const_iterator end, size_t chunk_size, int source_query_len, const char* query_title, const Sequence& query_seq, const Block& target_block);
 std::vector<WorkTarget> gapped_filter(const Sequence *query, const Bias_correction* query_cbs, std::vector<WorkTarget>& targets, Statistics &stat);
-void gapped_filter(const Sequence* query, const Bias_correction* query_cbs, FlatArray<SeedHit> &seed_hits, std::vector<uint32_t> &target_block_ids, Statistics& stat, int flags, const Parameters &params);
+void gapped_filter(const Sequence* query, const Bias_correction* query_cbs, FlatArray<SeedHit> &seed_hits, std::vector<uint32_t> &target_block_ids, Statistics& stat, int flags, const Search::Config &params);
 std::vector<Target> align(const std::vector<WorkTarget> &targets, const Sequence *query_seq, const Bias_correction *query_cb, int source_query_len, int flags, Statistics &stat);
 std::vector<Match> align(std::vector<Target> &targets, const Sequence *query_seq, const Bias_correction *query_cb, int source_query_len, int flags, Statistics &stat);
-std::vector<Target> full_db_align(const Sequence *query_seq, const Bias_correction *query_cb, int flags, Statistics &stat);
+std::vector<Target> full_db_align(const Sequence *query_seq, const Bias_correction *query_cb, int flags, Statistics &stat, const Block& target_block);
 
 std::vector<Match> extend(
 	size_t query_id,
-	const Parameters &params,
-	const Metadata &metadata,
+	const Search::Config& cfg,
 	Statistics &stat,
 	int flags,
 	FlatArray<SeedHit>& seed_hits,

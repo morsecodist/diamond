@@ -221,41 +221,45 @@ void DatabaseFile::make_db(TempFile **tmp_out, list<TextInputFile> *input_file)
 	size_t letters = 0, n = 0, n_seqs = 0, total_seqs = 0;
 	uint64_t offset = out->tell();
 
-	SequenceSet *seqs;
-	String_set<char, 0> *ids;
+	Block* block;
 	const FASTA_format format;
 	vector<SeqInfo> pos_array;
 	ExternalSorter<pair<string, uint32_t>> accessions;
 
 	try {
-		while ((timer.go("Loading sequences"), n = ::load_seqs(db_file->begin(), db_file->end(), format, &seqs, ids, 0, nullptr, (size_t)(1e9), string(), amino_acid_traits)) > 0) {
+		while (true) {
+			timer.go("Loading sequences");
+			block = new Block(db_file->begin(), db_file->end(), format, (size_t)(1e9), amino_acid_traits, false);
+			if (block->empty()) {
+				delete block;
+				break;
+			}
 			if (config.masking == 1) {
 				timer.go("Masking sequences");
-				mask_seqs(*seqs, Masking::get(), false);
+				mask_seqs(block->seqs(), Masking::get(), false);
 			}
 			timer.go("Writing sequences");
 			for (size_t i = 0; i < n; ++i) {
-				Sequence seq = (*seqs)[i];
+				Sequence seq = block->seqs()[i];
 				if (seq.length() == 0)
 					throw std::runtime_error("File format error: sequence of length 0 at line " + std::to_string(db_file->front().line_count));
-				push_seq(seq, (*ids)[i], ids->length(i), offset, pos_array, *out, letters, n_seqs);
+				push_seq(seq, block->ids()[i], block->ids().length(i), offset, pos_array, *out, letters, n_seqs);
 			}
 			if (!config.prot_accession2taxid.empty()) {
 				timer.go("Writing accessions");
 				for (size_t i = 0; i < n; ++i) {
-					vector<string> acc = accession_from_title((*ids)[i]);
+					vector<string> acc = accession_from_title(block->ids()[i]);
 					for (const string& s : acc)
 						accessions.push(std::make_pair(s, total_seqs + i));
 				}
 			}
 			timer.go("Hashing sequences");
 			for (size_t i = 0; i < n; ++i) {
-				Sequence seq = (*seqs)[i];
+				Sequence seq = block->seqs()[i];
 				MurmurHash3_x64_128(seq.data(), (int)seq.length(), header2.hash, header2.hash);
-				MurmurHash3_x64_128((*ids)[i], ids->length(i), header2.hash, header2.hash);
+				MurmurHash3_x64_128(block->ids()[i], block->ids().length(i), header2.hash, header2.hash);
 			}
-			delete seqs;
-			delete ids;
+			delete block;
 			total_seqs += n;
 		}
 	}

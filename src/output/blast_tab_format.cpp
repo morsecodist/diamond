@@ -30,8 +30,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../data/taxonomy.h"
 #include "../data/queries.h"
 
-using namespace std;
 using namespace Output;
+using std::endl;
+using std::set;
 
 const vector<OutputField> Blast_tab_format::field_def = {
 { "qseqid", "Query ID", NONE, Flags::NONE },		// 0 means Query Seq - id
@@ -149,18 +150,18 @@ Blast_tab_format::Blast_tab_format() :
 		//config.traceback_mode = TracebackMode::SCORE_ONLY;
 }
 
-void print_staxids(TextBuffer &out, unsigned subject_global_id, const Metadata &metadata)
+void print_staxids(TextBuffer &out, unsigned subject_global_id, const Search::Config& cfg)
 {
-	out.print(metadata.database->taxids(subject_global_id), ';');
+	out.print(cfg.db->taxids(subject_global_id), ';');
 }
 
 template<typename _it>
-void print_taxon_names(_it begin, _it end, const Metadata &metadata, TextBuffer &out) {
+void print_taxon_names(_it begin, _it end, const Search::Config& cfg, TextBuffer &out) {
 	if (begin == end) {
 		out << "N/A";
 		return;
 	}
-	const vector<string> &names = *metadata.taxonomy_scientific_names;
+	const vector<string> &names = *cfg.taxonomy_scientific_names;
 	for (_it i = begin; i != end; ++i) {
 		if (i != begin)
 			out << ';';
@@ -171,8 +172,9 @@ void print_taxon_names(_it begin, _it end, const Metadata &metadata, TextBuffer 
 	}
 }
 
-void Blast_tab_format::print_match(const Hsp_context& r, const Metadata &metadata, TextBuffer &out)
+void Blast_tab_format::print_match(const Hsp_context& r, const Search::Config& cfg, TextBuffer &out)
 {
+	const Block::IdSet& query_qual = cfg.query->qual();
 	for (vector<unsigned>::const_iterator i = fields.begin(); i != fields.end(); ++i) {
 		switch (*i) {
 		case 0:
@@ -289,16 +291,16 @@ void Blast_tab_format::print_match(const Hsp_context& r, const Metadata &metadat
 		}
 			break;
 		case 34:
-			print_staxids(out, r.orig_subject_id, metadata);
+			print_staxids(out, r.orig_subject_id, cfg);
 			break;
 		case 35: {
-			const vector<unsigned> tax_id = metadata.database->taxids(r.orig_subject_id);
-			print_taxon_names(tax_id.begin(), tax_id.end(), metadata, out);
+			const vector<unsigned> tax_id = cfg.db->taxids(r.orig_subject_id);
+			print_taxon_names(tax_id.begin(), tax_id.end(), cfg, out);
 			break;
 		}
 		case 38: {
-			const set<unsigned> tax_id = metadata.taxon_nodes->rank_taxid(metadata.database->taxids(r.orig_subject_id), Rank::superkingdom);
-			print_taxon_names(tax_id.begin(), tax_id.end(), metadata, out);
+			const set<unsigned> tax_id = cfg.taxon_nodes->rank_taxid(cfg.db->taxids(r.orig_subject_id), Rank::superkingdom);
+			print_taxon_names(tax_id.begin(), tax_id.end(), cfg, out);
 			break;
 		}
 		case 39:
@@ -323,11 +325,11 @@ void Blast_tab_format::print_match(const Hsp_context& r, const Metadata &metadat
 			out << r.subject_seq;
 			break;
 		case 49: {
-			if (!query_qual) {
+			if (cfg.query->qual().empty()) {
 				out << '*';
 				break;
 			}
-			const char *q = (*query_qual)[r.query_id];
+			const char *q = cfg.query->qual()[r.query_id];
 			if (strlen(q) == 0) {
 				out << '*';
 				break;
@@ -346,7 +348,7 @@ void Blast_tab_format::print_match(const Hsp_context& r, const Metadata &metadat
 			out << (double)r.subject_range().length() * 100.0 / r.subject_len;
 			break;
 		case 53:
-			out << (query_qual && strlen((*query_qual)[r.query_id]) ? (*query_qual)[r.query_id] : "*");
+			out << (!query_qual.empty() && strlen(query_qual[r.query_id]) ? query_qual[r.query_id] : "*");
 			break;
 		case 54:
 			r.query.source().print(out, input_value_traits);
@@ -369,13 +371,13 @@ void Blast_tab_format::print_match(const Hsp_context& r, const Metadata &metadat
 			print_cigar(r, out);
 			break;
 		case 59: {
-			const set<unsigned> tax_id = metadata.taxon_nodes->rank_taxid(metadata.database->taxids(r.orig_subject_id), Rank::kingdom);
-			print_taxon_names(tax_id.begin(), tax_id.end(), metadata, out);
+			const set<unsigned> tax_id = cfg.taxon_nodes->rank_taxid(cfg.db->taxids(r.orig_subject_id), Rank::kingdom);
+			print_taxon_names(tax_id.begin(), tax_id.end(), cfg, out);
 			break;
 		}
 		case 60: {
-			const set<unsigned> tax_id = metadata.taxon_nodes->rank_taxid(metadata.database->taxids(r.orig_subject_id), Rank::phylum);
-			print_taxon_names(tax_id.begin(), tax_id.end(), metadata, out);
+			const set<unsigned> tax_id = cfg.taxon_nodes->rank_taxid(cfg.db->taxids(r.orig_subject_id), Rank::phylum);
+			print_taxon_names(tax_id.begin(), tax_id.end(), cfg, out);
 			break;
 		}
 		case 61:
@@ -384,7 +386,7 @@ void Blast_tab_format::print_match(const Hsp_context& r, const Metadata &metadat
 		case 62: {
 			if (config.query_file.size() == 2) {
 				unsigned mate = r.query_id % 2, mate_id = mate == 0 ? r.query_id + 1 : r.query_id - 1;
-				query_source_seqs::get()[mate_id].print(out, input_value_traits);
+				cfg.query->source_seqs()[mate_id].print(out, input_value_traits);
 				break;
 			}
 			else {
@@ -440,8 +442,9 @@ void Blast_tab_format::print_match(const Hsp_context& r, const Metadata &metadat
 	out << '\n';
 }
 
-void Blast_tab_format::print_query_intro(size_t query_num, const char *query_name, unsigned query_len, TextBuffer &out, bool unaligned) const
+void Blast_tab_format::print_query_intro(size_t query_num, const char *query_name, unsigned query_len, TextBuffer &out, bool unaligned, const Search::Config& cfg) const
 {
+	const Block::IdSet& qual = cfg.query->qual();
 	if (unaligned && config.report_unaligned == 1) {
 		for (vector<unsigned>::const_iterator i = fields.begin(); i != fields.end(); ++i) {
 			switch (*i) {
@@ -499,10 +502,10 @@ void Blast_tab_format::print_query_intro(size_t query_num, const char *query_nam
 				out << query_name;
 				break;
 			case 53:
-				out << (query_qual && strlen((*query_qual)[query_num]) ? (*query_qual)[query_num] : "*");
+				out << (!qual.empty() && strlen(qual[query_num]) ? qual[query_num] : "*");
 				break;
 			case 54:
-				(align_mode.query_translated ? query_source_seqs::get()[query_num] : query_seqs::get()[query_num]).print(out, input_value_traits);
+				(align_mode.query_translated ? cfg.query->source_seqs()[query_num] : cfg.query->seqs()[query_num]).print(out, input_value_traits);
 				break;
 			default:
 				throw std::runtime_error(string("Invalid output field: ") + field_def[*i].key);
@@ -517,7 +520,7 @@ void Blast_tab_format::print_query_intro(size_t query_num, const char *query_nam
 void Blast_tab_format::print_header(Consumer &f, int mode, const char *matrix, int gap_open, int gap_extend, double evalue, const char *first_query_name, unsigned first_query_len) const {
 	if (!config.output_header)
 		return;
-	stringstream ss;
+	std::stringstream ss;
 	ss << "# DIAMOND v" << Const::version_string << ". http://github.com/bbuchfink/diamond" << endl;
 	ss << "# Invocation: " << config.invocation << endl;
 	ss << "# Fields: " << join(", ", apply(fields, [](unsigned i) -> string { return string(field_def[i].description); })) << endl;

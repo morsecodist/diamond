@@ -48,15 +48,15 @@ vector<int> MultiStep::cluster(SequenceFile& db, const BitVector* filter) {
 	config.freq_sd = 0;
 	config.max_alignments = numeric_limits<size_t>::max();
 
-	Workflow::Search::Options opt;
+	Search::Config opt(false);
 	opt.db = &db;
 	opt.self = true;
 	Neighbors nb(db.sequence_count());
 
 	opt.consumer = &nb;
-	opt.db_filter = filter;
+	opt.db_filter = *filter;
 
-	Workflow::Search::run(opt);
+	Search::run(opt);
 	
 	/*
 	auto lo = nb.dSet.getListOfSets();
@@ -251,11 +251,9 @@ void MultiStep::run() {
 	}
 		
 	task_timer timer("Generating output");
-	SequenceSet* rep_seqs;
-	String_set<char, 0>* rep_ids;
 	vector<unsigned> rep_database_id, rep_block_id(seq_count);
 	db->set_seqinfo_ptr(0);
-	db->load_seqs(&rep_database_id, (size_t)1e11, &rep_seqs, &rep_ids, true, &previous_reps);
+	Block* block = db->load_seqs(&rep_database_id, (size_t)1e11, true, &previous_reps);
 	for (size_t i = 0; i < rep_database_id.size(); ++i)
 		rep_block_id[rep_database_id[i]] = (unsigned)i;
 
@@ -270,7 +268,7 @@ void MultiStep::run() {
 		db->read_seq(seq, id);
 		const unsigned r = rep_block_id[previous_centroids[i]];
 		(*out) << blast_id(id) << '\t'
-			<< blast_id((*rep_ids)[r]) << '\n';
+			<< blast_id(block->ids()[r]) << '\n';
 		/*if ((int)i == centroid2[i])
 			(*out) << "100\t100\t100\t0" << endl;
 		else {
@@ -283,8 +281,7 @@ void MultiStep::run() {
 		} */
 	}
 	if (out != &cout) delete out;
-	delete rep_seqs;
-	delete rep_ids;
+	delete block;
 	db->close();
 
 }

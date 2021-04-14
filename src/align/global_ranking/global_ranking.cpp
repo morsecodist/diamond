@@ -29,9 +29,9 @@ using std::vector;
 
 namespace Extension { namespace GlobalRanking {
 
-uint16_t recompute_overflow_scores(FlatArray<SeedHit>::ConstIterator begin, FlatArray<SeedHit>::ConstIterator end, size_t query_id, uint32_t target_id) {
-	const auto query = query_seqs::get()[query_id];
-	const auto target = ref_seqs::get()[target_id];
+uint16_t recompute_overflow_scores(FlatArray<SeedHit>::ConstIterator begin, FlatArray<SeedHit>::ConstIterator end, size_t query_id, uint32_t target_id, const Search::Config& cfg) {
+	const auto query = cfg.query->seqs()[query_id];
+	const auto target = cfg.target->seqs()[target_id];
 	int score = 0;
 	for (auto it = begin; it < end; ++it) {
 		if (it->score != UCHAR_MAX)
@@ -44,11 +44,11 @@ uint16_t recompute_overflow_scores(FlatArray<SeedHit>::ConstIterator begin, Flat
 	return (uint16_t)std::min(score, USHRT_MAX);
 }
 
-std::vector<Extension::Match> ranking_list(size_t query_id, std::vector<TargetScore>::iterator begin, std::vector<TargetScore>::iterator end, std::vector<uint32_t>::const_iterator target_block_ids, const FlatArray<SeedHit>& seed_hits) {
+std::vector<Extension::Match> ranking_list(size_t query_id, std::vector<TargetScore>::iterator begin, std::vector<TargetScore>::iterator end, std::vector<uint32_t>::const_iterator target_block_ids, const FlatArray<SeedHit>& seed_hits, const Search::Config& cfg) {
 	size_t overflows = 0;
 	for (auto it = begin; it < end && it->score >= UCHAR_MAX; ++it)
 		if (it->score == UCHAR_MAX) {
-			it->score = recompute_overflow_scores(seed_hits.begin(it->target), seed_hits.end(it->target), query_id, target_block_ids[it->target]);
+			it->score = recompute_overflow_scores(seed_hits.begin(it->target), seed_hits.end(it->target), query_id, target_block_ids[it->target], cfg);
 			++overflows;
 		}
 	if (overflows > 0)

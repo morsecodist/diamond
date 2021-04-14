@@ -1,6 +1,10 @@
 /****
 DIAMOND protein aligner
-Copyright (C) 2013-2018 Benjamin Buchfink <buchfink@gmail.com>
+Copyright (C) 2013-2021 Max Planck Society for the Advancement of Science e.V.
+                        Benjamin Buchfink
+                        Eberhard Karls Universitaet Tuebingen
+						
+Code developed by Benjamin Buchfink <benjamin.buchfink@tue.mpg.de>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -70,7 +74,7 @@ void ReferenceDictionary::init(unsigned ref_count, const vector<unsigned> &block
 	block_to_database_id_ = &block_to_database_id;
 }
 
-uint32_t ReferenceDictionary::get(unsigned block, size_t block_id)
+uint32_t ReferenceDictionary::get(unsigned block, size_t block_id, const Search::Config& cfg)
 {
 	uint32_t n = data_[block][block_id];
 	if (n != std::numeric_limits<uint32_t>::max())
@@ -85,9 +89,9 @@ uint32_t ReferenceDictionary::get(unsigned block, size_t block_id)
 		n = next_++;
 		data_[block][block_id] = n;
 		if (!config.no_dict) {
-			len_.push_back((uint32_t)ref_seqs::get().length(block_id));
+			len_.push_back((uint32_t)cfg.target->seqs().length(block_id));
 			database_id_.push_back((*block_to_database_id_)[block_id]);
-			const char *title = ref_ids::get()[block_id];
+			const char *title = cfg.target->ids()[block_id];
 			if (config.salltitles)
 				name_.push_back(new string(title));
 			else if (config.sallseqid)
@@ -100,7 +104,7 @@ uint32_t ReferenceDictionary::get(unsigned block, size_t block_id)
 	return n;
 }
 
-void ReferenceDictionary::build_lazy_dict(SequenceFile &db_file)
+void ReferenceDictionary::build_lazy_dict(SequenceFile &db_file, Search::Config& cfg)
 {
 	BitVector filter(db_file.sequence_count());
 	vector<pair<unsigned, unsigned> > m;
@@ -112,7 +116,7 @@ void ReferenceDictionary::build_lazy_dict(SequenceFile &db_file)
 		m.push_back(std::make_pair(*i, n++));
 	}
 	db_file.set_seqinfo_ptr(0);
-	db_file.load_seqs(nullptr, std::numeric_limits<size_t>::max(), &ref_seqs::data_, &ref_ids::data_, false, &filter);
+	cfg.target.reset(db_file.load_seqs(nullptr, std::numeric_limits<size_t>::max(), false, &filter));
 	std::sort(m.begin(), m.end());
 	dict_to_lazy_dict_id_.clear();
 	dict_to_lazy_dict_id_.resize(dict_size);

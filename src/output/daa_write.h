@@ -69,9 +69,9 @@ inline void write_daa_record(TextBuffer &buf, const IntermediateRecord &r)
 	buf << r.transcript.data();
 }
 
-inline void write_daa_record(TextBuffer &buf, const Hsp &match, size_t subject_id)
+inline void write_daa_record(TextBuffer &buf, const Hsp &match, size_t subject_id, const Search::Config& cfg)
 {
-	buf.write(config.command == Config::view ? (uint32_t)subject_id : ReferenceDictionary::get().get(current_ref_block, subject_id));
+	buf.write(config.command == Config::view ? (uint32_t)subject_id : ReferenceDictionary::get().get(current_ref_block, subject_id, cfg));
 	buf.write(get_segment_flag(match));
 	buf.write_packed(match.score);
 	buf.write_packed(match.oriented_range().begin_);

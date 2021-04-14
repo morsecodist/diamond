@@ -30,8 +30,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../data/reference.h"
 #include "../basic/match.h"
 #include "../data/ref_dictionary.h"
-#include "../basic/parameters.h"
-#include "../data/metadata.h"
 #include "../util/io/consumer.h"
 #include "output_format.h"
 
@@ -117,10 +115,10 @@ struct IntermediateRecord
 	{
 		*(uint32_t*)(&buf[seek_pos + sizeof(uint32_t)]) = safe_cast<uint32_t>(buf.size() - seek_pos - sizeof(uint32_t) * 2);
 	}
-	static void write(TextBuffer &buf, const Hsp &match, unsigned query_id, size_t subject_id)
+	static void write(TextBuffer &buf, const Hsp &match, unsigned query_id, size_t subject_id, const Search::Config& cfg)
 	{
 		const interval oriented_range (match.oriented_range());
-		buf.write(ReferenceDictionary::get().get(current_ref_block, subject_id));
+		buf.write(ReferenceDictionary::get().get(current_ref_block, subject_id, cfg));
 		buf.write(get_segment_flag(match));
 		buf.write_packed(match.score);
 		buf.write(match.evalue);
@@ -142,8 +140,8 @@ struct IntermediateRecord
 			buf.write_varint(match.gaps);
 		}
 	}
-	static void write(TextBuffer& buf, uint32_t target_block_id, int score) {
-		buf.write(ReferenceDictionary::get().get(current_ref_block, target_block_id));
+	static void write(TextBuffer& buf, uint32_t target_block_id, int score, const Search::Config& cfg) {
+		buf.write(ReferenceDictionary::get().get(current_ref_block, target_block_id, cfg));
 		const uint16_t s = (uint16_t)std::min(score, USHRT_MAX);
 		buf.write(s);
 	}
@@ -159,7 +157,7 @@ struct IntermediateRecord
 	Packed_transcript transcript;
 };
 
-void join_blocks(unsigned ref_blocks, Consumer &master_out, const PtrVector<TempFile> &tmp_file, const Parameters &params, const Metadata &metadata, SequenceFile &db_file,
+void join_blocks(unsigned ref_blocks, Consumer &master_out, const PtrVector<TempFile> &tmp_file, Search::Config& cfg, SequenceFile &db_file,
 					const vector<string> tmp_file_names = vector<string>());
 
 struct OutputSink
@@ -200,4 +198,4 @@ private:
 	size_t begin_, next_, size_, max_size_;
 };
 
-void heartbeat_worker(size_t qend);
+void heartbeat_worker(size_t qend, const Search::Config* cfg);

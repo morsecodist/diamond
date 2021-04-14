@@ -111,10 +111,10 @@ struct Async_buffer
 		Async_buffer &parent_;
 	};
 
-	void load(size_t max_size) {
+	void load(size_t max_size, bool long_offsets) {
 		auto worker = [&](size_t end) {
 			for (; bins_processed_ < end; ++bins_processed_)
-				load_bin(*data_next_, bins_processed_);
+				load_bin(*data_next_, bins_processed_, long_offsets);
 		};
 		if (bins_processed_ == bins_) {
 			data_next_ = nullptr;
@@ -154,13 +154,13 @@ struct Async_buffer
 
 private:
 
-	void load_bin(std::vector<_t> &out, size_t bin)
+	void load_bin(std::vector<_t> &out, size_t bin, bool long_offsets)
 	{
 		InputFile f(tmp_file_[bin], InputStreamBuffer::ASYNC);
 		auto it = std::back_inserter(out);
 		size_t count = 0;
 		try {
-			while(true) count += _t::read(f, it);
+			while(true) count += _t::read(f, it, long_offsets);
 		} catch(EndOfStream&) {}
 		f.close_and_delete();
 		if (count != count_[bin])

@@ -21,32 +21,40 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 #include <list>
-#include "../basic/config.h"
+#include <memory>
 #include "../util/data_structures/bit_vector.h"
+#include "../util/scores/cutoff_table.h"
 
-struct DatabaseFile;
+struct SequenceFile;
 struct Consumer;
 struct TextInputFile;
+struct Block;
+struct TaxonomyNodes;
 
-namespace Workflow { 
 namespace Search {
 
-struct Options {
-	Options():
-		self(config.self),
-		db(nullptr),
-		consumer(nullptr),
-		query_file(nullptr),
-		db_filter(nullptr)
-	{}
-	bool self;
-	SequenceFile *db;
-	Consumer *consumer;
-	std::list<TextInputFile> *query_file;
-	const BitVector* db_filter;
+struct Config {
+
+	Config(bool dealloc);
+	void free();
+
+	bool                      self;
+	const bool                dealloc;
+	SequenceFile*             db;
+	Consumer*                 consumer;
+	std::list<TextInputFile>* query_file;
+	BitVector                 db_filter;
+	TaxonomyNodes*            taxon_nodes;
+	std::vector<std::string>* taxonomy_scientific_names;
+
+	std::unique_ptr<Block> query, target;
+
+	uint64_t db_seqs, db_letters, ref_blocks;
+	Util::Scores::CutoffTable cutoff_gapped1, cutoff_gapped2;
+	Util::Scores::CutoffTable2D cutoff_gapped1_new, cutoff_gapped2_new;
+
 };
 
-void run(const Options &options);
+void run(Config &options);
 
-}
 }

@@ -54,20 +54,20 @@ size_t run_testcase(size_t i, DatabaseFile &db, list<TextInputFile> &query_file,
 		args.push_back("--log");
 	config = Config((int)args.size(), charp_array(args.begin(), args.end()).data(), false);
 	statistics.reset();
-	Workflow::Search::Options opt;
+	Search::Config opt(false);
 	opt.db = &db;
 	query_file.front().rewind();
 	opt.query_file = &query_file;
 
 	if (to_cout) {
-		Workflow::Search::run(opt);
+		Search::run(opt);
 		return 0;
 	}
 	
 	TempFile output_file(!bootstrap);
 	opt.consumer = &output_file;
 
-	Workflow::Search::run(opt);
+	Search::run(opt);
 
 	InputFile out_in(output_file);
 	uint64_t hash = out_in.hash();

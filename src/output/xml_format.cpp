@@ -1,10 +1,11 @@
 #include <sstream>
 #include "output_format.h"
 #include "../util/escape_sequences.h"
+#include "../data/taxonomy.h"
 
 using std::endl;
 
-void XML_format::print_match(const Hsp_context& r, const Metadata& metadata, TextBuffer& out)
+void XML_format::print_match(const Hsp_context& r, const Search::Config& metadata, TextBuffer& out)
 {
 	if (r.hsp_num == 0) {
 		if (r.hit_num > 0)
@@ -103,7 +104,7 @@ void XML_format::print_header(Consumer& f, int mode, const char* matrix, int gap
 	f.consume(ss.str().c_str(), ss.str().length());
 }
 
-void XML_format::print_query_intro(size_t query_num, const char* query_name, unsigned query_len, TextBuffer& out, bool unaligned) const
+void XML_format::print_query_intro(size_t query_num, const char* query_name, unsigned query_len, TextBuffer& out, bool unaligned, const Search::Config& cfg) const
 {
 	out << "<Iteration>" << '\n'
 		<< "  <Iteration_iter-num>" << query_num + 1 << "</Iteration_iter-num>" << '\n'
@@ -115,7 +116,7 @@ void XML_format::print_query_intro(size_t query_num, const char* query_name, uns
 		<< "<Iteration_hits>" << '\n';
 }
 
-void XML_format::print_query_epilog(TextBuffer& out, const char* query_title, bool unaligned, const Parameters& parameters) const
+void XML_format::print_query_epilog(TextBuffer& out, const char* query_title, bool unaligned, const Search::Config& parameters) const
 {
 	if (!unaligned) {
 		out << "  </Hit_hsps>" << '\n'

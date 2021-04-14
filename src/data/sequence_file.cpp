@@ -36,7 +36,7 @@ using std::setw;
 
 const EMap<SequenceFile::Type> EnumTraits<SequenceFile::Type>::to_string = { {SequenceFile::Type::DMND, "Diamond database" }, {SequenceFile::Type::BLAST, "BLAST database"} };
 
-bool SequenceFile::load_seqs(vector<uint32_t>* block2db_id, const size_t max_letters, SequenceSet** dst_seq, String_set<char, 0>** dst_id, bool load_ids, const BitVector* filter, const bool fetch_seqs, const Chunk& chunk)
+Block* SequenceFile::load_seqs(vector<uint32_t>* block2db_id, const size_t max_letters, bool load_ids, const BitVector* filter, const bool fetch_seqs, const Chunk& chunk)
 {
 	task_timer timer("Loading reference sequences");
 	reopen();
@@ -50,12 +50,8 @@ bool SequenceFile::load_seqs(vector<uint32_t>* block2db_id, const size_t max_let
 	size_t letters = 0, seqs = 0, id_letters = 0, seqs_processed = 0, filtered_seq_count = 0;
 	vector<uint64_t> filtered_pos;
 	if (block2db_id) block2db_id->clear();
-
-	if (fetch_seqs) {
-		*dst_seq = new SequenceSet;
-		if (load_ids) *dst_id = new String_set<char, 0>;
-	}
-
+	Block* block = new Block();
+	
 	SeqInfo r = read_seqinfo();
 	uint64_t start_offset = r.pos;
 	bool last = false;
@@ -75,12 +71,12 @@ bool SequenceFile::load_seqs(vector<uint32_t>* block2db_id, const size_t max_let
 		if (!use_filter || filter->get(database_id)) {
 			letters += r.seq_len;
 			if (fetch_seqs) {
-				(*dst_seq)->reserve(r.seq_len);
+				block->seqs_.reserve(r.seq_len);
 			}
 			const size_t id_len = this->id_len(r, r_next);
 			id_letters += id_len;
 			if (fetch_seqs && load_ids)
-				(*dst_id)->reserve(id_len);
+				block->ids_.reserve(id_len);
 			++filtered_seq_count;
 			if (block2db_id) block2db_id->push_back((unsigned)database_id);
 			if (use_filter) {
@@ -99,32 +95,25 @@ bool SequenceFile::load_seqs(vector<uint32_t>* block2db_id, const size_t max_let
 
 	putback_seqinfo();
 
-	if (seqs == 0 || filtered_seq_count == 0) {
-		if (fetch_seqs) {
-			delete (*dst_seq);
-			(*dst_seq) = NULL;
-			if (load_ids) delete (*dst_id);
-			(*dst_id) = NULL;
-		}
-		return false;
-	}
+	if (seqs == 0 || filtered_seq_count == 0)
+		return block;
 
 	if (fetch_seqs) {
-		(*dst_seq)->finish_reserve();
-		if (load_ids) (*dst_id)->finish_reserve();
+		block->seqs_.finish_reserve();
+		if (load_ids) block->ids_.finish_reserve();
 		seek_offset(start_offset);
 
 		for (size_t i = 0; i < filtered_seq_count; ++i) {
 			if (use_filter && filtered_pos[i]) seek_offset(filtered_pos[i]);
-			read_seq_data((*dst_seq)->ptr(i), (*dst_seq)->length(i));
+			read_seq_data(block->seqs_.ptr(i), block->seqs_.length(i));
 			if (load_ids)
-				read_id_data((*dst_id)->ptr(i), (*dst_id)->length(i));
+				read_id_data(block->ids_.ptr(i), block->ids_.length(i));
 			else
 				skip_id_data();
-			Masking::get().remove_bit_mask((*dst_seq)->ptr(i), (*dst_seq)->length(i));
+			Masking::get().remove_bit_mask(block->seqs_.ptr(i), block->seqs_.length(i));
 		}
 		timer.finish();
-		(*dst_seq)->print_stats();
+		block->seqs_.print_stats();
 	}
 
 	if (config.multiprocessing || config.global_ranking_targets)
@@ -133,7 +122,7 @@ bool SequenceFile::load_seqs(vector<uint32_t>* block2db_id, const size_t max_let
 		blocked_processing = seqs_processed < sequence_count();
 
 	close_weakly();
-	return true;
+	return block;
 }
 
 void SequenceFile::get_seq()

@@ -60,7 +60,7 @@ void Output_format::print_title(TextBuffer &buf, const char *id, bool full_title
 void print_hsp(Hsp &hsp, const TranslatedSequence &query)
 {
 	TextBuffer buf;
-	Pairwise_format().print_match(Hsp_context(hsp, 0, query, "", 0, 0, "", 0, 0, 0, Sequence()), Metadata(), buf);
+	Pairwise_format().print_match(Hsp_context(hsp, 0, query, "", 0, 0, "", 0, 0, 0, Sequence()), Search::Config(true), buf);
 	buf << '\0';
 	cout << buf.get_begin() << endl;
 }
@@ -124,19 +124,19 @@ void init_output()
 	log_stream << "Format options: transcript=" << bool(output_format->hsp_values & Output::TRANSCRIPT) << " stats=" << bool(output_format->hsp_values & Output::STATS_OR_COORDS) << endl;
 }
 
-void Bin1_format::print_query_intro(size_t query_num, const char *query_name, unsigned query_len, TextBuffer &out, bool unaligned) const {
+void Bin1_format::print_query_intro(size_t query_num, const char *query_name, unsigned query_len, TextBuffer &out, bool unaligned, const Search::Config& cfg) const {
 	out.write(std::numeric_limits<uint32_t>::max());
 	out.write((uint32_t)query_num);
 }
 
-void Bin1_format::print_match(const Hsp_context& r, const Metadata &metadata, TextBuffer &out) {
+void Bin1_format::print_match(const Hsp_context& r, const Search::Config &metadata, TextBuffer &out) {
 	if (r.query_id < r.subject_id) {
 		out.write((uint32_t)r.subject_id);
 		out.write(r.bit_score() / std::max((unsigned)r.query.source().length(), r.subject_len));
 	}
 }
 
-void Binary_format::print_match(const Hsp_context& r, const Metadata& metadata, TextBuffer& out)
+void Binary_format::print_match(const Hsp_context& r, const Search::Config& metadata, TextBuffer& out)
 {
 	out.write((uint32_t)query_block_to_database_id[r.query_id]);
 	out.write((uint32_t)r.orig_subject_id);

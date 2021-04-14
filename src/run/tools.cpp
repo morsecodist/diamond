@@ -51,12 +51,13 @@ void get_seq()
 void random_seqs()
 {
 	DatabaseFile db_file(config.database);
-	db_file.load_seqs(nullptr, std::numeric_limits<size_t>::max(), &ref_seqs::data_, &ref_ids::data_);
-	cout << "Sequences = " << ref_seqs::get().get_length() << endl;
+	Block* ref_seqs = db_file.load_seqs(nullptr, std::numeric_limits<size_t>::max());
+	const auto& r = ref_seqs->seqs();
+	cout << "Sequences = " << r.get_length() << endl;
 	std::set<unsigned> n;
 	const size_t count = atoi(config.seq_no[0].c_str());
 	while (n.size() < count)
-		n.insert((rand()*RAND_MAX + rand()) % ref_seqs::get().get_length());
+		n.insert((rand()*RAND_MAX + rand()) % r.get_length());
 	OutputFile out(config.output_file);
 	unsigned j = 0;
 	
@@ -67,12 +68,13 @@ void random_seqs()
 		if (config.reverse)
 			; // ref_seqs::get()[*i].print(ss, value_traits, sequence::Reversed());
 		else
-			ss << ref_seqs::get()[*i];
+			ss << r[*i];
 		ss << endl;
 		s = ss.str();
 		out.write(s.data(), s.length());
 	}
 	out.close();
+	delete ref_seqs;
 }
 
 void sort_file()
@@ -93,13 +95,14 @@ void sort_file()
 void db_stat()
 {
 	DatabaseFile db_file(config.database);
-	db_file.load_seqs(nullptr, std::numeric_limits<size_t>::max(), &ref_seqs::data_, &ref_ids::data_);
-	cout << "Sequences = " << ref_seqs::get().get_length() << endl;
+	Block* ref_seqs = db_file.load_seqs(nullptr, std::numeric_limits<size_t>::max());
+	const auto& r = ref_seqs->seqs();
+	cout << "Sequences = " << r.get_length() << endl;
 
 	size_t letters = 0;
 	vector<size_t> letter_freq(20);
-	for (size_t i = 0; i < ref_seqs::get().get_length(); ++i) {
-		const Sequence seq = ref_seqs::get()[i];
+	for (size_t i = 0; i < r.get_length(); ++i) {
+		const Sequence seq = r[i];
 		for (size_t j = 0; j < seq.length(); ++j) {
 			if (seq[j] < 20) {
 				++letters;

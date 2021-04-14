@@ -64,7 +64,6 @@ static void seed_hit_files() {
 	const size_t raw_size = file_size(file_name.c_str());
 	message_stream << "File size = " << raw_size << endl;
 	timer.go("Reading input file");
-	ref_seqs::data_ = new SequenceSet();
 	InputFile in(file_name, InputStreamBuffer::ASYNC);
 	if (config.raw) {
 		char* buf = new char[raw_size];
@@ -77,14 +76,13 @@ static void seed_hit_files() {
 		auto it = std::back_inserter(out);
 		size_t count = 0;
 		try {
-			while (true) count += hit::read(in, it);
+			while (true) count += hit::read(in, it, false);
 		}
 		catch (EndOfStream&) {}
 		message_stream << "Read " << count << " hits." << endl;
 	}
 	in.close();
 	timer.finish();
-	delete ref_seqs::data_;
 	message_stream << "Throughput: " << (double)raw_size / (1 << 20) / timer.seconds() << " MB/s" << endl;
 }
 
@@ -96,16 +94,16 @@ static void load_seqs() {
 	SequenceFile* db = SequenceFile::auto_create(SequenceFile::Flags::NONE);
 	timer.finish();
 	message_stream << "Type: " << to_string(db->type()) << endl;
+	Block* ref;
 
 	while (true) {
 		timer.go("Loading sequences");
-		if (!db->load_seqs(nullptr, (size_t)(config.chunk_size * 1e9), &ref_seqs::data_, &ref_ids::data_, true, nullptr))
+		if ((ref = db->load_seqs(nullptr, (size_t)(config.chunk_size * 1e9), true, nullptr))->empty())
 			return;
-		size_t n = ref_seqs::data_->letters() + ref_ids::data_->letters();
+		size_t n = ref->seqs().letters() + ref->ids().letters();
 		message_stream << "Throughput: " << (double)n / (1 << 20) / timer.milliseconds() * 1000 << " MB/s" << endl;
 		timer.go("Deallocating");
-		delete ref_seqs::data_;
-		delete ref_ids::data_;
+		delete ref;
 	}
 
 	timer.go("Closing the database");

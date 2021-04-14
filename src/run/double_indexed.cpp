@@ -1,4 +1,4 @@
-/****
+/****-
 DIAMOND protein aligner
 Copyright (C) 2013-2020 Max Planck Society for the Advancement of Science e.V.
 						Benjamin Buchfink
@@ -40,7 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../data/taxonomy.h"
 #include "../basic/masking.h"
 #include "../data/ref_dictionary.h"
-#include "../data/metadata.h"
+#include "../data/block.h"
 #include "../search/search.h"
 #include "workflow.h"
 #include "../util/io/consumer.h"
@@ -53,8 +53,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 using std::unique_ptr;
 using std::endl;
+using std::list;
 
-namespace Workflow { namespace Search {
+namespace Search {
 
 static const size_t MAX_INDEX_QUERY_SIZE      = 0x2000000;
 static const size_t MAX_HASH_SET_SIZE         = 0x800000;
@@ -90,38 +91,39 @@ void run_ref_chunk(SequenceFile &db_file,
 	char *query_buffer,
 	Consumer &master_out,
 	PtrVector<TempFile> &tmp_file,
-	const Parameters &params,
-	const Metadata &metadata)
+	Config& cfg)
 {
 	log_rss();
+	auto& ref_seqs = cfg.target->seqs();
+	auto& query_seqs = cfg.query->seqs();
 
 	if (config.comp_based_stats == Stats::CBS::COMP_BASED_STATS_AND_MATRIX_ADJUST)
-		ref_seqs_unmasked::data_ = new SequenceSet(*ref_seqs::data_);
+		cfg.target->unmasked_seqs() = ref_seqs;
 
 	task_timer timer;
 	if (config.masking == 1 && !config.no_ref_masking) {
 		timer.go("Masking reference");
-		size_t n = mask_seqs(*ref_seqs::data_, Masking::get());
+		size_t n = mask_seqs(ref_seqs, Masking::get());
 		timer.finish();
 		log_stream << "Masked letters: " << n << endl;
 	}
 
-	ReferenceDictionary::get().init(safe_cast<unsigned>(ref_seqs::get().get_length()), block_to_database_id);
+	ReferenceDictionary::get().init(safe_cast<unsigned>(ref_seqs.get_length()), block_to_database_id);
 
 	timer.go("Initializing temporary storage");
-	Trace_pt_buffer::instance = new Trace_pt_buffer(query_seqs::data_->get_length() / align_mode.query_contexts,
+	Trace_pt_buffer::instance = new Trace_pt_buffer(query_seqs.get_length() / align_mode.query_contexts,
 		config.tmpdir,
 		config.query_bins);
 
 	if (!config.swipe_all) {
 		timer.go("Building reference histograms");
 		if (query_seeds_hashed.get())
-			ref_hst = Partitioned_histogram(*ref_seqs::data_, true, query_seeds_hashed.get(), true);
+			cfg.target->hst() = Partitioned_histogram(ref_seqs, true, query_seeds_hashed.get(), true);
 		else
-			ref_hst = Partitioned_histogram(*ref_seqs::data_, false, &no_filter, config.target_indexed);
+			cfg.target->hst() = Partitioned_histogram(ref_seqs, false, &no_filter, config.target_indexed);
 
 		timer.go("Allocating buffers");
-		char *ref_buffer = SeedArray::alloc_buffer(ref_hst);
+		char *ref_buffer = SeedArray::alloc_buffer(cfg.target->hst());
 		timer.finish();
 
 		HashedSeedSet* target_seeds = nullptr;
@@ -132,14 +134,14 @@ void run_ref_chunk(SequenceFile &db_file,
 		}
 
 		for (unsigned i = 0; i < shapes.count(); ++i)
-			search_shape(i, query_chunk, query_buffer, ref_buffer, params, target_seeds);
+			search_shape(i, query_chunk, query_buffer, ref_buffer, cfg, target_seeds);
 
 		timer.go("Deallocating buffers");
 		delete[] ref_buffer;
 		delete target_seeds;
 
 		timer.go("Clearing query masking");
-		Frequent_seeds::clear_masking(*query_seqs::data_);
+		Frequent_seeds::clear_masking(query_seqs);
 	}
 
 	Consumer* out;
@@ -158,80 +160,69 @@ void run_ref_chunk(SequenceFile &db_file,
 
 	if (config.target_seg == 1) {
 		timer.go("SEG masking targets");
-		mask_seqs(*ref_seqs::data_, Masking::get(), true, Masking::Algo::SEG);
+		mask_seqs(ref_seqs, Masking::get(), true, Masking::Algo::SEG);
 	}
 
 	timer.go("Computing alignments");
-	align_queries(*Trace_pt_buffer::instance, out, params, metadata);
+	align_queries(*Trace_pt_buffer::instance, out, cfg);
 	delete Trace_pt_buffer::instance;
 
 	if (blocked_processing)
 		IntermediateRecord::finish_file(*out);
 
 	timer.go("Deallocating reference");
-	delete ref_seqs::data_;
-	delete ref_ids::data_;
-	if (config.comp_based_stats == Stats::CBS::COMP_BASED_STATS_AND_MATRIX_ADJUST)
-		delete ref_seqs_unmasked::data_;
+	cfg.target.reset();
 	timer.finish();
 }
 
-void deallocate_queries() {
-	delete query_seqs::data_;
-	delete query_ids::data_;
-	delete query_source_seqs::data_;
-	delete query_qual;
-}
-
-void run_query_chunk(SequenceFile &db_file,
-	unsigned query_chunk,
+void run_query_chunk(unsigned query_chunk,
 	Consumer &master_out,
 	OutputFile *unaligned_file,
 	OutputFile *aligned_file,
-	const Metadata &metadata,
-	const Options &options)
+	Config &options)
 {
 	auto P = Parallelizer::get();
 	task_timer timer;
-
-	if (config.algo == Config::Algo::AUTO &&
+	auto& query_seqs = options.query->seqs();
+	auto& query_ids = options.query->ids();
+	auto& db_file = *options.db;
+	
+	if (config.algo == ::Config::Algo::AUTO &&
 		(!sensitivity_traits.at(config.sensitivity).support_query_indexed
-			|| query_seqs::get().letters() > MAX_INDEX_QUERY_SIZE
-			|| db_file.letters() < MIN_QUERY_INDEXED_DB_SIZE))
-		config.algo = Config::Algo::DOUBLE_INDEXED;
-	if (config.algo == Config::Algo::AUTO || config.algo == Config::Algo::QUERY_INDEXED) {
+			|| query_seqs.letters() > MAX_INDEX_QUERY_SIZE
+			|| options.db->letters() < MIN_QUERY_INDEXED_DB_SIZE))
+		config.algo = ::Config::Algo::DOUBLE_INDEXED;
+	if (config.algo == ::Config::Algo::AUTO || config.algo == ::Config::Algo::QUERY_INDEXED) {
 		timer.go("Building query seed set");
-		query_seeds_hashed.reset(new HashedSeedSet(query_seqs::get()));
-		if (config.algo == Config::Algo::AUTO && query_seeds_hashed->max_table_size() > MAX_HASH_SET_SIZE) {
-			config.algo = Config::Algo::DOUBLE_INDEXED;
+		query_seeds_hashed.reset(new HashedSeedSet(query_seqs));
+		if (config.algo == ::Config::Algo::AUTO && query_seeds_hashed->max_table_size() > MAX_HASH_SET_SIZE) {
+			config.algo = ::Config::Algo::DOUBLE_INDEXED;
 			query_seeds_hashed.reset();
 		}
 		else
-			config.algo = Config::Algo::QUERY_INDEXED;
+			config.algo = ::Config::Algo::QUERY_INDEXED;
 		timer.finish();
 	}
 	if (current_query_chunk == 0)
-		message_stream << "Algorithm: " << (config.algo == Config::Algo::DOUBLE_INDEXED ? "Double-indexed" : "Query-indexed") << endl;
+		message_stream << "Algorithm: " << (config.algo == ::Config::Algo::DOUBLE_INDEXED ? "Double-indexed" : "Query-indexed") << endl;
 
-	const Parameters params{
-	db_file.sequence_count(),
-	db_file.letters(),
-	db_file.total_blocks(),
-	config.gapped_filter_evalue1,
-	config.gapped_filter_evalue,
-	config.gapped_filter_evalue1,
-	config.gapped_filter_evalue
-	};
+	options.db_seqs = db_file.sequence_count();
+	options.db_letters = db_file.letters();
+	options.ref_blocks = db_file.total_blocks();
+	options.cutoff_gapped1 = { config.gapped_filter_evalue1 };
+	options.cutoff_gapped2 = { config.gapped_filter_evalue };
+	options.cutoff_gapped1_new = { config.gapped_filter_evalue1 };
+	options.cutoff_gapped2_new = { config.gapped_filter_evalue };
 
 	char *query_buffer = nullptr;
-	const pair<size_t, size_t> query_len_bounds = query_seqs::data_->len_bounds(shapes[0].length_);
+	const pair<size_t, size_t> query_len_bounds = query_seqs.len_bounds(shapes[0].length_);
 
 	if (!config.swipe_all && !config.target_indexed) {
 		timer.go("Building query histograms");
-		query_hst = Partitioned_histogram(*query_seqs::data_, false, &no_filter, query_seeds_hashed.get());
+		options.query->hst() = Partitioned_histogram(query_seqs, false, &no_filter, query_seeds_hashed.get());
 
 		timer.go("Allocating buffers");
-		query_buffer = SeedArray::alloc_buffer(query_hst);
+		query_buffer = SeedArray::alloc_buffer(options.query->hst());
 		timer.finish();
 	}
 
@@ -239,9 +230,9 @@ void run_query_chunk(SequenceFile &db_file,
 
 	PtrVector<TempFile> tmp_file;
 	query_aligned.clear();
-	query_aligned.insert(query_aligned.end(), query_ids::get().get_length(), false);
+	query_aligned.insert(query_aligned.end(), query_ids.get_length(), false);
 	if(config.query_memory)
-		Extension::memory = new Extension::Memory(query_ids::get().get_length());
+		Extension::memory = new Extension::Memory(query_ids.get_length());
 	db_file.set_seqinfo_ptr(0);
 	bool mp_last_chunk = false;
 
@@ -266,8 +257,8 @@ void run_query_chunk(SequenceFile &db_file,
 
 			P->log("SEARCH BEGIN "+std::to_string(query_chunk)+" "+std::to_string(chunk.i));
 
-			db_file.load_seqs(&block_to_database_id, (size_t)(0), &ref_seqs::data_, &ref_ids::data_, true, options.db_filter ? options.db_filter : &metadata.taxon_filter, true, chunk);
-			run_ref_chunk(db_file, query_chunk, query_len_bounds, query_buffer, master_out, tmp_file, params, metadata);
+			options.target.reset(db_file.load_seqs(&block_to_database_id, (size_t)(0), true, &options.db_filter, true, chunk));
+			run_ref_chunk(db_file, query_chunk, query_len_bounds, query_buffer, master_out, tmp_file, options);
 
 			tmp_file.back().close();
 			ReferenceDictionary::get().save_block(query_chunk, chunk.i);
@@ -289,10 +280,10 @@ void run_query_chunk(SequenceFile &db_file,
 		P->delete_stack(stack_align_wip);
 		P->delete_stack(stack_align_done);
 	} else {
-		for (current_ref_block = 0;
-			 db_file.load_seqs(&block_to_database_id, (size_t)(config.chunk_size*1e9), &ref_seqs::data_, &ref_ids::data_, true, options.db_filter ? options.db_filter : &metadata.taxon_filter);
-			 ++current_ref_block) {
-			run_ref_chunk(db_file, query_chunk, query_len_bounds, query_buffer, master_out, tmp_file, params, metadata);
+		for (current_ref_block = 0; ; ++current_ref_block) {
+			options.target.reset(db_file.load_seqs(&block_to_database_id, (size_t)(config.chunk_size * 1e9), true, &options.db_filter));
+			if (options.target->empty()) break;
+			run_ref_chunk(db_file, query_chunk, query_len_bounds, query_buffer, master_out, tmp_file, options);
 		}
 		log_rss();
 	}
@@ -340,7 +331,7 @@ void run_query_chunk(SequenceFile &db_file,
 				// 	output_format->print_header(*query_chunk_out, align_mode.mode, config.matrix.c_str(), score_matrix.gap_open(), score_matrix.gap_extend(), config.max_evalue, query_ids::get()[0],
 				// 		unsigned(align_mode.query_translated ? query_source_seqs::get()[0].length() : query_seqs::get()[0].length()));
 
-				join_blocks(current_ref_block, *query_chunk_out, tmp_file, params, metadata, db_file, tmp_file_names);
+				join_blocks(current_ref_block, *query_chunk_out, tmp_file, options, db_file, tmp_file_names);
 
 				// if (*output_format == Output_format::daa)
 				// 	// finish_daa(*static_cast<OutputFile*>(query_chunk_out), *db_file);
@@ -366,29 +357,30 @@ void run_query_chunk(SequenceFile &db_file,
 			}
 			P->delete_stack(stack_join_todo);
 		} else {
-			join_blocks(current_ref_block, master_out, tmp_file, params, metadata, db_file);
+			join_blocks(current_ref_block, master_out, tmp_file, options, db_file);
 		}
 	}
 
 	if (unaligned_file) {
 		timer.go("Writing unaligned queries");
-		write_unaligned(unaligned_file);
+		write_unaligned(*options.query, unaligned_file);
 	}
 	if (aligned_file) {
 		timer.go("Writing aligned queries");
-		write_aligned(aligned_file);
+		write_aligned(*options.query, aligned_file);
 	}
 
 	timer.go("Deallocating queries");
-	deallocate_queries();
+	options.query.reset();
 	if (*output_format != Output_format::daa)
 		ReferenceDictionary::get().clear();
 }
 
 
 
-void master_thread(SequenceFile *db_file, task_timer &total_timer, Metadata &metadata, const Options &options)
+void master_thread(task_timer &total_timer, Config &options)
 {
+	SequenceFile* db_file = options.db;
 	if (config.multiprocessing && config.mp_recover) {
 		const size_t max_assumed_query_chunks = 65536;
 		for (size_t i=0; i<max_assumed_query_chunks; ++i) {
@@ -464,23 +456,13 @@ void master_thread(SequenceFile *db_file, task_timer &total_timer, Metadata &met
 	if (config.multiprocessing && config.mp_init) {
 		task_timer timer("Counting query blocks", true);
 
-		for (;; ++current_query_chunk) {
+		for (;!options.query->empty(); ++current_query_chunk) {
 			if (options.self) {
 				db_file->set_seqinfo_ptr(query_file_offset);
-				if (!db_file->load_seqs(&query_block_to_database_id, (size_t)(config.chunk_size * 1e9),
-					&query_seqs::data_,
-					&query_ids::data_,
-					true,
-					options.db_filter))
-					break;
-				deallocate_queries();
+				options.query.reset(db_file->load_seqs(&query_block_to_database_id, (size_t)(config.chunk_size * 1e9), true, &options.db_filter));
 				query_file_offset = db_file->tell_seq();
 			} else {
-				if (!load_seqs(query_file->begin(), query_file->end(), *format_n, &query_seqs::data_, query_ids::data_, &query_source_seqs::data_,
-					config.store_query_quality ? &query_qual : nullptr,
-					(size_t)(config.chunk_size * 1e9), config.qfilt, input_value_traits, paired_mode ? 2 : 1))
-					break;
-				deallocate_queries();
+				options.query.reset(new Block(query_file->begin(), query_file->end(), *format_n, (size_t)(config.chunk_size * 1e9), input_value_traits, config.store_query_quality, paired_mode ? 2 : 1));
 			}
 		}
 		if (options.self) {
@@ -516,35 +498,28 @@ void master_thread(SequenceFile *db_file, task_timer &total_timer, Metadata &met
 
 		if (options.self) {
 			db_file->set_seqinfo_ptr(query_file_offset);
-			if (!db_file->load_seqs(&query_block_to_database_id,
-				(size_t)(config.chunk_size * 1e9),
-				&query_seqs::data_,
-				&query_ids::data_,
-				true,
-				options.db_filter))
-				break;
+			options.query.reset(db_file->load_seqs(&query_block_to_database_id, (size_t)(config.chunk_size * 1e9), true, &options.db_filter));
 			query_file_offset = db_file->tell_seq();
 		}
 		else
-			if (!load_seqs(query_file->begin(), query_file->end(), *format_n, &query_seqs::data_, query_ids::data_, &query_source_seqs::data_,
-				config.store_query_quality ? &query_qual : nullptr,
-				(size_t)(config.chunk_size * 1e9), config.qfilt, input_value_traits, paired_mode ? 2 : 1))
-				break;
+			options.query.reset(new Block(query_file->begin(), query_file->end(), *format_n, (size_t)(config.chunk_size * 1e9), input_value_traits, config.store_query_quality, paired_mode ? 2 : 1));
 
+		if (options.query->empty())
+			break;
 		timer.finish();
-		query_seqs::data_->print_stats();
+		options.query->seqs().print_stats();
 
 		if (current_query_chunk == 0 && *output_format != Output_format::daa)
-			output_format->print_header(*master_out, align_mode.mode, config.matrix.c_str(), score_matrix.gap_open(), score_matrix.gap_extend(), config.max_evalue, query_ids::get()[0],
-				unsigned(align_mode.query_translated ? query_source_seqs::get()[0].length() : query_seqs::get()[0].length()));
+			output_format->print_header(*master_out, align_mode.mode, config.matrix.c_str(), score_matrix.gap_open(), score_matrix.gap_extend(), config.max_evalue, options.query->ids()[0],
+				unsigned(align_mode.query_translated ? options.query->source_seqs()[0].length() : options.query->seqs()[0].length()));
 
 		if (config.masking == 1 && !options.self) {
 			timer.go("Masking queries");
-			mask_seqs(*query_seqs::data_, Masking::get());
+			mask_seqs(options.query->seqs(), Masking::get());
 			timer.finish();
 		}
 
-		run_query_chunk(*db_file, current_query_chunk, *master_out, unaligned_file.get(), aligned_file.get(), metadata, options);
+		run_query_chunk(current_query_chunk, *master_out, unaligned_file.get(), aligned_file.get(), options);
 
 		if (file_exists("stop")) {
 			message_stream << "Encountered \'stop\' file, shutting down run" << endl;
@@ -570,14 +545,8 @@ void master_thread(SequenceFile *db_file, task_timer &total_timer, Metadata &met
 	if (aligned_file.get())
 		aligned_file->close();
 
-	if (!options.db) {
-		timer.go("Closing the database file");
-		db_file->close();
-		delete db_file;
-	}
-
-	timer.go("Deallocating taxonomy");
-	metadata.free();
+	timer.go("Cleaning up");
+	options.free();
 
 	timer.finish();
 	log_rss();
@@ -586,7 +555,7 @@ void master_thread(SequenceFile *db_file, task_timer &total_timer, Metadata &met
 	print_warnings();
 }
 
-void run(const Options &options)
+void run(Config &options)
 {
 	task_timer total;
 
@@ -595,9 +564,9 @@ void run(const Options &options)
 	message_stream << "Temporary directory: " << TempFile::get_temp_dir() << endl;
 
 	if (config.sensitivity >= Sensitivity::VERY_SENSITIVE)
-		Config::set_option(config.chunk_size, 0.4);
+		::Config::set_option(config.chunk_size, 0.4);
 	else
-		Config::set_option(config.chunk_size, 2.0);
+		::Config::set_option(config.chunk_size, 2.0);
 
 	init_output();
 
@@ -615,41 +584,40 @@ void run(const Options &options)
 
 	task_timer timer("Opening the database", 1);
 	auto flags = flag_any(output_format->flags, Output::Flags::FULL_SEQIDS) ? SequenceFile::Flags::FULL_SEQIDS : SequenceFile::Flags::NONE;
-	SequenceFile* db_file = options.db ? options.db : SequenceFile::auto_create(flags, metadata_flags);
-	Metadata metadata;
-	metadata.database = db_file;
+	if (!options.db)
+		options.db = SequenceFile::auto_create(flags, metadata_flags);
 	timer.finish();
 
 	message_stream << "Database: " << config.database << ' ';
-	message_stream << "(type: " << to_string(db_file->type()) << ", ";
-	message_stream << "sequences: " << db_file->sequence_count() << ", ";
-	message_stream << "letters: " << db_file->letters() << ')' << endl;
+	message_stream << "(type: " << to_string(options.db->type()) << ", ";
+	message_stream << "sequences: " << options.db->sequence_count() << ", ";
+	message_stream << "letters: " << options.db->letters() << ')' << endl;
 	message_stream << "Block size = " << (size_t)(config.chunk_size * 1e9) << endl;
-	score_matrix.set_db_letters(config.db_size ? config.db_size : db_file->letters());
+	score_matrix.set_db_letters(config.db_size ? config.db_size : options.db->letters());
 
 	if (output_format->needs_taxon_nodes || taxon_filter || taxon_culling) {
 		timer.go("Loading taxonomy nodes");
-		metadata.taxon_nodes = db_file->taxon_nodes();
+		options.taxon_nodes = options.db->taxon_nodes();
 		if (taxon_filter) {
 			timer.go("Building taxonomy filter");
-			metadata.taxon_filter = db_file->filter_by_taxonomy(config.taxonlist, config.taxon_exclude, *metadata.taxon_nodes);
+			options.db_filter = options.db->filter_by_taxonomy(config.taxonlist, config.taxon_exclude, *options.taxon_nodes);
 		}
 		timer.finish();
 	}
 	if (output_format->needs_taxon_scientific_names) {
 		timer.go("Loading taxonomy names");
-		metadata.taxonomy_scientific_names = db_file->taxon_scientific_names();
+		options.taxonomy_scientific_names = options.db->taxon_scientific_names();
 		timer.finish();
 	}
 
 	if (!config.seqidlist.empty()) {
 		message_stream << "Filtering database by accession list: " << config.seqidlist << endl;
 		timer.go("Building database filter");
-		metadata.taxon_filter = db_file->filter_by_accession(config.seqidlist);
+		options.db_filter = options.db->filter_by_accession(config.seqidlist);
 		timer.finish();
 	}
 
-	master_thread(db_file, total, metadata, options);
+	master_thread(total, options);
 }
 
-}}
+}

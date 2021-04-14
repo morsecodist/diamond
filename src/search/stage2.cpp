@@ -69,18 +69,19 @@ static void search_query_offset(uint64_t q,
 	thread_local TextBuffer output_buf;
 
 	constexpr auto N = vector<Stage1_hit>::const_iterator::difference_type(::DISPATCH_ARCH::SIMD::Vector<int8_t>::CHANNELS);
-	const bool long_subject_offsets = ::long_subject_offsets();
-	const Letter* query = query_seqs::data_->data(q);
+	const SequenceSet& ref_seqs = work_set.cfg.target->seqs(), &query_seqs = work_set.cfg.query->seqs();
+	const bool long_subject_offsets = work_set.cfg.target->long_offsets();
+	const Letter* query = query_seqs.data(q);
 
 	const Letter* subjects[N];
 	int scores[N];
 	std::fill(scores, scores + N, INT_MAX);
 
 	unsigned query_id = UINT_MAX, seed_offset = UINT_MAX;
-	std::pair<size_t, size_t> l = query_seqs::data_->local_position(q);
+	std::pair<size_t, size_t> l = query_seqs.local_position(q);
 	query_id = (unsigned)l.first;
 	seed_offset = (unsigned)l.second;
-	const int query_len = query_seqs::data_->length(query_id);
+	const int query_len = query_seqs.length(query_id);
 	const int score_cutoff = ungapped_cutoff(query_len, work_set.context);
 	const int window = ungapped_window(query_len);
 	const Sequence query_clipped = Util::Seq::clip(query - window, window * 2, window);
@@ -94,7 +95,7 @@ static void search_query_offset(uint64_t q,
 
 		n = std::min(N, hits_end - i);
 		for (size_t j = 0; j < n; ++j)
-			subjects[j] = ref_seqs::data_->data(s[*(i + j)]) - window_left;
+			subjects[j] = ref_seqs.data(s[*(i + j)]) - window_left;
 		DP::window_ungapped_best(query_clipped.data(), subjects, n, window_clipped, scores);
 
 		for (size_t j = 0; j < n; ++j) {
@@ -180,8 +181,8 @@ void FLATTEN stage1(const PackedLoc* q, size_t nq, const PackedLoc* s, size_t ns
 	Container& vq = work_set.vq, &vs = work_set.vs;
 #endif
 	work_set.stats.inc(Statistics::SEED_HITS, nq * ns);
-	load_fps(q, nq, vq, *query_seqs::data_);
-	load_fps(s, ns, vs, *ref_seqs::data_);
+	load_fps(q, nq, vq, work_set.cfg.query->seqs());
+	load_fps(s, ns, vs, work_set.cfg.target->seqs());
 
 	const size_t tile_size = config.tile_size;
 	for (size_t i = 0; i < vq.size(); i += tile_size) {

@@ -55,7 +55,9 @@ void Frequent_seeds::build_worker(
 	unsigned sid,
 	unsigned ref_max_n,
 	unsigned query_max_n,
-	vector<unsigned> *counts) {
+	vector<unsigned> *counts,
+	Search::Config* cfg) {
+	SequenceSet& query_seqs = cfg->query->seqs();
 	if (!range->contains((unsigned)seedp))
 		return;
 
@@ -70,7 +72,7 @@ void Frequent_seeds::build_worker(
 
 			Range<SeedArray::_pos*> query_hits = *it.r;
 			for (SeedArray::_pos* i = query_hits.begin(); i < query_hits.end(); ++i) {
-				Letter* p = query_seqs::get_nc().data(*i);
+				Letter* p = query_seqs.data(*i);
 				*p |= SEED_MASK;
 			}
 			
@@ -84,7 +86,7 @@ void Frequent_seeds::build_worker(
 	(*counts)[seedp] = (unsigned)n;
 }
 
-void Frequent_seeds::build(unsigned sid, const SeedPartitionRange &range, DoubleArray<SeedArray::_pos> *query_seed_hits, DoubleArray<SeedArray::_pos> *ref_seed_hits)
+void Frequent_seeds::build(unsigned sid, const SeedPartitionRange &range, DoubleArray<SeedArray::_pos> *query_seed_hits, DoubleArray<SeedArray::_pos> *ref_seed_hits, Search::Config& cfg)
 {
 	vector<Sd> ref_sds(range.size()), query_sds(range.size());
 	atomic<unsigned> seedp(range.begin());
@@ -100,7 +102,7 @@ void Frequent_seeds::build(unsigned sid, const SeedPartitionRange &range, Double
 	log_stream << "Seed frequency mean (query) = " << query_sd.mean() << ", SD = " << query_sd.sd() << endl;
 	log_stream << "Seed frequency cap query: " << query_max_n << ", reference: " << ref_max_n << endl;
 	vector<unsigned> counts(Const::seedp);
-	Util::Parallel::scheduled_thread_pool_auto(config.threads_, Const::seedp, build_worker, query_seed_hits, ref_seed_hits, &range, sid, ref_max_n, query_max_n, &counts);
+	Util::Parallel::scheduled_thread_pool_auto(config.threads_, Const::seedp, build_worker, query_seed_hits, ref_seed_hits, &range, sid, ref_max_n, query_max_n, &counts, &cfg);
 	log_stream << "Masked positions = " << std::accumulate(counts.begin(), counts.end(), 0) << std::endl;
 }
 

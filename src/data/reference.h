@@ -26,42 +26,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "sequence_file.h"
 #include "seed_histogram.h"
 
-struct ref_seqs
-{
-	static const SequenceSet& get()
-	{
-		return *data_;
-	}
-	static SequenceSet& get_nc()
-	{
-		return *data_;
-	}
-	static SequenceSet* data_;
-};
-
-struct ref_seqs_unmasked
-{
-	static const SequenceSet& get()
-	{
-		return *data_;
-	}
-	static SequenceSet& get_nc()
-	{
-		return *data_;
-	}
-	static SequenceSet* data_;
-};
-
-struct ref_ids
-{
-	static const String_set<char, 0>& get()
-	{
-		return *data_;
-	}
-	static String_set<char, 0>* data_;
-};
-
-extern Partitioned_histogram ref_hst;
 extern unsigned current_ref_block;
 extern bool blocked_processing;
 extern std::vector<uint32_t> block_to_database_id;
@@ -81,7 +45,3 @@ inline vector<string> seq_titles(const char* title)
 
 Chunk to_chunk(const string& line);
 string to_string(const Chunk& c);
-
-static inline bool long_subject_offsets() {
-	return ref_seqs::get().raw_len() > (size_t)std::numeric_limits<uint32_t>::max();
-}

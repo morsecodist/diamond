@@ -1,0 +1,77 @@
+/****
+DIAMOND protein aligner
+Copyright (C) 2021 Max Planck Society for the Advancement of Science e.V.
+
+Code developed by Benjamin Buchfink <benjamin.buchfink@tue.mpg.de>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+****/
+
+#pragma once
+#include <list>
+#include "sequence_set.h"
+#include "seed_histogram.h"
+#include "../util/seq_file_format.h"
+
+struct Block {
+
+	typedef String_set<char, '\0'> IdSet;
+
+	Block();
+	Block(std::list<TextInputFile>::iterator file_begin,
+		std::list<TextInputFile>::iterator file_end,
+		const Sequence_file_format& format,
+		size_t max_letters,
+		const Value_traits& value_traits,
+		bool with_quals,
+		size_t modulo = 1);
+	unsigned source_len(unsigned block_id) const;
+	TranslatedSequence translated(size_t block_id) const;
+	bool long_offsets() const;
+	bool empty() const;
+	SequenceSet& seqs() {
+		return seqs_;
+	}
+	const SequenceSet& seqs() const {
+		return seqs_;
+	}
+	const IdSet& ids() const {
+		return ids_;
+	}
+	const SequenceSet& source_seqs() const {
+		return source_seqs_;
+	}
+	SequenceSet& unmasked_seqs() {
+		return unmasked_seqs_;
+	}
+	const SequenceSet& unmasked_seqs() const {
+		return unmasked_seqs_;
+	}
+	const IdSet& qual() const {
+		return qual_;
+	}
+	Partitioned_histogram& hst() {
+		return hst_;
+	}
+
+private:
+
+	SequenceSet seqs_, source_seqs_, unmasked_seqs_;
+	IdSet ids_;
+	IdSet qual_;
+	Partitioned_histogram hst_;
+
+	friend struct SequenceFile;
+
+};

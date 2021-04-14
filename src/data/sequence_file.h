@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "taxonomy_nodes.h"
 #include "../util/enum.h"
 #include "../util/data_structures/bit_vector.h"
+#include "block.h"
 
 struct Chunk
 {
@@ -109,11 +110,9 @@ struct SequenceFile {
 	virtual ~SequenceFile();
 
 	Type type() const { return type_; }
-	bool load_seqs(
+	Block* load_seqs(
 		std::vector<uint32_t>* block2db_id,
 		const size_t max_letters,
-		SequenceSet** dst_seq,
-		String_set<char, 0>** dst_id,
 		bool load_ids = true,
 		const BitVector* filter = nullptr,
 		const bool fetch_seqs = true,

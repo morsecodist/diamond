@@ -71,14 +71,14 @@ size_t get_medoid(SequenceFile *db, const BitVector &filter, size_t n, SequenceS
 	//config.ext = Config::swipe;
 	score_matrix.set_db_letters(1);
 
-	Workflow::Search::Options opt;
+	Search::Config opt(false);
 	opt.db = db;
 	opt.self = true;
 	ClusterDist d;
 	opt.consumer = &d;
-	opt.db_filter = &filter;
+	opt.db_filter = filter;
 
-	Workflow::Search::run(opt);
+	Search::run(opt);
 	
 	int max_i = -1;
 	uint64_t max_s = 0;
@@ -114,7 +114,7 @@ void get_medoids_from_tree() {
 
 	SequenceSet *seqs;
 	String_set<char, '\0'> *ids;
-	db->load_seqs(nullptr, SIZE_MAX, &seqs, &ids, true);
+	db->load_seqs(nullptr, SIZE_MAX, true);
 
 	map<int, int> parent;
 	map<string, int> acc2idx;

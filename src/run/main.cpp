@@ -79,7 +79,7 @@ int main(int ac, const char* av[])
 			break;
 		case Config::blastp:
 		case Config::blastx:
-			Workflow::Search::run(Workflow::Search::Options());
+			Search::run(Search::Config(true));
 			break;
 		case Config::view:
 			view();

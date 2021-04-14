@@ -128,7 +128,6 @@ struct Config
 	double d_exp, d_new;
 	double score_estimate_factor;
 	int diag_min_estimate;
-	string qfilt, sfilt;
 	double path_cutoff;
 	bool use_smith_waterman;
 	string prot_accession2taxid;

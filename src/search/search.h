@@ -30,9 +30,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "trace_pt_buffer.h"
 #include "../util/algo/pattern_matcher.h"
 #include "../util/scores/cutoff_table.h"
-#include "../basic/parameters.h"
 #include "finger_print.h"
 #include "../util/memory/alignment.h"
+#include "../run/workflow.h"
 
 // #define UNGAPPED_SPOUGE
 
@@ -85,7 +85,7 @@ struct Stage1_hit
 
 struct HashedSeedSet;
 
-void search_shape(unsigned sid, unsigned query_block, char *query_buffer, char *ref_buffer, const Parameters &params, const HashedSeedSet* target_seeds);
+void search_shape(unsigned sid, unsigned query_block, char *query_buffer, char *ref_buffer, Search::Config& cfg, const HashedSeedSet* target_seeds);
 bool use_single_indexed(double coverage, size_t query_letters, size_t ref_letters);
 void setup_search();
 
@@ -93,6 +93,7 @@ namespace Search {
 
 struct WorkSet {
 	Context context;
+	const Search::Config& cfg;
 	unsigned shape_id;
 	Statistics stats;
 	Trace_pt_buffer::Iterator out;

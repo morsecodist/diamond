@@ -67,7 +67,7 @@ private:
 template<typename _t, typename _cont>
 struct ContainerIterator : public DynamicIterator<_t> {
 
-	ContainerIterator(_cont& container, size_t size) :
+	ContainerIterator(const _cont& container, size_t size) :
 		DynamicIterator<_t>(size),
 		container_(container),
 		i_(0)
@@ -87,7 +87,7 @@ struct ContainerIterator : public DynamicIterator<_t> {
 
 private:
 
-	_cont& container_;
+	const _cont& container_;
 	std::atomic<size_t> i_;
 
 };

@@ -86,6 +86,10 @@ struct String_set
 	size_t get_length() const
 	{ return limits_.size() - 1; }
 
+	bool empty() const {
+		return limits_.size() <= 1;
+	}
+
 	size_t raw_len() const
 	{ return limits_.back(); }
 

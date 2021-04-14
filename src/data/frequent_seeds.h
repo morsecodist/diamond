@@ -26,11 +26,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "seed_array.h"
 #include "../util/algo/join_result.h"
 #include "../util/range.h"
+#include "../run/workflow.h"
 
 struct Frequent_seeds
 {
 
-	void build(unsigned sid, const SeedPartitionRange &range, DoubleArray<SeedArray::_pos> *query_seed_hits, DoubleArray<SeedArray::_pos> *ref_seed_hits);
+	void build(unsigned sid, const SeedPartitionRange &range, DoubleArray<SeedArray::_pos> *query_seed_hits, DoubleArray<SeedArray::_pos> *ref_seed_hits, Search::Config& cfg);
 	static void clear_masking(SequenceSet& seqs);
 
 private:
@@ -46,7 +47,8 @@ private:
 		unsigned sid,
 		unsigned ref_max_n,
 		unsigned query_max_n,
-		vector<unsigned> *counts);
+		vector<unsigned> *counts,
+		Search::Config* cfg);
 
 	static void compute_sd(std::atomic<unsigned> *seedp, DoubleArray<SeedArray::_pos> *query_seed_hits, DoubleArray<SeedArray::_pos> *ref_seed_hits, vector<Sd> *ref_out, vector<Sd> *query_out);
 

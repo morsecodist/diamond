@@ -30,9 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../util/ptr_vector.h"
 #include "../util/io/output_file.h"
 #include "reference.h"
-
-using std::vector;
-using std::string;
+#include "../run/workflow.h"
 
 struct ReferenceDictionary
 {
@@ -43,8 +41,8 @@ struct ReferenceDictionary
 
 	void init(unsigned ref_count, const vector<unsigned> &block_to_database_id);
 
-	uint32_t get(unsigned block, size_t i);
-	void build_lazy_dict(SequenceFile &db_file);
+	uint32_t get(unsigned block, size_t i, const Search::Config& cfg);
+	void build_lazy_dict(SequenceFile &db_file, Search::Config& cfg);
 	void clear();
 
 	unsigned length(uint32_t i) const
@@ -57,10 +55,14 @@ struct ReferenceDictionary
 		return config.no_dict ? "" : name_[i].c_str();
 	}
 
-	Sequence seq(size_t i) const
-	{
-		return ref_seqs::get()[dict_to_lazy_dict_id_[i]];
+	size_t dict_to_lazy_dict_id(size_t i) const {
+		return dict_to_lazy_dict_id_[i];
 	}
+
+	//Sequence seq(size_t i) const
+	//{
+	//	return ref_seqs::get()[dict_to_lazy_dict_id_[i]];
+	//}
 
 	//void init_rev_map();
 
@@ -115,15 +117,15 @@ private:
 
 	std::mutex mtx_;
 
-	vector<vector<uint32_t>> data_;
+	std::vector<vector<uint32_t>> data_;
 	// vector<vector<uint32_t>> init_data_;
 
-	vector<uint32_t> len_, database_id_;
+	std::vector<uint32_t> len_, database_id_;
 	PtrVector<string> name_;
 	//vector<uint32_t> rev_map_;
 	uint32_t next_;
-	vector<uint32_t> dict_to_lazy_dict_id_;
-	const vector<unsigned> *block_to_database_id_;
+	std::vector<uint32_t> dict_to_lazy_dict_id_;
+	const std::vector<unsigned> *block_to_database_id_;
 
 	friend void finish_daa(OutputFile&, const SequenceFile&);
 

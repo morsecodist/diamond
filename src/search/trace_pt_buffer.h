@@ -116,8 +116,7 @@ struct hit
 		return s;
 	}
 	template<typename _it>
-	static size_t read(Deserializer& s, _it it) {
-		const bool l = long_subject_offsets();
+	static size_t read(Deserializer& s, _it it, bool long_offsets) {
 		uint32_t query_id, seed_offset;
 		s.varint = true;
 		s >> query_id >> seed_offset;
@@ -126,7 +125,7 @@ struct hit
 		uint32_t x;
 		s.varint = false;
 		for (;;) {
-			if (l) {
+			if (long_offsets) {
 				s.read(subject_loc);
 				if (uint64_t(subject_loc) == 0)
 					return count;
