@@ -17,11 +17,10 @@ void makeindex() {
 	config.algo = Config::Algo::DOUBLE_INDEXED;
 
 	vector<uint32_t> block2db_id;
-	SequenceSet* seqs;
-	db.load_seqs(&block2db_id, MAX_LETTERS, &seqs, nullptr, false);
+	Block* block = db.load_seqs(&block2db_id, MAX_LETTERS, false);
 
 	task_timer timer("Building index");
-	HashedSeedSet index(*seqs);
+	HashedSeedSet index(block->seqs());
 
 	timer.go("Writing to disk");
 	OutputFile out(db.file_name() + ".seed_idx");
@@ -38,5 +37,5 @@ void makeindex() {
 
 	out.close();
 	db.close();
-	delete seqs;
+	delete block;
 }

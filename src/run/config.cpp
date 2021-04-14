@@ -1,6 +1,8 @@
 #include "workflow.h"
 #include "../basic/config.h"
 #include "../data/block.h"
+#include "../data/taxonomy_nodes.h"
+#include "../data/sequence_file.h"
 
 namespace Search {
 

@@ -38,8 +38,8 @@ struct Config {
 	Config(bool dealloc);
 	void free();
 
-	bool                      self;
 	const bool                dealloc;
+	bool                      self;
 	SequenceFile*             db;
 	Consumer*                 consumer;
 	std::list<TextInputFile>* query_file;
