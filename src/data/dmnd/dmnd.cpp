@@ -234,6 +234,7 @@ void DatabaseFile::make_db(TempFile **tmp_out, list<TextInputFile> *input_file)
 				delete block;
 				break;
 			}
+			n = block->seqs().get_length();
 			if (config.masking == 1) {
 				timer.go("Masking sequences");
 				mask_seqs(block->seqs(), Masking::get(), false);

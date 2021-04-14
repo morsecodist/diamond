@@ -112,7 +112,7 @@ struct Async_buffer
 	};
 
 	void load(size_t max_size, bool long_offsets) {
-		auto worker = [&](size_t end) {
+		auto worker = [this, long_offsets](size_t end) {
 			for (; bins_processed_ < end; ++bins_processed_)
 				load_bin(*data_next_, bins_processed_, long_offsets);
 		};
