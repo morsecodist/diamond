@@ -32,7 +32,7 @@ namespace Extension {
 
 TextBuffer* generate_output(vector<Match> &targets, size_t query_block_id, Statistics &stat, const Search::Config& cfg)
 {
-	const SequenceSet& query_seqs = cfg.query->seqs(), ref_seqs = cfg.target->seqs();
+	const SequenceSet& query_seqs = cfg.query->seqs(), &ref_seqs = cfg.target->seqs();
 	TextBuffer* out = new TextBuffer;
 	std::unique_ptr<Output_format> f(output_format->clone());
 	size_t seek_pos = 0;
