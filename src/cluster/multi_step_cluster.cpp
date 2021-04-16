@@ -251,11 +251,11 @@ void MultiStep::run() {
 	}
 		
 	task_timer timer("Generating output");
-	vector<unsigned> rep_database_id, rep_block_id(seq_count);
+	vector<unsigned> rep_block_id(seq_count);
 	db->set_seqinfo_ptr(0);
-	Block* block = db->load_seqs(&rep_database_id, (size_t)1e11, true, &previous_reps);
-	for (size_t i = 0; i < rep_database_id.size(); ++i)
-		rep_block_id[rep_database_id[i]] = (unsigned)i;
+	Block* block = db->load_seqs((size_t)1e11, true, &previous_reps);
+	for (size_t i = 0; i < block->seqs().get_length(); ++i)
+		rep_block_id[block->block_id2oid(i)] = (unsigned)i;
 
 	ostream* out = config.output_file.empty() ? &cout : new ofstream(config.output_file.c_str());
 	vector<Letter> seq;

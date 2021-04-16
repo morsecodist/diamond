@@ -51,7 +51,7 @@ void get_seq()
 void random_seqs()
 {
 	DatabaseFile db_file(config.database);
-	Block* ref_seqs = db_file.load_seqs(nullptr, std::numeric_limits<size_t>::max());
+	Block* ref_seqs = db_file.load_seqs(std::numeric_limits<size_t>::max());
 	const auto& r = ref_seqs->seqs();
 	cout << "Sequences = " << r.get_length() << endl;
 	std::set<unsigned> n;
@@ -95,7 +95,7 @@ void sort_file()
 void db_stat()
 {
 	DatabaseFile db_file(config.database);
-	Block* ref_seqs = db_file.load_seqs(nullptr, std::numeric_limits<size_t>::max());
+	Block* ref_seqs = db_file.load_seqs(std::numeric_limits<size_t>::max());
 	const auto& r = ref_seqs->seqs();
 	cout << "Sequences = " << r.get_length() << endl;
 
@@ -234,7 +234,7 @@ void pairwise_worker(TextInputFile *in, std::mutex *input_lock, std::mutex *outp
 		const string ir = blast_id(id_r), iq = blast_id(id_q);
 		Hsp hsp;
 		smith_waterman(Sequence(query), Sequence(ref), hsp);
-		Hsp_context context(hsp, 0, TranslatedSequence(query), "", 0, 0, "", 0, 0, 0, Sequence());
+		Hsp_context context(hsp, 0, TranslatedSequence(query), "", 0, "", 0, 0, 0, Sequence());
 		Hsp_context::Iterator it = context.begin();
 		std::stringstream ss;
 		while (it.good()) {

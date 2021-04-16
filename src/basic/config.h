@@ -156,7 +156,6 @@ struct Config
 	bool sort_join;
 	bool simple_freq;
 	double freq_treshold;
-	bool use_lazy_dict;
 	string aligned_file;
 	bool use_dataset_field;
 	bool store_query_quality;

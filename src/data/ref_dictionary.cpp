@@ -116,7 +116,7 @@ void ReferenceDictionary::build_lazy_dict(SequenceFile &db_file, Search::Config&
 		m.push_back(std::make_pair(*i, n++));
 	}
 	db_file.set_seqinfo_ptr(0);
-	cfg.target.reset(db_file.load_seqs(nullptr, std::numeric_limits<size_t>::max(), false, &filter));
+	cfg.target.reset(db_file.load_seqs(std::numeric_limits<size_t>::max(), false, &filter));
 	std::sort(m.begin(), m.end());
 	dict_to_lazy_dict_id_.clear();
 	dict_to_lazy_dict_id_.resize(dict_size);

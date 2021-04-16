@@ -131,14 +131,14 @@ struct Join_record
 
 	bool db_precedence(const Join_record &rhs) const
 	{
-		return block_ < rhs.block_ || (block_ == rhs.block_ && info_.subject_dict_id < rhs.info_.subject_dict_id);
+		return block_ < rhs.block_ || (block_ == rhs.block_ && info_.subject_oid < rhs.info_.subject_oid);
 	}
 
 	Join_record(unsigned ref_block, unsigned subject, BinaryBuffer::Iterator &it):
 		block_(ref_block)
 	{
 		info_.read(it);
-		same_subject_ = info_.subject_dict_id == subject;
+		same_subject_ = info_.subject_oid == subject;
 	}
 
 	static bool push_next(unsigned block, unsigned subject, BinaryBuffer::Iterator &it, vector<Join_record> &v)
@@ -174,12 +174,12 @@ struct BlockJoiner
 		const Join_record &first = records.front();
 		const unsigned block = first.block_;
 		block_idx = block;
-		const unsigned subject = first.info_.subject_dict_id;
+		const unsigned subject = first.info_.subject_oid;
 		target_hsp.clear();
 		const auto pred = (config.toppercent == 100.0 && config.global_ranking_targets == 0) ? Join_record::cmp_evalue : Join_record::cmp_score;
 		do {
 			const Join_record &next = records.front();
-			if (next.block_ != block || next.info_.subject_dict_id != subject)
+			if (next.block_ != block || next.info_.subject_oid != subject)
 				return true;
 			target_hsp.push_back(next.info_);
 			std::pop_heap(records.begin(), records.end(), pred);
@@ -204,8 +204,6 @@ void join_query(
 	const Search::Config &cfg,
 	BitVector& ranking_db_filter)
 {
-	ReferenceDictionary& dict = ReferenceDictionary::get();
-	const SequenceSet& ref_seqs = cfg.target->seqs();
 	TranslatedSequence query_seq(cfg.query->translated(query));
 	BlockJoiner joiner(buf);
 	vector<IntermediateRecord> target_hsp;
@@ -215,14 +213,7 @@ void join_query(
 	unsigned block_idx = 0;
 
 	while (joiner.get(target_hsp, block_idx)) {
-		ReferenceDictionary * dict_ptr;
-		if (config.multiprocessing) {
-			dict_ptr = & ReferenceDictionary::get(block_idx);
-		} else {
-			dict_ptr = & dict;
-		}
-
-		const size_t oid = dict_ptr->database_id(target_hsp.front().subject_dict_id);
+		const size_t oid = target_hsp.front().subject_oid;
 		const set<unsigned> rank_taxon_ids = config.taxon_k ? cfg.taxon_nodes->rank_taxid(cfg.db->taxids(oid), Rank::species) : set<unsigned>();
 		const int c = culling->cull(target_hsp, rank_taxon_ids);
 		if (c == TargetCulling::FINISHED)
@@ -235,21 +226,23 @@ void join_query(
 			if (f == Output_format::daa)
 				write_daa_record(out, *i);
 			else if (config.global_ranking_targets > 0)
-				Extension::GlobalRanking::write_merged_query_list(*i, dict, out, ranking_db_filter, statistics);
+				Extension::GlobalRanking::write_merged_query_list(*i, out, ranking_db_filter, statistics);
 			else {
 				Hsp hsp(*i, query_source_len);
-				Sequence subject_seq = config.use_lazy_dict ? ref_seqs[dict_ptr->dict_to_lazy_dict_id(i->subject_dict_id)] : Sequence();
+				vector<Letter> subject_seq;
+				if (flag_any(f.flags, Output::Flags::TARGET_SEQS))
+					cfg.db->seq_data(i->subject_oid, subject_seq);
+				const string target_seqid = cfg.db->seqid(i->subject_oid);
 				f.print_match(Hsp_context(hsp,
 					query,
 					query_seq,
 					query_name,
-					dict_ptr->check_id(i->subject_dict_id),
-					dict_ptr->database_id(i->subject_dict_id),
-					dict_ptr->name(i->subject_dict_id),
-					dict_ptr->length(i->subject_dict_id),
+					i->subject_oid,
+					target_seqid.c_str(),
+					cfg.db->seq_length(i->subject_oid),
 					n_target_seq,
 					hsp_num,
-					subject_seq
+					Sequence(subject_seq)
 					).parse(), cfg, out);
 			}
 		}
@@ -318,11 +311,7 @@ void join_worker(Task_queue<TextBuffer, JoinWriter> *queue, const Search::Config
 void join_blocks(unsigned ref_blocks, Consumer &master_out, const PtrVector<TempFile> &tmp_file, Search::Config& cfg, SequenceFile &db_file,
 	const vector<string> tmp_file_names)
 {
-	//ReferenceDictionary::get().init_rev_map();
-	task_timer timer("Building reference dictionary", 3);
-	if (config.use_lazy_dict)
-		ReferenceDictionary::get().build_lazy_dict(db_file, cfg);
-	timer.go("Joining output blocks");
+	task_timer timer("Joining output blocks");
 
 	if (tmp_file_names.size() > 0) {
 		JoinFetcher::init(tmp_file_names);
@@ -351,11 +340,6 @@ void join_blocks(unsigned ref_blocks, Consumer &master_out, const PtrVector<Temp
 			output_format->print_query_epilog(out, query_ids[i], true, cfg);
 		}
 		writer(out);
-	}
-
-	if (config.use_lazy_dict) {
-		timer.go("Deallocating dictionary");
-		cfg.target.reset();
 	}
 
 	if (config.global_ranking_targets)

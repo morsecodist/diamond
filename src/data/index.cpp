@@ -16,8 +16,7 @@ void makeindex() {
 	setup_search();
 	config.algo = Config::Algo::DOUBLE_INDEXED;
 
-	vector<uint32_t> block2db_id;
-	Block* block = db.load_seqs(&block2db_id, MAX_LETTERS, false);
+	Block* block = db.load_seqs(MAX_LETTERS, false);
 
 	task_timer timer("Building index");
 	HashedSeedSet index(block->seqs());

@@ -474,7 +474,11 @@ void DatabaseFile::seek_chunk(const Chunk& chunk) {
 	current_ref_block = chunk.i;
 	seek(chunk.offset);
 }
-
+
+std::string DatabaseFile::seqid(size_t oid)
+{
+	return std::string();
+}
 size_t DatabaseFile::id_len(const SeqInfo& seq_info, const SeqInfo& seq_info_next) {
 	return seq_info_next.pos - seq_info.pos - seq_info.seq_len - 3;
 }
@@ -589,8 +593,13 @@ std::vector<unsigned> DatabaseFile::taxids(size_t oid) const
 	return (*taxon_list_)[oid];
 }
 
-void DatabaseFile::seq_data(size_t oid, std::vector<char>& dst) const
+void DatabaseFile::seq_data(size_t oid, std::vector<Letter>& dst) const
 {
+}
+
+size_t DatabaseFile::seq_length(size_t oid) const
+{
+	return size_t();
 }
 
 std::vector<string>* DatabaseFile::taxon_scientific_names() {

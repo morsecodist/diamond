@@ -28,7 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 extern unsigned current_ref_block;
 extern bool blocked_processing;
-extern std::vector<uint32_t> block_to_database_id;
 
 inline size_t max_id_len(const String_set<char, 0>& ids)
 {

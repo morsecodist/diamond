@@ -71,11 +71,6 @@ struct ReferenceDictionary
 		return config.no_dict ? 0 : database_id_[dict_id];
 	}
 
-	unsigned block_to_database_id(size_t block_id) const
-	{
-		return (*block_to_database_id_)[block_id];
-	}
-
 	void set_block2db(const vector<unsigned>* block_to_database_id) {
 		block_to_database_id_ = block_to_database_id;
 	}
@@ -85,11 +80,6 @@ struct ReferenceDictionary
 		if (i >= next_)
 			throw std::runtime_error("Dictionary reference id out of bounds.");
 		return i;
-	}
-
-	static ReferenceDictionary& get()
-	{
-		return instance_;
 	}
 
 	static ReferenceDictionary& get(int block)
@@ -126,7 +116,5 @@ private:
 	uint32_t next_;
 	std::vector<uint32_t> dict_to_lazy_dict_id_;
 	const std::vector<unsigned> *block_to_database_id_;
-
-	friend void finish_daa(OutputFile&, const SequenceFile&);
 
 };

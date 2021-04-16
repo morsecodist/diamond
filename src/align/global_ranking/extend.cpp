@@ -90,14 +90,13 @@ void align_worker(InputFile* query_list, const TargetMap* db2block_id, const Sea
 void extend(SequenceFile& db, TempFile& merged_query_list, BitVector& ranking_db_filter, Search::Config& cfg, Consumer& master_out) {
 	task_timer timer("Loading reference sequences");
 	InputFile query_list(merged_query_list);
-	vector<uint32_t> block2db_id;
 	db.set_seqinfo_ptr(0);
-	cfg.target.reset(db.load_seqs(&block2db_id, SIZE_MAX, true, &ranking_db_filter, true));
-	ReferenceDictionary::get().set_block2db(&block2db_id);
+	cfg.target.reset(db.load_seqs(SIZE_MAX, true, &ranking_db_filter, true));
 	TargetMap db2block_id;
-	db2block_id.reserve(block2db_id.size());
-	for (size_t i = 0; i < block2db_id.size(); ++i)
-		db2block_id[block2db_id[i]] = i;
+	const size_t db_count = cfg.target->seqs().get_length();
+	db2block_id.reserve(db_count);
+	for (size_t i = 0; i < db_count; ++i)
+		db2block_id[cfg.target->block_id2oid(i)] = i;
 	timer.finish();
 	verbose_stream << "#Ranked database sequences: " << cfg.target->seqs().get_length() << endl;
 

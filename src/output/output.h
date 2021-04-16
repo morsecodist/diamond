@@ -69,7 +69,7 @@ struct IntermediateRecord
 {
 	void read(BinaryBuffer::Iterator &f)
 	{
-		f.read(subject_dict_id);
+		f.read(subject_oid);
 		if (config.global_ranking_targets > 0) {
 			uint16_t s;
 			f.read(s);
@@ -118,7 +118,7 @@ struct IntermediateRecord
 	static void write(TextBuffer &buf, const Hsp &match, unsigned query_id, size_t subject_id, const Search::Config& cfg)
 	{
 		const interval oriented_range (match.oriented_range());
-		buf.write(ReferenceDictionary::get().get(current_ref_block, subject_id, cfg));
+		buf.write((uint32_t)cfg.target->block_id2oid(subject_id));
 		buf.write(get_segment_flag(match));
 		buf.write_packed(match.score);
 		buf.write(match.evalue);
@@ -141,7 +141,7 @@ struct IntermediateRecord
 		}
 	}
 	static void write(TextBuffer& buf, uint32_t target_block_id, int score, const Search::Config& cfg) {
-		buf.write(ReferenceDictionary::get().get(current_ref_block, target_block_id, cfg));
+		buf.write(cfg.target->block_id2oid(target_block_id));
 		const uint16_t s = (uint16_t)std::min(score, USHRT_MAX);
 		buf.write(s);
 	}
@@ -151,7 +151,7 @@ struct IntermediateRecord
 		f.consume(reinterpret_cast<const char*>(&i), 4);
 	}
 	static const uint32_t FINISHED = 0xffffffffu;
-	uint32_t score, query_id, subject_dict_id, query_begin, subject_begin, query_end, subject_end, identities, mismatches, positives, gap_openings, gaps;
+	uint32_t score, query_id, subject_oid, query_begin, subject_begin, query_end, subject_end, identities, mismatches, positives, gap_openings, gaps;
 	double evalue;
 	uint8_t flag;
 	Packed_transcript transcript;

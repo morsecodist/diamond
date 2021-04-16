@@ -47,6 +47,8 @@ struct Block {
 		return seqs_;
 	}
 	const IdSet& ids() const {
+		if (ids_.empty())
+			throw std::runtime_error("Block::ids()");
 		return ids_;
 	}
 	const SequenceSet& source_seqs() const {
@@ -64,6 +66,9 @@ struct Block {
 	Partitioned_histogram& hst() {
 		return hst_;
 	}
+	size_t block_id2oid(size_t i) const {
+		return block2oid_[i];
+	}
 
 private:
 
@@ -71,6 +76,7 @@ private:
 	IdSet ids_;
 	IdSet qual_;
 	Partitioned_histogram hst_;
+	std::vector<uint32_t> block2oid_;
 
 	friend struct SequenceFile;
 

@@ -114,7 +114,7 @@ void get_medoids_from_tree() {
 
 	SequenceSet *seqs;
 	String_set<char, '\0'> *ids;
-	db->load_seqs(nullptr, SIZE_MAX, true);
+	db->load_seqs(SIZE_MAX, true);
 
 	map<int, int> parent;
 	map<string, int> acc2idx;

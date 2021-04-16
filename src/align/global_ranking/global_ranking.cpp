@@ -69,11 +69,10 @@ size_t write_merged_query_list_intro(uint32_t query_id, TextBuffer& buf) {
 	return seek_pos;
 }
 
-void write_merged_query_list(const IntermediateRecord& r, const ReferenceDictionary& dict, TextBuffer& out, BitVector& ranking_db_filter, Statistics& stat) {
-	const uint32_t database_id = dict.database_id(r.subject_dict_id);
-	out.write(database_id);
+void write_merged_query_list(const IntermediateRecord& r, TextBuffer& out, BitVector& ranking_db_filter, Statistics& stat) {
+	out.write(r.subject_oid);
 	out.write(uint16_t(r.score));
-	ranking_db_filter.set(database_id);
+	ranking_db_filter.set(r.subject_oid);
 	stat.inc(Statistics::TARGET_HITS1);
 }
 

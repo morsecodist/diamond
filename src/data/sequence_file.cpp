@@ -36,7 +36,7 @@ using std::setw;
 
 const EMap<SequenceFile::Type> EnumTraits<SequenceFile::Type>::to_string = { {SequenceFile::Type::DMND, "Diamond database" }, {SequenceFile::Type::BLAST, "BLAST database"} };
 
-Block* SequenceFile::load_seqs(vector<uint32_t>* block2db_id, const size_t max_letters, bool load_ids, const BitVector* filter, const bool fetch_seqs, const Chunk& chunk)
+Block* SequenceFile::load_seqs(const size_t max_letters, bool load_ids, const BitVector* filter, const bool fetch_seqs, const Chunk& chunk)
 {
 	task_timer timer("Loading reference sequences");
 	reopen();
@@ -49,7 +49,6 @@ Block* SequenceFile::load_seqs(vector<uint32_t>* block2db_id, const size_t max_l
 	size_t database_id = tell_seq();
 	size_t letters = 0, seqs = 0, id_letters = 0, seqs_processed = 0, filtered_seq_count = 0;
 	vector<uint64_t> filtered_pos;
-	if (block2db_id) block2db_id->clear();
 	Block* block = new Block();
 	
 	SeqInfo r = read_seqinfo();
@@ -73,12 +72,14 @@ Block* SequenceFile::load_seqs(vector<uint32_t>* block2db_id, const size_t max_l
 			if (fetch_seqs) {
 				block->seqs_.reserve(r.seq_len);
 			}
-			const size_t id_len = this->id_len(r, r_next);
-			id_letters += id_len;
-			if (fetch_seqs && load_ids)
-				block->ids_.reserve(id_len);
+			if (load_ids) {
+				const size_t id_len = this->id_len(r, r_next);
+				id_letters += id_len;
+				if (fetch_seqs)
+					block->ids_.reserve(id_len);
+			}
 			++filtered_seq_count;
-			if (block2db_id) block2db_id->push_back((unsigned)database_id);
+			block->block2oid_.push_back((unsigned)database_id);
 			if (use_filter) {
 				filtered_pos.push_back(last ? 0 : r.pos);
 			}
@@ -121,7 +122,8 @@ Block* SequenceFile::load_seqs(vector<uint32_t>* block2db_id, const size_t max_l
 	else
 		blocked_processing = seqs_processed < sequence_count();
 
-	close_weakly();
+	if (blocked_processing)
+		close_weakly();
 	return block;
 }
 

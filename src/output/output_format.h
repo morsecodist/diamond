@@ -54,7 +54,8 @@ enum HspValues : uint64_t {
 
 enum class Flags : int {
 	NONE        = 0,
-	FULL_SEQIDS = 1
+	FULL_SEQIDS = 1,
+	TARGET_SEQS = 1 << 1
 };
 
 DEF_ENUM_FLAG_OPERATORS(Flags)

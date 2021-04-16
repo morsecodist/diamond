@@ -84,6 +84,7 @@ struct SequenceFile {
 	virtual void read_seq_data(Letter* dst, size_t len) = 0;
 	virtual void read_id_data(char* dst, size_t len) = 0;
 	virtual void skip_id_data() = 0;
+	virtual std::string seqid(size_t oid) = 0;
 	virtual size_t sequence_count() const = 0;
 	virtual size_t sparse_sequence_count() const = 0;
 	virtual size_t letters() const = 0;
@@ -106,12 +107,12 @@ struct SequenceFile {
 	virtual std::vector<unsigned> taxids(size_t oid) const = 0;
 	virtual const BitVector* builtin_filter() = 0;
 	virtual std::string file_name() = 0;
-	virtual void seq_data(size_t oid, std::vector<char>& dst) const = 0;
+	virtual void seq_data(size_t oid, std::vector<Letter>& dst) const = 0;
+	virtual size_t seq_length(size_t oid) const = 0;
 	virtual ~SequenceFile();
 
 	Type type() const { return type_; }
 	Block* load_seqs(
-		std::vector<uint32_t>* block2db_id,
 		const size_t max_letters,
 		bool load_ids = true,
 		const BitVector* filter = nullptr,

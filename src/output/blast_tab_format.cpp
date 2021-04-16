@@ -134,7 +134,7 @@ Blast_tab_format::Blast_tab_format() :
 		if (j == 6 || j == 39 || j == 40 || j == 34)
 			config.salltitles = true;
 		if (j == 48)
-			config.use_lazy_dict = true;
+			flags |= Flags::TARGET_SEQS;
 		if (j == 49 || j == 53)
 			config.store_query_quality = true;
 		if (j == 62)
@@ -291,15 +291,15 @@ void Blast_tab_format::print_match(const Hsp_context& r, const Search::Config& c
 		}
 			break;
 		case 34:
-			print_staxids(out, r.orig_subject_id, cfg);
+			print_staxids(out, r.subject_oid, cfg);
 			break;
 		case 35: {
-			const vector<unsigned> tax_id = cfg.db->taxids(r.orig_subject_id);
+			const vector<unsigned> tax_id = cfg.db->taxids(r.subject_oid);
 			print_taxon_names(tax_id.begin(), tax_id.end(), cfg, out);
 			break;
 		}
 		case 38: {
-			const set<unsigned> tax_id = cfg.taxon_nodes->rank_taxid(cfg.db->taxids(r.orig_subject_id), Rank::superkingdom);
+			const set<unsigned> tax_id = cfg.taxon_nodes->rank_taxid(cfg.db->taxids(r.subject_oid), Rank::superkingdom);
 			print_taxon_names(tax_id.begin(), tax_id.end(), cfg, out);
 			break;
 		}
@@ -338,11 +338,11 @@ void Blast_tab_format::print_match(const Hsp_context& r, const Search::Config& c
 			break;
 		}
 		case 50:
-			out << query_block_to_database_id[r.query_id];
+			out << cfg.query->block_id2oid(r.query_id);
 			//out << r.query_id;
 			break;
 		case 51:
-			out << r.orig_subject_id;
+			out << r.subject_oid;
 			break;
 		case 52:
 			out << (double)r.subject_range().length() * 100.0 / r.subject_len;
@@ -371,12 +371,12 @@ void Blast_tab_format::print_match(const Hsp_context& r, const Search::Config& c
 			print_cigar(r, out);
 			break;
 		case 59: {
-			const set<unsigned> tax_id = cfg.taxon_nodes->rank_taxid(cfg.db->taxids(r.orig_subject_id), Rank::kingdom);
+			const set<unsigned> tax_id = cfg.taxon_nodes->rank_taxid(cfg.db->taxids(r.subject_oid), Rank::kingdom);
 			print_taxon_names(tax_id.begin(), tax_id.end(), cfg, out);
 			break;
 		}
 		case 60: {
-			const set<unsigned> tax_id = cfg.taxon_nodes->rank_taxid(cfg.db->taxids(r.orig_subject_id), Rank::phylum);
+			const set<unsigned> tax_id = cfg.taxon_nodes->rank_taxid(cfg.db->taxids(r.subject_oid), Rank::phylum);
 			print_taxon_names(tax_id.begin(), tax_id.end(), cfg, out);
 			break;
 		}

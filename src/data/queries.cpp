@@ -27,8 +27,6 @@ unsigned current_query_chunk;
 vector<bool> query_aligned;
 std::mutex query_aligned_mtx;
 unique_ptr<HashedSeedSet> query_seeds_hashed;
-String_set<char, '\0'> *query_qual = nullptr;
-vector<unsigned> query_block_to_database_id;
 
 void write_unaligned(const Block& query, OutputFile *file)
 {
@@ -38,7 +36,7 @@ void write_unaligned(const Block& query, OutputFile *file)
 		if (!query_aligned[i]) {
 			Util::Seq::format(align_mode.query_translated ? query.source_seqs()[i] : query.seqs()[i],
 				query.ids()[i],
-				query_qual ? (*query_qual)[i] : nullptr,
+				query.qual().empty() ? nullptr : query.qual()[i],
 				*file,
 				config.unfmt,
 				input_value_traits);
@@ -54,7 +52,7 @@ void write_aligned(const Block& query, OutputFile *file)
 		if (query_aligned[i]) {
 			Util::Seq::format(align_mode.query_translated ? query.source_seqs()[i] : query.seqs()[i],
 				query.ids()[i],
-				query_qual ? (*query_qual)[i] : nullptr,
+				query.qual().empty() ? nullptr : query.qual()[i],
 				*file,
 				config.alfmt,
 				input_value_traits);

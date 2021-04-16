@@ -38,4 +38,3 @@ void write_aligned(const Block& query, OutputFile *file);
 
 struct HashedSeedSet;
 extern std::unique_ptr<HashedSeedSet> query_seeds_hashed;
-extern vector<unsigned> query_block_to_database_id;

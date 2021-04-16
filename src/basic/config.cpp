@@ -766,8 +766,6 @@ Config::Config(int argc, const char **argv, bool check_io)
 		algo = Algo::DOUBLE_INDEXED;
 	}
 
-	use_lazy_dict = false;
-
 	if (query_range_culling && taxon_k != 0)
 		throw std::runtime_error("--taxon-k is not supported for --range-culling mode.");
 

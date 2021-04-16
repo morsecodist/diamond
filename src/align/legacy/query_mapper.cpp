@@ -142,7 +142,7 @@ void QueryMapper::load_targets()
 			if (n > 0) {
 				targets[n - 1].end = i;
 			}
-			const size_t oid = ReferenceDictionary::get().block_to_database_id(seed_hits[i].subject_);
+			const size_t oid = metadata.target->block_id2oid(seed_hits[i].subject_);
 			targets.get(n) = new Target(i,
 				seed_hits[i].subject_,
 				metadata.target->seqs()[seed_hits[i].subject_],
@@ -215,7 +215,7 @@ bool QueryMapper::generate_output(TextBuffer &buffer, Statistics &stat)
 	for (size_t i = 0; i < targets.size(); ++i) {
 
 		const size_t subject_id = targets[i].subject_block_id;
-		const unsigned database_id = ReferenceDictionary::get().block_to_database_id(subject_id);
+		const unsigned database_id = metadata.target->block_id2oid(subject_id);
 		const unsigned subject_len = (unsigned)metadata.target->seqs()[subject_id].length();
 		const char *ref_title = metadata.target->ids()[subject_id];
 		targets[i].apply_filters(source_query_len, subject_len, query_title, ref_title);
@@ -254,7 +254,6 @@ bool QueryMapper::generate_output(TextBuffer &buffer, Statistics &stat)
 						query_id,
 						translated_query,
 						query_title,
-						subject_id,
 						database_id,
 						ref_title,
 						subject_len,

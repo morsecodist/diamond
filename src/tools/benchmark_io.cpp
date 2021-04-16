@@ -98,7 +98,7 @@ static void load_seqs() {
 
 	while (true) {
 		timer.go("Loading sequences");
-		if ((ref = db->load_seqs(nullptr, (size_t)(config.chunk_size * 1e9), true, nullptr))->empty())
+		if ((ref = db->load_seqs((size_t)(config.chunk_size * 1e9), true, nullptr))->empty())
 			return;
 		size_t n = ref->seqs().letters() + ref->ids().letters();
 		message_stream << "Throughput: " << (double)n / (1 << 20) / timer.milliseconds() * 1000 << " MB/s" << endl;
@@ -132,7 +132,7 @@ static void load_mmap() {
 	timer.finish();
 	message_stream << "Type: " << to_string(db->type()) << endl;
 	size_t n = db->sequence_count(), l = 0;
-	vector<char> v;
+	vector<Letter> v;
 	for (size_t i = 0; i < n; ++i) {
 		db->seq_data(i, v);
 		l += v.size();

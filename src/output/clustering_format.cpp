@@ -26,8 +26,8 @@ void Clustering_format::print_query_intro(size_t query_num, const char *query_na
 
 void Clustering_format::print_match(const Hsp_context& r, const Search::Config &metadata, TextBuffer &out) 
 {
-	out.write((uint32_t) query_block_to_database_id[r.query_id]);
-	out.write((uint32_t) r.orig_subject_id);
+	out.write((uint32_t) metadata.query->block_id2oid(r.query_id));
+	out.write((uint32_t) r.subject_oid);
 	RecursiveParser rp(&r, format.c_str(), false);
 	out.write(rp.evaluate());
 }

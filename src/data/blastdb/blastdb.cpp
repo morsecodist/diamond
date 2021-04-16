@@ -186,6 +186,16 @@ void BlastDB::skip_id_data()
 	++oid_seqdata_;
 }
 
+std::string BlastDB::seqid(size_t oid)
+{
+	if (flag_any(flags_, Flags::FULL_SEQIDS)) {
+		return full_id(*db_->GetBioseq(oid), nullptr, long_seqids_, true);
+	}
+	else {
+		return best_id(db_->GetSeqIDs(oid));
+	}
+}
+
 size_t BlastDB::sequence_count() const
 {
 	return db_->GetNumOIDs();
@@ -325,7 +335,7 @@ std::vector<unsigned> BlastDB::taxids(size_t oid) const
 	return std::vector<unsigned>();
 }
 
-void BlastDB::seq_data(size_t oid, std::vector<char>& dst) const
+void BlastDB::seq_data(size_t oid, std::vector<Letter>& dst) const
 {
 	const char* buf;
 	const int db_len = db_->GetSequence(oid, &buf);
@@ -333,6 +343,11 @@ void BlastDB::seq_data(size_t oid, std::vector<char>& dst) const
 	dst.resize(db_len);
 	std::copy(buf, buf + db_len, dst.data());
 	db_->RetSequence(&buf);
+}
+
+size_t BlastDB::seq_length(size_t oid) const
+{
+	return size_t();
 }
 
 const BitVector* BlastDB::builtin_filter() {

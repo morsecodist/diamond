@@ -123,6 +123,7 @@ struct DatabaseFile : public SequenceFile, public InputFile
 	virtual void read_seq_data(Letter* dst, size_t len) override;
 	virtual void read_id_data(char* dst, size_t len) override;
 	virtual void skip_id_data() override;
+	virtual std::string seqid(size_t oid) override;
 	virtual size_t sequence_count() const override;
 	virtual void read_seq(std::vector<Letter>& seq, std::string& id) override;
 	virtual size_t letters() const override;
@@ -141,7 +142,8 @@ struct DatabaseFile : public SequenceFile, public InputFile
 	virtual std::string file_name() override;
 	virtual size_t sparse_sequence_count() const override;
 	virtual std::vector<unsigned> taxids(size_t oid) const override;
-	virtual void seq_data(size_t oid, std::vector<char>& dst) const override;
+	virtual void seq_data(size_t oid, std::vector<Letter>& dst) const override;
+	virtual size_t seq_length(size_t oid) const override;
 
 	static const char* FILE_EXTENSION;
 

@@ -16,7 +16,7 @@ void XML_format::print_match(const Hsp_context& r, const Search::Config& metadat
 		string id, def;
 		get_title_def(r.subject_name, id, def);
 		if (config.xml_blord_format) {
-			out << "  <Hit_id>gnl|BL_ORD_ID|" << r.subject_id << "</Hit_id>" << '\n'
+			out << "  <Hit_id>gnl|BL_ORD_ID|" << r.subject_oid << "</Hit_id>" << '\n'
 				<< "  <Hit_def>";
 			Output_format::print_title(out, r.subject_name, true, true, " &gt;", &EscapeSequences::XML);
 			out << "</Hit_def>" << '\n';

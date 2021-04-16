@@ -115,33 +115,38 @@ TextBuffer* legacy_pipeline(Align_fetcher &hits, const Search::Config& cfg, Stat
 
 void align_worker(size_t thread_id, const Search::Config* cfg)
 {
-	Align_fetcher hits;
-	Statistics stat;
-	DpStat dp_stat;
-	const bool parallel = config.swipe_all && (cfg->target->seqs().get_length() >= cfg->query->seqs().get_length());
-	while (hits.get()) {
-		if(config.frame_shift != 0) {
-			TextBuffer *buf = legacy_pipeline(hits, *cfg, stat);
+	try {
+		Align_fetcher hits;
+		Statistics stat;
+		DpStat dp_stat;
+		const bool parallel = config.swipe_all && (cfg->target->seqs().get_length() >= cfg->query->seqs().get_length());
+		while (hits.get()) {
+			if (config.frame_shift != 0) {
+				TextBuffer* buf = legacy_pipeline(hits, *cfg, stat);
+				OutputSink::get().push(hits.query, buf);
+				hits.release();
+				continue;
+			}
+			task_timer timer;
+			vector<Extension::Match> matches = Extension::extend(hits.query, hits.begin, hits.end, *cfg, stat, hits.target_parallel || parallel ? DP::PARALLEL : 0);
+			TextBuffer* buf = blocked_processing ? Extension::generate_intermediate_output(matches, hits.query, *cfg) : Extension::generate_output(matches, hits.query, stat, *cfg);
+			if (!matches.empty() && (!config.unaligned.empty() || !config.aligned_file.empty())) {
+				std::lock_guard<std::mutex> lock(query_aligned_mtx);
+				query_aligned[hits.query] = true;
+			}
 			OutputSink::get().push(hits.query, buf);
+			if (hits.target_parallel)
+				stat.inc(Statistics::TIME_TARGET_PARALLEL, timer.microseconds());
 			hits.release();
-			continue;
+			if (config.swipe_all && !config.no_heartbeat && (hits.query % 100 == 0))
+				log_stream << "Queries = " << hits.query << std::endl;
 		}
-		task_timer timer;
-		vector<Extension::Match> matches = Extension::extend(hits.query, hits.begin, hits.end, *cfg, stat, hits.target_parallel || parallel ? DP::PARALLEL : 0);
-		TextBuffer *buf = blocked_processing ? Extension::generate_intermediate_output(matches, hits.query, *cfg) : Extension::generate_output(matches, hits.query, stat, *cfg);
-		if (!matches.empty() && (!config.unaligned.empty() || !config.aligned_file.empty())) {
-			std::lock_guard<std::mutex> lock(query_aligned_mtx);
-			query_aligned[hits.query] = true;
-		}
-		OutputSink::get().push(hits.query, buf);
-		if (hits.target_parallel)
-			stat.inc(Statistics::TIME_TARGET_PARALLEL, timer.microseconds());
-		hits.release();
-		if (config.swipe_all && !config.no_heartbeat && (hits.query % 100 == 0))
-			log_stream << "Queries = " << hits.query << std::endl;
+		statistics += stat;
+		::dp_stat += dp_stat;
 	}
-	statistics += stat;
-	::dp_stat += dp_stat;
+	catch (std::exception& e) {
+		exit_with_error(e);
+	}
 }
 
 void align_queries(Trace_pt_buffer &trace_pts, Consumer* output_file, const Search::Config& cfg)

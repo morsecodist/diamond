@@ -1,4 +1,4 @@
-/****-
+/****
 DIAMOND protein aligner
 Copyright (C) 2013-2020 Max Planck Society for the Advancement of Science e.V.
                         Benjamin Buchfink
@@ -107,8 +107,6 @@ void run_ref_chunk(SequenceFile &db_file,
 		timer.finish();
 		log_stream << "Masked letters: " << n << endl;
 	}
-
-	ReferenceDictionary::get().init(safe_cast<unsigned>(ref_seqs.get_length()), block_to_database_id);
 
 	timer.go("Initializing temporary storage");
 	Trace_pt_buffer::instance = new Trace_pt_buffer(query_seqs.get_length() / align_mode.query_contexts,
@@ -257,12 +255,10 @@ void run_query_chunk(unsigned query_chunk,
 
 			P->log("SEARCH BEGIN "+std::to_string(query_chunk)+" "+std::to_string(chunk.i));
 
-			options.target.reset(db_file.load_seqs(&block_to_database_id, (size_t)(0), true, &options.db_filter, true, chunk));
+			options.target.reset(db_file.load_seqs((size_t)(0), false, &options.db_filter, true, chunk));
 			run_ref_chunk(db_file, query_chunk, query_len_bounds, query_buffer, master_out, tmp_file, options);
 
 			tmp_file.back().close();
-			ReferenceDictionary::get().save_block(query_chunk, chunk.i);
-			ReferenceDictionary::get().clear_block(chunk.i);
 
 			size_t size_after_push = 0;
 			done->push(buf, size_after_push);
@@ -281,7 +277,7 @@ void run_query_chunk(unsigned query_chunk,
 		P->delete_stack(stack_align_done);
 	} else {
 		for (current_ref_block = 0; ; ++current_ref_block) {
-			options.target.reset(db_file.load_seqs(&block_to_database_id, (size_t)(config.chunk_size * 1e9), true, &options.db_filter));
+			options.target.reset(db_file.load_seqs((size_t)(config.chunk_size * 1e9), false, &options.db_filter));
 			if (options.target->empty()) break;
 			run_ref_chunk(db_file, query_chunk, query_len_bounds, query_buffer, master_out, tmp_file, options);
 		}
@@ -318,7 +314,6 @@ void run_query_chunk(unsigned query_chunk,
 				work->clear();
 
 				current_ref_block = db_file.get_n_partition_chunks();
-				ReferenceDictionary::get().restore_blocks(query_chunk, current_ref_block);
 
 				vector<string> tmp_file_names;
 				for (size_t i=0; i<current_ref_block; ++i) {
@@ -344,8 +339,6 @@ void run_query_chunk(unsigned query_chunk,
 				done->push(buf);
 				wip->pop(buf);
 
-				ReferenceDictionary::get().clear_block_instances();
-				ReferenceDictionary::get().remove_temporary_files(query_chunk, current_ref_block);
 				for (auto f : tmp_file_names) {
 					std::remove(f.c_str());
 				}
@@ -372,8 +365,6 @@ void run_query_chunk(unsigned query_chunk,
 
 	timer.go("Deallocating queries");
 	options.query.reset();
-	if (*output_format != Output_format::daa)
-		ReferenceDictionary::get().clear();
 }
 
 
@@ -459,7 +450,7 @@ void master_thread(task_timer &total_timer, Config &options)
 		for (;!options.query->empty(); ++current_query_chunk) {
 			if (options.self) {
 				db_file->set_seqinfo_ptr(query_file_offset);
-				options.query.reset(db_file->load_seqs(&query_block_to_database_id, (size_t)(config.chunk_size * 1e9), true, &options.db_filter));
+				options.query.reset(db_file->load_seqs((size_t)(config.chunk_size * 1e9), true, &options.db_filter));
 				query_file_offset = db_file->tell_seq();
 			} else {
 				options.query.reset(new Block(query_file->begin(), query_file->end(), *format_n, (size_t)(config.chunk_size * 1e9), input_value_traits, config.store_query_quality, paired_mode ? 2 : 1));
@@ -498,7 +489,7 @@ void master_thread(task_timer &total_timer, Config &options)
 
 		if (options.self) {
 			db_file->set_seqinfo_ptr(query_file_offset);
-			options.query.reset(db_file->load_seqs(&query_block_to_database_id, (size_t)(config.chunk_size * 1e9), true, &options.db_filter));
+			options.query.reset(db_file->load_seqs((size_t)(config.chunk_size * 1e9), true, &options.db_filter));
 			query_file_offset = db_file->tell_seq();
 		}
 		else
