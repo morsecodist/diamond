@@ -61,7 +61,6 @@ struct DAA_query_record
 				parent_.query_seq,
 				parent_.query_name.c_str(),
 				subject_id,
-				subject_name.c_str(),
 				subject_len,
 				hit_num,
 				hsp_num,

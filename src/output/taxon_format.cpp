@@ -36,7 +36,7 @@ void Taxon_format::print_match(const Hsp_context &r, const Search::Config& cfg, 
 			taxid = cfg.taxon_nodes->get_lca(taxid, *i);
 	}
 	catch (std::exception &) {
-		std::cerr << "Query=" << r.query_name << endl << "Subject=" << r.subject_name << endl;
+		std::cerr << "Query=" << r.query_name << endl << "Subject=" << cfg.db->seqid(r.subject_oid).c_str() << endl;
 		throw;
 	}
 }

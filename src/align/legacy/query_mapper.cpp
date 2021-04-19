@@ -217,8 +217,7 @@ bool QueryMapper::generate_output(TextBuffer &buffer, Statistics &stat)
 		const size_t subject_id = targets[i].subject_block_id;
 		const unsigned database_id = metadata.target->block_id2oid(subject_id);
 		const unsigned subject_len = (unsigned)metadata.target->seqs()[subject_id].length();
-		const char *ref_title = metadata.target->ids()[subject_id];
-		targets[i].apply_filters(source_query_len, subject_len, query_title, ref_title);
+		targets[i].apply_filters(source_query_len, subject_len, query_title);
 		if (targets[i].hsps.size() == 0)
 			continue;
 
@@ -255,7 +254,6 @@ bool QueryMapper::generate_output(TextBuffer &buffer, Statistics &stat)
 						translated_query,
 						query_title,
 						database_id,
-						ref_title,
 						subject_len,
 						n_target_seq,
 						hit_hsps,
@@ -312,7 +310,7 @@ void Target::inner_culling()
 	}
 }
 
-void Target::apply_filters(int dna_len, int subject_len, const char *query_title, const char *ref_title)
+void Target::apply_filters(int dna_len, int subject_len, const char *query_title)
 {
 	for (list<Hsp>::iterator i = hsps.begin(); i != hsps.end();) {
 		if (i->id_percent() < config.min_id

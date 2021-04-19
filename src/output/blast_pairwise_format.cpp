@@ -24,7 +24,7 @@ void Pairwise_format::print_match(const Hsp_context& r, const Search::Config& me
 	const int dna_len = (int)r.query.source().length();
 	const Strand strand = r.frame() < 3 ? FORWARD : REVERSE;
 	out << '>';
-	Output_format::print_title(out, r.subject_name, true, true, " ");
+	Output_format::print_title(out, metadata.db->seqid(r.subject_oid).c_str(), true, true, " ");
 	out << "\nLength=" << r.subject_len << "\n\n";
 	out << " Score = " << r.bit_score() << " bits (" << r.score() << "),  Expect = ";
 	out.print_e(r.evalue());

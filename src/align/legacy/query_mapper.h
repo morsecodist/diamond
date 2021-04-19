@@ -137,7 +137,7 @@ struct Target
 	bool is_enveloped(const Target &t, double p) const;
 	bool is_enveloped(PtrVector<Target>::const_iterator begin, PtrVector<Target>::const_iterator end, double p, int min_score) const;
 	void inner_culling();
-	void apply_filters(int dna_len, int subject_len, const char *query_title, const char *ref_title);
+	void apply_filters(int dna_len, int subject_len, const char *query_title);
 	unsigned subject_block_id;
 	Sequence subject;
 	int filter_score;

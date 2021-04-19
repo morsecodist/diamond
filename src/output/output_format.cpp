@@ -60,7 +60,7 @@ void Output_format::print_title(TextBuffer &buf, const char *id, bool full_title
 void print_hsp(Hsp &hsp, const TranslatedSequence &query)
 {
 	TextBuffer buf;
-	Pairwise_format().print_match(Hsp_context(hsp, 0, query, "", 0, "", 0, 0, 0, Sequence()), Search::Config(true), buf);
+	Pairwise_format().print_match(Hsp_context(hsp, 0, query, "", 0, 0, 0, 0, Sequence()), Search::Config(true), buf);
 	buf << '\0';
 	cout << buf.get_begin() << endl;
 }

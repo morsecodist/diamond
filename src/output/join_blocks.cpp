@@ -232,13 +232,11 @@ void join_query(
 				vector<Letter> subject_seq;
 				if (flag_any(f.flags, Output::Flags::TARGET_SEQS))
 					cfg.db->seq_data(i->subject_oid, subject_seq);
-				const string target_seqid = cfg.db->seqid(i->subject_oid);
 				f.print_match(Hsp_context(hsp,
 					query,
 					query_seq,
 					query_name,
 					i->subject_oid,
-					target_seqid.c_str(),
 					cfg.db->seq_length(i->subject_oid),
 					n_target_seq,
 					hsp_num,

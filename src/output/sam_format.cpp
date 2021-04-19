@@ -91,7 +91,7 @@ void Sam_format::print_match(const Hsp_context& r, const Search::Config&metadata
 	out << '\t' << '0' << '\t';
 
 	const bool lt = (config.salltitles || (config.command == Config::view)) ? true : false;
-	print_title(out, r.subject_name, lt, lt, "<>");
+	print_title(out, metadata.db->seqid(r.subject_oid).c_str(), lt, lt, "<>");
 
 	out << '\t'
 		<< r.subject_range().begin_ + 1 << '\t'

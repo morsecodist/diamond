@@ -52,7 +52,6 @@ TextBuffer* generate_output(vector<Match> &targets, size_t query_block_id, Stati
 		const size_t subject_id = targets[i].target_block_id;
 		const unsigned database_id = cfg.target->block_id2oid(subject_id);
 		const unsigned subject_len = (unsigned)ref_seqs[subject_id].length();
-		const string ref_title = cfg.db->seqid(database_id);
 
 		hit_hsps = 0;
 		for (Hsp &hsp : targets[i].hsp) {
@@ -64,7 +63,6 @@ TextBuffer* generate_output(vector<Match> &targets, size_t query_block_id, Stati
 					query,
 					query_title,
 					database_id,
-					ref_title.c_str(),
 					subject_len,
 					i,
 					hit_hsps,

@@ -34,7 +34,7 @@ void PAF_format::print_match(const Hsp_context& r, const Search::Config& cfg, Te
 		<< r.query_source_range().end_ - 1 << '\t'
 		<< (Frame(r.frame()).strand == FORWARD ? '+' : '-') << '\t';
 
-	print_title(out, r.subject_name, false, false, "<>");
+	print_title(out, cfg.db->seqid(r.subject_oid).c_str(), false, false, "<>");
 
 	out << '\t' << r.subject_len << '\t'
 		<< r.subject_range().begin_ << '\t'

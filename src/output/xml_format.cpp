@@ -14,11 +14,12 @@ void XML_format::print_match(const Hsp_context& r, const Search::Config& metadat
 		out << "<Hit>" << '\n'
 			<< "  <Hit_num>" << r.hit_num + 1 << "</Hit_num>" << '\n';
 		string id, def;
-		get_title_def(r.subject_name, id, def);
+		const string target_seqid = metadata.db->seqid(r.subject_oid).c_str();
+		get_title_def(target_seqid, id, def);
 		if (config.xml_blord_format) {
 			out << "  <Hit_id>gnl|BL_ORD_ID|" << r.subject_oid << "</Hit_id>" << '\n'
 				<< "  <Hit_def>";
-			Output_format::print_title(out, r.subject_name, true, true, " &gt;", &EscapeSequences::XML);
+			Output_format::print_title(out, target_seqid.c_str(), true, true, " &gt;", &EscapeSequences::XML);
 			out << "</Hit_def>" << '\n';
 		}
 		else {

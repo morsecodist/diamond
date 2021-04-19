@@ -184,10 +184,10 @@ void Blast_tab_format::print_match(const Hsp_context& r, const Search::Config& c
 			out << r.query.source().length();
 			break;
 		case 5:
-			print_title(out, r.subject_name, false, false, "<>");
+			print_title(out, cfg.db->seqid(r.subject_oid).c_str(), false, false, "<>");
 			break;
 		case 6:
-			print_title(out, r.subject_name, false, true, "<>");
+			print_title(out, cfg.db->seqid(r.subject_oid).c_str(), false, true, "<>");
 			break;
 		case 12:
 			out << r.subject_len;
@@ -304,10 +304,10 @@ void Blast_tab_format::print_match(const Hsp_context& r, const Search::Config& c
 			break;
 		}
 		case 39:
-			print_title(out, r.subject_name, true, false, "<>");
+			print_title(out, cfg.db->seqid(r.subject_oid).c_str(), true, false, "<>");
 			break;
 		case 40:
-			print_title(out, r.subject_name, true, true, "<>");
+			print_title(out, cfg.db->seqid(r.subject_oid).c_str(), true, true, "<>");
 			break;
 		case 43:
 			out << (double)r.query_source_range().length()*100.0 / r.query.source().length();
