@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../search/trace_pt_buffer.h"
 #include "../data/reference.h"
 #include "../util/io/input_stream_buffer.h"
+#include "../data/blastdb/blastdb.h"
 
 using std::vector;
 using std::string;
@@ -142,6 +143,26 @@ static void load_mmap() {
 	message_stream << "Throughput: " << (double)l / (1 << 20) / timer.milliseconds() * 1000 << " MB/s" << endl;
 }
 
+static void load_blast_seqid() {
+	const size_t N = 100000;
+	task_timer timer("Opening the database");
+	SequenceFile* db = SequenceFile::auto_create(SequenceFile::Flags::NONE);
+	timer.finish();
+	message_stream << "Type: " << to_string(db->type()) << endl;
+	std::mt19937 g;
+	std::uniform_int_distribution<int> dist(0, db->sequence_count() - 1);
+	size_t n = 0;
+	timer.go("Loading seqids");
+	for (size_t i = 0; i < N; ++i) {
+		auto l = ((BlastDB*)db)->db_->GetSeqIDs(dist(g));
+		n += l.size();
+		if (i % 1000 == 0)
+			message_stream << i << endl;
+	}
+	timer.finish();
+	message_stream << n << endl;
+}
+
 void benchmark_io() {
 	if (config.type == "seedhit")
 		seed_hit_files();
@@ -151,4 +172,6 @@ void benchmark_io() {
 		load_raw();
 	else if (config.type == "mmap")
 		load_mmap();
+	else if (config.type == "blast_seqid")
+		load_blast_seqid();
 }

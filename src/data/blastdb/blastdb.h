@@ -54,4 +54,6 @@ private:
 	const Flags flags_;
 	BitVector oid_filter_;
 
+	friend void load_blast_seqid();
+
 };
