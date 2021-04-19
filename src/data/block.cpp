@@ -26,6 +26,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../util/seq_file_format.h"
 #include "block.h"
 
+using std::mutex;
+using std::lock_guard;
+
 Block::Block() {
 }
 
@@ -83,6 +86,7 @@ Block::Block(std::list<TextInputFile>::iterator file_begin,
 	size_t max_letters,
 	const Value_traits& value_traits,
 	bool with_quals,
+	bool lazy_masking,
 	size_t modulo)
 {
 	size_t letters = 0, n = 0;
@@ -121,4 +125,26 @@ Block::Block(std::list<TextInputFile>::iterator file_begin,
 	source_seqs_.finish_reserve();
 	if (file_it != file_begin || (!read_success && ++file_it != file_end && format.get_seq(id, seq, *file_it, value_traits, nullptr)))
 		throw std::runtime_error("Unequal number of sequences in paired read files.");
+}
+
+bool Block::fetch_seq_if_unmasked(size_t block_id, std::vector<Letter>& seq) {
+	if (masked_[block_id])
+		return false;
+	{
+		lock_guard<mutex> lck(mask_lock_);
+		if (masked_[block_id])
+			return false;
+		seq.clear();
+		Sequence s = seqs_[block_id];
+		std::copy(s.data(), s.end(), std::back_inserter(seq));
+		return true;
+	}
+}
+
+void Block::write_masked_seq(size_t block_id, const std::vector<Letter>& seq) {
+	lock_guard<mutex> lck(mask_lock_);
+	if (masked_[block_id])
+		return;
+	std::copy(seq.begin(), seq.end(), seqs_.ptr(block_id));
+	masked_[block_id] = true;
 }

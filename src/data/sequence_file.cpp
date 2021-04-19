@@ -36,7 +36,7 @@ using std::setw;
 
 const EMap<SequenceFile::Type> EnumTraits<SequenceFile::Type>::to_string = { {SequenceFile::Type::DMND, "Diamond database" }, {SequenceFile::Type::BLAST, "BLAST database"} };
 
-Block* SequenceFile::load_seqs(const size_t max_letters, bool load_ids, const BitVector* filter, const bool fetch_seqs, const Chunk& chunk)
+Block* SequenceFile::load_seqs(const size_t max_letters, bool load_ids, const BitVector* filter, const bool fetch_seqs, bool lazy_masking, const Chunk& chunk)
 {
 	task_timer timer("Loading reference sequences");
 	reopen();
@@ -124,6 +124,10 @@ Block* SequenceFile::load_seqs(const size_t max_letters, bool load_ids, const Bi
 
 	if (blocked_processing)
 		close_weakly();
+
+	if (lazy_masking)
+		block->masked_.resize(filtered_seq_count, false);
+
 	return block;
 }
 

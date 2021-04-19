@@ -20,6 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 #include <list>
+#include <vector>
+#include <mutex>
 #include "sequence_set.h"
 #include "seed_histogram.h"
 #include "../util/seq_file_format.h"
@@ -35,6 +37,7 @@ struct Block {
 		size_t max_letters,
 		const Value_traits& value_traits,
 		bool with_quals,
+		bool lazy_masking = false,
 		size_t modulo = 1);
 	unsigned source_len(unsigned block_id) const;
 	TranslatedSequence translated(size_t block_id) const;
@@ -69,6 +72,8 @@ struct Block {
 	size_t block_id2oid(size_t i) const {
 		return block2oid_[i];
 	}
+	bool fetch_seq_if_unmasked(size_t block_id, std::vector<Letter>& seq);
+	void write_masked_seq(size_t block_id, const std::vector<Letter>& seq);
 
 private:
 
@@ -77,6 +82,8 @@ private:
 	IdSet qual_;
 	Partitioned_histogram hst_;
 	std::vector<uint32_t> block2oid_;
+	std::vector<bool> masked_;
+	std::mutex mask_lock_;
 
 	friend struct SequenceFile;
 

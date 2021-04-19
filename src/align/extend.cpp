@@ -33,6 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../util/system.h"
 #include "../util/util.h"
 #include "global_ranking/global_ranking.h"
+#include "../basic/masking.h"
 
 using std::vector;
 using std::list;
@@ -61,6 +62,22 @@ size_t chunk_size_multiplier(const FlatArray<SeedHit>& seed_hits, int query_len)
 	return seed_hits.size() * query_len / seed_hits.data_size() < config.seedhit_density ? config.chunk_size_multiplier : 1;
 }
 
+static size_t lazy_masking(const vector<uint32_t>& target_block_ids, Block& targets) {
+	if (config.algo != Config::Algo::QUERY_INDEXED || (config.target_seg == 0 && config.masking == 0))
+		return 0;
+	vector<Letter> seq;
+	const Masking& masking = Masking::get();
+	const Masking::Algo algo = config.target_seg == 1 ? Masking::Algo::SEG : Masking::Algo::TANTAN;
+	size_t n = 0;
+	for (uint32_t t : target_block_ids)
+		if (targets.fetch_seq_if_unmasked(t, seq)) {
+			masking(seq.data(), seq.size(), algo);
+			targets.write_masked_seq(t, seq);
+			++n;
+		}
+	return n;
+}
+
 vector<Target> extend(size_t query_id,
 	const Sequence *query_seq,
 	int source_query_len,
@@ -75,6 +92,9 @@ vector<Target> extend(size_t query_id,
 	static const size_t GAPPED_FILTER_MIN_QLEN = 85;
 	stat.inc(Statistics::TARGET_HITS2, target_block_ids.size());
 	task_timer timer(flags & DP::PARALLEL ? config.target_parallel_verbosity : UINT_MAX);
+
+	stat.inc(Statistics::MASKED_LAZY, lazy_masking(target_block_ids, *cfg.target));
+
 	if (config.gapped_filter_evalue > 0.0 && config.global_ranking_targets == 0 && (!align_mode.query_translated || query_seq[0].length() >= GAPPED_FILTER_MIN_QLEN)) {
 		timer.go("Computing gapped filter");
 		gapped_filter(query_seq, query_cb, seed_hits, target_block_ids, stat, flags, cfg);

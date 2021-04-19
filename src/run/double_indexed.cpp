@@ -94,6 +94,7 @@ void run_ref_chunk(SequenceFile &db_file,
 	Config& cfg)
 {
 	log_rss();
+	const bool lazy_masking = config.algo == ::Config::Algo::QUERY_INDEXED;
 	auto& ref_seqs = cfg.target->seqs();
 	auto& query_seqs = cfg.query->seqs();
 
@@ -101,7 +102,7 @@ void run_ref_chunk(SequenceFile &db_file,
 		cfg.target->unmasked_seqs() = ref_seqs;
 
 	task_timer timer;
-	if (config.masking == 1 && !config.no_ref_masking) {
+	if (config.masking == 1 && !config.no_ref_masking && !lazy_masking) {
 		timer.go("Masking reference");
 		size_t n = mask_seqs(ref_seqs, Masking::get());
 		timer.finish();
@@ -156,7 +157,7 @@ void run_ref_chunk(SequenceFile &db_file,
 	else
 		out = &master_out;
 
-	if (config.target_seg == 1) {
+	if (config.target_seg == 1 && !lazy_masking) {
 		timer.go("SEG masking targets");
 		mask_seqs(ref_seqs, Masking::get(), true, Masking::Algo::SEG);
 	}
@@ -233,6 +234,7 @@ void run_query_chunk(unsigned query_chunk,
 		Extension::memory = new Extension::Memory(query_ids.get_length());
 	db_file.set_seqinfo_ptr(0);
 	bool mp_last_chunk = false;
+	const bool lazy_masking = config.algo == ::Config::Algo::QUERY_INDEXED && (config.masking == 1 || config.target_seg == 1);
 
 	log_rss();
 
@@ -255,7 +257,7 @@ void run_query_chunk(unsigned query_chunk,
 
 			P->log("SEARCH BEGIN "+std::to_string(query_chunk)+" "+std::to_string(chunk.i));
 
-			options.target.reset(db_file.load_seqs((size_t)(0), false, &options.db_filter, true, chunk));
+			options.target.reset(db_file.load_seqs((size_t)(0), false, &options.db_filter, true, lazy_masking, chunk));
 			run_ref_chunk(db_file, query_chunk, query_len_bounds, query_buffer, master_out, tmp_file, options);
 
 			tmp_file.back().close();
@@ -277,7 +279,7 @@ void run_query_chunk(unsigned query_chunk,
 		P->delete_stack(stack_align_done);
 	} else {
 		for (current_ref_block = 0; ; ++current_ref_block) {
-			options.target.reset(db_file.load_seqs((size_t)(config.chunk_size * 1e9), false, &options.db_filter));
+			options.target.reset(db_file.load_seqs((size_t)(config.chunk_size * 1e9), false, &options.db_filter, true, lazy_masking));
 			if (options.target->empty()) break;
 			run_ref_chunk(db_file, query_chunk, query_len_bounds, query_buffer, master_out, tmp_file, options);
 		}

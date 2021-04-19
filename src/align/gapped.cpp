@@ -118,6 +118,7 @@ void add_dp_targets(const WorkTarget& target, int target_idx, const Sequence* qu
 				j0 = std::min(j0, hsp.subject_range.begin_);
 				j1 = std::max(j1, hsp.subject_range.end_);
 				bits = std::max(bits, (hsp.score <= config.cutoff_score_8bit && (d1 - d0) < 256) ? 0 : 1);
+				if (matrix) bits = std::max(bits, matrix->score_width());
 				if (flags & DP::TRACEBACK && size_t(d1 - d0) * qlen > config.max_swipe_dp)
 					bits = 2;
 			}
@@ -131,6 +132,7 @@ void add_dp_targets(const WorkTarget& target, int target_idx, const Sequence* qu
 				bits = (hsp.score <= config.cutoff_score_8bit && (d1 - d0) < 256) ? 0 : 1;
 				if (flags & DP::TRACEBACK && size_t(d1 - d0) * qlen > config.max_swipe_dp)
 					bits = 2;
+				if (matrix) bits = std::max(bits, matrix->score_width());
 			}
 		}
 

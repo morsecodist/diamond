@@ -116,7 +116,8 @@ struct SequenceFile {
 		const size_t max_letters,
 		bool load_ids = true,
 		const BitVector* filter = nullptr,
-		const bool fetch_seqs = true,
+		bool fetch_seqs = true,
+		bool lazy_masking = false,
 		const Chunk& chunk = Chunk());
 	void get_seq();
 	size_t total_blocks() const;
