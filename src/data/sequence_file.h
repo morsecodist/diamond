@@ -109,6 +109,8 @@ struct SequenceFile {
 	virtual std::string file_name() = 0;
 	virtual void seq_data(size_t oid, std::vector<Letter>& dst) const = 0;
 	virtual size_t seq_length(size_t oid) const = 0;
+	virtual void init_random_access() = 0;
+	virtual void end_random_access() = 0;
 	virtual ~SequenceFile();
 
 	Type type() const { return type_; }

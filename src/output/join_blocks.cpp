@@ -309,6 +309,7 @@ void join_worker(Task_queue<TextBuffer, JoinWriter> *queue, const Search::Config
 void join_blocks(unsigned ref_blocks, Consumer &master_out, const PtrVector<TempFile> &tmp_file, Search::Config& cfg, SequenceFile &db_file,
 	const vector<string> tmp_file_names)
 {
+	cfg.db->init_random_access();
 	task_timer timer("Joining output blocks");
 
 	if (tmp_file_names.size() > 0) {
@@ -342,4 +343,5 @@ void join_blocks(unsigned ref_blocks, Consumer &master_out, const PtrVector<Temp
 
 	if (config.global_ranking_targets)
 		Extension::GlobalRanking::extend(db_file, *merged_query_list, ranking_db_filter, cfg, master_out);
+	cfg.db->end_random_access();
 }

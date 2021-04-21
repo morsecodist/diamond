@@ -144,6 +144,8 @@ struct DatabaseFile : public SequenceFile, public InputFile
 	virtual std::vector<unsigned> taxids(size_t oid) const override;
 	virtual void seq_data(size_t oid, std::vector<Letter>& dst) const override;
 	virtual size_t seq_length(size_t oid) const override;
+	virtual void init_random_access() override;
+	virtual void end_random_access() override;
 
 	static const char* FILE_EXTENSION;
 

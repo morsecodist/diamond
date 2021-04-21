@@ -602,6 +602,14 @@ size_t DatabaseFile::seq_length(size_t oid) const
 	return size_t();
 }
 
+void DatabaseFile::init_random_access()
+{
+}
+
+void DatabaseFile::end_random_access()
+{
+}
+
 std::vector<string>* DatabaseFile::taxon_scientific_names() {
 	vector<string>* r = new vector<string>;
 	seek(header2.taxon_names_offset);

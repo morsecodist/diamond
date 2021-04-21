@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <corelib/ncbiutil.hpp>
 #include "../util/io/text_input_file.h"
 #include "blastdb.h"
+#include "../../util/string/tokenizer.h"
 
 using std::cout;
 using std::endl;
@@ -192,7 +193,7 @@ std::string BlastDB::seqid(size_t oid)
 		return full_id(*db_->GetBioseq(oid), nullptr, long_seqids_, true);
 	}
 	else {
-		return best_id(db_->GetSeqIDs(oid));
+		return acc_[oid];
 	}
 }
 
@@ -348,6 +349,33 @@ void BlastDB::seq_data(size_t oid, std::vector<Letter>& dst) const
 size_t BlastDB::seq_length(size_t oid) const
 {
 	return size_t();
+}
+
+void BlastDB::init_random_access()
+{
+	if (flag_any(flags_, Flags::FULL_SEQIDS))
+		return;
+	task_timer timer("Loading accessions");
+	vector<string> paths;
+	if(db_.get())
+		db_->FindVolumePaths(paths);
+	else
+		CSeqDB::FindVolumePaths(file_name_, CSeqDB::eProtein, paths);
+	acc_ = String_set<char, '\0'>();
+	string acc;
+	for (const string& path : paths) {
+		TextInputFile f(path + ".acc");
+		while (f.getline(), !f.eof() || !f.line.empty()) {
+			Util::String::Tokenizer(f.line, "\t") >> acc;
+			acc_.push_back(acc.begin(), acc.end());
+		}
+		f.close();
+	}
+}
+
+void BlastDB::end_random_access()
+{
+	acc_ = String_set<char, '\0'>();
 }
 
 const BitVector* BlastDB::builtin_filter() {

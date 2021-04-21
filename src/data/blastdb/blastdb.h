@@ -2,6 +2,7 @@
 #include <objtools/blast/seqdb_reader/seqdbexpert.hpp>
 #include <memory>
 #include "../sequence_file.h"
+#include "../string_set.h"
 
 struct BlastDB : public SequenceFile {
 
@@ -43,6 +44,8 @@ struct BlastDB : public SequenceFile {
 	virtual std::vector<unsigned> taxids(size_t oid) const override;
 	virtual void seq_data(size_t oid, std::vector<Letter>& dst) const override;
 	virtual size_t seq_length(size_t oid) const override;
+	virtual void init_random_access() override;
+	virtual void end_random_access() override;
 	virtual ~BlastDB();
 	
 private:
@@ -53,6 +56,7 @@ private:
 	const bool long_seqids_;
 	const Flags flags_;
 	BitVector oid_filter_;
+	String_set<char, '\0'> acc_;
 
 	friend void load_blast_seqid();
 	friend void load_blast_seqid_lin();

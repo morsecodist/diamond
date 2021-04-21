@@ -159,11 +159,16 @@ void align_queries(Trace_pt_buffer &trace_pts, Consumer* output_file, const Sear
 		Extension::target_matrices.insert(Extension::target_matrices.end(), cfg.target->seqs().get_length(), nullptr);
 		Extension::target_matrix_count = 0;
 	}
+
+	task_timer timer(nullptr, 3);
+
+	if (!blocked_processing)
+		cfg.db->init_random_access();
 	
 	trace_pts.load(max_size, cfg.target->long_offsets());
 
 	while (true) {
-		task_timer timer("Loading trace points", 3);
+		timer.go("Loading trace points");				
 		tuple<vector<hit>*, size_t, size_t> input = trace_pts.retrieve();
 		if (get<0>(input) == nullptr)
 			break;
@@ -203,4 +208,7 @@ void align_queries(Trace_pt_buffer &trace_pts, Consumer* output_file, const Sear
 		delete[] i;
 	Extension::target_matrices.clear();
 	statistics.inc(Statistics::MATRIX_ADJUST_COUNT, Extension::target_matrix_count);
+
+	if (!blocked_processing)
+		cfg.db->end_random_access();
 }
