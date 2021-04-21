@@ -55,5 +55,6 @@ private:
 	BitVector oid_filter_;
 
 	friend void load_blast_seqid();
+	friend void load_blast_seqid_lin();
 
 };

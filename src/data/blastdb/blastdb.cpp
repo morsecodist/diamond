@@ -367,3 +367,29 @@ const BitVector* BlastDB::builtin_filter() {
 BlastDB::~BlastDB()
 {
 }
+
+void prep_blast_db() {
+	vector<string> paths;
+	CSeqDB::FindVolumePaths(config.database, CSeqDB::eProtein, paths);
+	for (const string& db : paths) {
+		message_stream << "Processing volume: " << db << endl;
+		CSeqDB volume(db, CSeqDB::eProtein);
+		const int n = volume.GetNumOIDs();
+		message_stream << "Number of sequences: " << n << endl;
+		ofstream out(db + ".acc");
+		size_t id_count = 0;
+		for (int i = 0; i < n; ++i) {
+			list<CRef<CSeq_id>> ids = volume.GetSeqIDs(i);
+			if (!ids.empty()) {
+				auto it = ids.cbegin();
+				out << (*it)->GetSeqIdString();
+				while (++it != ids.cend())
+					out << '\t' << (*it)->GetSeqIdString();
+				id_count += ids.size();
+			}
+			out << endl;
+		}
+		message_stream << "Number of accessions: " << id_count << endl;
+		out.close();
+	}
+}

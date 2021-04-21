@@ -143,7 +143,7 @@ static void load_mmap() {
 	message_stream << "Throughput: " << (double)l / (1 << 20) / timer.milliseconds() * 1000 << " MB/s" << endl;
 }
 
-static void load_blast_seqid() {
+void load_blast_seqid() {
 	const size_t N = 100000;
 	task_timer timer("Opening the database");
 	SequenceFile* db = SequenceFile::auto_create(SequenceFile::Flags::NONE);
@@ -163,6 +163,24 @@ static void load_blast_seqid() {
 	message_stream << n << endl;
 }
 
+void load_blast_seqid_lin() {
+	task_timer timer("Opening the database");
+	SequenceFile* db = SequenceFile::auto_create(SequenceFile::Flags::NONE);
+	timer.finish();
+	message_stream << "Type: " << to_string(db->type()) << endl;
+	size_t n = 0;
+	const size_t count = db->sequence_count();
+	timer.go("Loading seqids");
+	for (size_t i = 0; i < count; ++i) {
+		auto l = ((BlastDB*)db)->db_->GetSeqIDs(i);
+		n += l.size();
+		/*if (i % 1000 == 0)
+			message_stream << i << endl;*/
+	}
+	timer.finish();
+	message_stream << n << endl;
+}
+
 void benchmark_io() {
 	if (config.type == "seedhit")
 		seed_hit_files();
@@ -174,4 +192,6 @@ void benchmark_io() {
 		load_mmap();
 	else if (config.type == "blast_seqid")
 		load_blast_seqid();
+	else if (config.type == "blast_seqid_lin")
+		load_blast_seqid_lin();
 }

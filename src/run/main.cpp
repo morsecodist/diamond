@@ -53,6 +53,9 @@ void merge_tsv();
 void roc_id();
 void makeindex();
 void find_shapes();
+#ifdef WITH_BLASTDB
+void prep_blast_db();
+#endif
 
 void split();
 namespace Benchmark { DECL_DISPATCH(void, benchmark, ()) }
@@ -182,6 +185,9 @@ int main(int ac, const char* av[])
 			break;
 		case Config::find_shapes:
 			find_shapes();
+			break;
+		case Config::prep_blast_db:
+			prep_blast_db();
 			break;
 		default:
 			return 1;
