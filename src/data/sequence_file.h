@@ -81,7 +81,7 @@ struct SequenceFile {
 	virtual void putback_seqinfo() = 0;
 	virtual size_t id_len(const SeqInfo& seq_info, const SeqInfo& seq_info_next) = 0;
 	virtual void seek_offset(size_t p) = 0;
-	virtual void read_seq_data(Letter* dst, size_t len) = 0;
+	virtual void read_seq_data(Letter* dst, size_t len, size_t& pos, bool seek) = 0;
 	virtual void read_id_data(char* dst, size_t len) = 0;
 	virtual void skip_id_data() = 0;
 	virtual std::string seqid(size_t oid) = 0;
@@ -127,6 +127,8 @@ struct SequenceFile {
 	static SequenceFile* auto_create(Flags flags = Flags::NONE, Metadata metadata = Metadata());
 
 private:
+
+	void load_block(size_t block_id_begin, size_t block_id_end, size_t pos, bool use_filter, const vector<uint64_t>* filtered_pos, bool load_ids, Block* block);
 
 	Type type_;
 

@@ -36,6 +36,24 @@ using std::setw;
 
 const EMap<SequenceFile::Type> EnumTraits<SequenceFile::Type>::to_string = { {SequenceFile::Type::DMND, "Diamond database" }, {SequenceFile::Type::BLAST, "BLAST database"} };
 
+void SequenceFile::load_block(size_t block_id_begin, size_t block_id_end, size_t pos, bool use_filter, const vector<uint64_t>* filtered_pos, bool load_ids, Block* block) {
+	seek_offset(pos);
+	for (size_t i = block_id_begin; i < block_id_end; ++i) {
+		bool seek = false;
+		if (use_filter && (*filtered_pos)[i]) {
+			pos = (*filtered_pos)[i];
+			seek = true;
+		}
+		read_seq_data(block->seqs_.ptr(i), block->seqs_.length(i), pos, seek);
+		if (load_ids)
+			read_id_data(block->ids_.ptr(i), block->ids_.length(i));
+		else
+			skip_id_data();
+		if (type_ == Type::DMND)
+			Masking::get().remove_bit_mask(block->seqs_.ptr(i), block->seqs_.length(i));
+	}
+}
+
 Block* SequenceFile::load_seqs(const size_t max_letters, bool load_ids, const BitVector* filter, const bool fetch_seqs, bool lazy_masking, const Chunk& chunk)
 {
 	task_timer timer("Loading reference sequences");
@@ -52,7 +70,7 @@ Block* SequenceFile::load_seqs(const size_t max_letters, bool load_ids, const Bi
 	Block* block = new Block();
 	
 	SeqInfo r = read_seqinfo();
-	uint64_t start_offset = r.pos;
+	size_t offset = r.pos;
 	bool last = false;
 	if (type() == Type::BLAST && sequence_count() != sparse_sequence_count())
 		filter = builtin_filter();
@@ -102,17 +120,18 @@ Block* SequenceFile::load_seqs(const size_t max_letters, bool load_ids, const Bi
 	if (fetch_seqs) {
 		block->seqs_.finish_reserve();
 		if (load_ids) block->ids_.finish_reserve();
-		seek_offset(start_offset);
-
-		for (size_t i = 0; i < filtered_seq_count; ++i) {
-			if (use_filter && filtered_pos[i]) seek_offset(filtered_pos[i]);
-			read_seq_data(block->seqs_.ptr(i), block->seqs_.length(i));
-			if (load_ids)
-				read_id_data(block->ids_.ptr(i), block->ids_.length(i));
-			else
-				skip_id_data();
-			Masking::get().remove_bit_mask(block->seqs_.ptr(i), block->seqs_.length(i));
+		if (type_ == Type::BLAST && config.algo == Config::Algo::QUERY_INDEXED && config.threads_ > 1 && !use_filter) {
+			assert(!use_filter);
+			partition<size_t> p(filtered_seq_count, config.threads_);
+			vector<std::thread> t;
+			for (size_t i = 0; i < p.parts; ++i)
+				t.emplace_back(&SequenceFile::load_block, this, p.getMin(i), p.getMax(i), offset + p.getMin(i), use_filter, &filtered_pos, false, block);
+			for (std::thread& i : t)
+				i.join();
 		}
+		else
+			load_block(0, filtered_seq_count, offset, use_filter, &filtered_pos, load_ids, block);
+		
 		timer.finish();
 		block->seqs_.print_stats();
 	}

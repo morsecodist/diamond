@@ -87,7 +87,6 @@ BlastDB::BlastDB(const std::string& file_name, Metadata metadata, Flags flags) :
 	file_name_(file_name),	
 	db_(new CSeqDBExpert(file_name, CSeqDB::eProtein)),
 	oid_(0),
-	oid_seqdata_(0),
 	long_seqids_(false),
 	flags_(flags)
 {
@@ -118,9 +117,7 @@ SeqInfo BlastDB::read_seqinfo()
 		++oid_;
 		return SeqInfo(0, 0);
 	}
-	const char* buf;
-	const int l = db_->GetSequence(oid_, &buf);
-	db_->RetSequence(&buf);
+	const int l = db_->GetSeqLength(oid_);
 	if (l == 0)
 		throw std::runtime_error("Database with sequence length 0 is not supported");
 	return SeqInfo(oid_++, l);
@@ -142,22 +139,21 @@ size_t BlastDB::id_len(const SeqInfo& seq_info, const SeqInfo& seq_info_next)
 
 void BlastDB::seek_offset(size_t p)
 {
-	oid_seqdata_ = (int)p;
 }
 
-void BlastDB::read_seq_data(Letter* dst, size_t len)
+void BlastDB::read_seq_data(Letter* dst, size_t len, size_t& pos, bool seek)
 {
 	*(dst - 1) = Sequence::DELIMITER;
 	*(dst + len) = Sequence::DELIMITER;
 	const char* buf;
-	const int db_len = db_->GetSequence(oid_seqdata_, &buf);
+	const int db_len = db_->GetSequence((int)pos, &buf);
 	if (size_t(db_len) != len)
 		throw std::runtime_error("Incorrect length");
 	
 	for (int i = 0; i < db_len; ++i) {
 		const char l = buf[i];
 		if ((size_t)l >= sizeof(NCBI_TO_STD) || NCBI_TO_STD[(int)l] < 0) {
-			list<CRef<CSeq_id>> ids = db_->GetSeqIDs(oid_seqdata_);
+			list<CRef<CSeq_id>> ids = db_->GetSeqIDs(pos);
 			throw std::runtime_error("Unrecognized sequence character in BLAST database ("
 				+ std::to_string((int)l)
 				+ ", id=" + ids.front()->GetSeqIdString()
@@ -165,12 +161,13 @@ void BlastDB::read_seq_data(Letter* dst, size_t len)
 		}
 		*(dst++) = NCBI_TO_STD[(int)l];
 	}
+	++pos;
 	db_->RetSequence(&buf);
 }
 
 void BlastDB::read_id_data(char* dst, size_t len)
 {
-	if (flag_any(flags_, Flags::FULL_SEQIDS)) {
+	/*if (flag_any(flags_, Flags::FULL_SEQIDS)) {
 		const string id = full_id(*db_->GetBioseq(oid_seqdata_), nullptr, long_seqids_, true);
 		std::copy(id.begin(), id.begin() + len, dst);
 	}
@@ -179,12 +176,12 @@ void BlastDB::read_id_data(char* dst, size_t len)
 		std::copy(id.begin(), id.end(), dst);
 	}
 	dst[len] = '\0';
-	++oid_seqdata_;
+	++oid_seqdata_;*/
 }
 
 void BlastDB::skip_id_data()
 {
-	++oid_seqdata_;
+	//++oid_seqdata_;
 }
 
 std::string BlastDB::seqid(size_t oid)

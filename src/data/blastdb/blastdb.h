@@ -16,7 +16,7 @@ struct BlastDB : public SequenceFile {
 	virtual void putback_seqinfo() override;
 	virtual size_t id_len(const SeqInfo& seq_info, const SeqInfo& seq_info_next) override;
 	virtual void seek_offset(size_t p) override;
-	virtual void read_seq_data(Letter* dst, size_t len) override;
+	virtual void read_seq_data(Letter* dst, size_t len, size_t& pos, bool seek) override;
 	virtual void read_id_data(char* dst, size_t len) override;
 	virtual void skip_id_data() override;
 	virtual std::string seqid(size_t oid) override;
@@ -52,7 +52,7 @@ private:
 
 	const std::string file_name_;
 	std::unique_ptr<ncbi::CSeqDBExpert> db_;
-	int oid_, oid_seqdata_;
+	int oid_;
 	const bool long_seqids_;
 	const Flags flags_;
 	BitVector oid_filter_;

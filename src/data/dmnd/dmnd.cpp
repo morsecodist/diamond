@@ -487,7 +487,9 @@ void DatabaseFile::seek_offset(size_t p) {
 	seek(p);
 }
 
-void DatabaseFile::read_seq_data(Letter* dst, size_t len) {
+void DatabaseFile::read_seq_data(Letter* dst, size_t len, size_t& pos, bool seek) {
+	if (seek)
+		this->seek(pos);
 	read(dst - 1, len + 2);
 	*(dst - 1) = Sequence::DELIMITER;
 	*(dst + len) = Sequence::DELIMITER;
