@@ -128,15 +128,20 @@ static void load_raw() {
 }
 
 static void load_mmap() {
+	static const size_t BUF = 2 * GIGABYTES;
 	task_timer timer("Opening the database");
 	SequenceFile* db = SequenceFile::auto_create(SequenceFile::Flags::NONE);
 	timer.finish();
 	message_stream << "Type: " << to_string(db->type()) << endl;
 	size_t n = db->sequence_count(), l = 0;
-	vector<Letter> v;
+	vector<Letter> v, buf;
+	buf.reserve(BUF);
 	for (size_t i = 0; i < n; ++i) {
 		db->seq_data(i, v);
 		l += v.size();
+		if (buf.size() + v.size() >= BUF)
+			buf.clear();
+		buf.insert(buf.end(), v.begin(), v.end());
 		if ((i & ((1 << 20) - 1)) == 0)
 			message_stream << "Throughput: " << (double)l / (1 << 20) / timer.milliseconds() * 1000 << " MB/s" << endl;
 	}
