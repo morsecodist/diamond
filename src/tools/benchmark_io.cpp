@@ -154,7 +154,7 @@ static void load_mmap_mt() {
 	timer.finish();
 	message_stream << "Type: " << to_string(db->type()) << endl;
 	size_t n = db->sequence_count();
-	std::atomic_size_t i = 0;
+	std::atomic_size_t i(0);
 	vector<std::thread> threads;
 	for (size_t j = 0; j < config.threads_; ++j)
 		threads.emplace_back([&i, n, db] {
