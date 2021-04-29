@@ -195,8 +195,6 @@ SequenceFile* SequenceFile::auto_create(Flags flags, Metadata metadata) {
 			throw std::runtime_error("--multiprocessing is not compatible with BLAST databases.");
 		if (config.target_indexed)
 			throw std::runtime_error("--target-indexed is not compatible with BLAST databases.");
-		if (config.global_ranking_targets)
-			throw std::runtime_error("");
 		return new BlastDB(config.database, metadata, flags);
 #else
 		throw std::runtime_error("This executable was not compiled with support for BLAST databases.");

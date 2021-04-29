@@ -141,7 +141,9 @@ struct IntermediateRecord
 		}
 	}
 	static void write(TextBuffer& buf, uint32_t target_block_id, int score, const Search::Config& cfg) {
-		buf.write(cfg.target->block_id2oid(target_block_id));
+		const uint32_t target_oid = (uint32_t)cfg.target->block_id2oid(target_block_id);
+		assert(target_oid < cfg.db_seqs);
+		buf.write(target_oid);
 		const uint16_t s = (uint16_t)std::min(score, USHRT_MAX);
 		buf.write(s);
 	}

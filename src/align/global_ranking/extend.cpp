@@ -77,21 +77,26 @@ void extend_query(const QueryList& query_list, const TargetMap& db2block_id, con
 }
 
 void align_worker(InputFile* query_list, const TargetMap* db2block_id, const Search::Config* cfg, uint32_t* next_query) {
-	QueryList input;
-	Statistics stats;
-	while (input = fetch_query_targets(*query_list, *next_query), !input.targets.empty()) {
-		for (uint32_t i = input.last_query_block_id; i < input.query_block_id; ++i)
-			OutputSink::get().push(i, nullptr);
-		extend_query(input, *db2block_id, *cfg, stats);
+	try {
+		QueryList input;
+		Statistics stats;
+		while (input = fetch_query_targets(*query_list, *next_query), !input.targets.empty()) {
+			for (uint32_t i = input.last_query_block_id; i < input.query_block_id; ++i)
+				OutputSink::get().push(i, nullptr);
+			extend_query(input, *db2block_id, *cfg, stats);
+		}
+		statistics += stats;
 	}
-	statistics += stats;
+	catch (std::exception& e) {
+		exit_with_error(e);
+	}
 }
 
 void extend(SequenceFile& db, TempFile& merged_query_list, BitVector& ranking_db_filter, Search::Config& cfg, Consumer& master_out) {
 	task_timer timer("Loading reference sequences");
 	InputFile query_list(merged_query_list);
 	db.set_seqinfo_ptr(0);
-	cfg.target.reset(db.load_seqs(SIZE_MAX, true, &ranking_db_filter, true));
+	cfg.target.reset(db.load_seqs(SIZE_MAX, false, &ranking_db_filter, true));
 	TargetMap db2block_id;
 	const size_t db_count = cfg.target->seqs().get_length();
 	db2block_id.reserve(db_count);

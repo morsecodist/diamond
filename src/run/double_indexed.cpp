@@ -234,7 +234,7 @@ void run_query_chunk(unsigned query_chunk,
 		Extension::memory = new Extension::Memory(query_ids.get_length());
 	db_file.set_seqinfo_ptr(0);
 	bool mp_last_chunk = false;
-	const bool lazy_masking = config.algo == ::Config::Algo::QUERY_INDEXED && (config.masking == 1 || config.target_seg == 1);
+	const bool lazy_masking = config.algo == ::Config::Algo::QUERY_INDEXED && (config.masking == 1 || config.target_seg == 1) && (config.global_ranking_targets == 0);
 
 	log_rss();
 

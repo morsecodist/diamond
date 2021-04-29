@@ -63,7 +63,7 @@ size_t chunk_size_multiplier(const FlatArray<SeedHit>& seed_hits, int query_len)
 }
 
 static size_t lazy_masking(const vector<uint32_t>& target_block_ids, Block& targets) {
-	if (config.algo != Config::Algo::QUERY_INDEXED || (config.target_seg == 0 && config.masking == 0))
+	if (config.algo != Config::Algo::QUERY_INDEXED || (config.target_seg == 0 && config.masking == 0) || config.global_ranking_targets > 0)
 		return 0;
 	vector<Letter> seq;
 	const Masking& masking = Masking::get();
