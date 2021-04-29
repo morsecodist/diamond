@@ -148,6 +148,29 @@ static void load_mmap() {
 	message_stream << "Throughput: " << (double)l / (1 << 20) / timer.milliseconds() * 1000 << " MB/s" << endl;
 }
 
+static void load_mmap_mt() {
+	task_timer timer("Opening the database");
+	SequenceFile* db = SequenceFile::auto_create(SequenceFile::Flags::NONE);
+	timer.finish();
+	message_stream << "Type: " << to_string(db->type()) << endl;
+	size_t n = db->sequence_count();
+	std::atomic_size_t i = 0;
+	vector<std::thread> threads;
+	for (size_t j = 0; j < config.threads_; ++j)
+		threads.emplace_back([&i, n, db] {
+		size_t k, l = 0;
+		vector<Letter> v;
+		while ((k = i++) < n) {
+			db->seq_data(k, v);
+			l += v.size();
+		}
+			});
+
+	for (auto& t : threads)
+		t.join();
+	message_stream << "Throughput: " << (double)db->letters() / (1 << 20) / timer.milliseconds() * 1000 << " MB/s" << endl;
+}
+
 void load_blast_seqid() {
 	const size_t N = 100000;
 	task_timer timer("Opening the database");
@@ -195,6 +218,8 @@ void benchmark_io() {
 		load_raw();
 	else if (config.type == "mmap")
 		load_mmap();
+	else if (config.type == "mmap_mt")
+		load_mmap_mt();
 	else if (config.type == "blast_seqid")
 		load_blast_seqid();
 	else if (config.type == "blast_seqid_lin")
