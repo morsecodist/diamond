@@ -98,6 +98,7 @@ void search_shape(unsigned sid, unsigned query_block, char *query_buffer, char *
 		SeedArray *ref_idx;
 		if (query_seeds_hashed.get())
 			ref_idx = new SeedArray(ref_seqs, sid, ref_hst.get(sid), range, ref_hst.partition(), ref_buffer, query_seeds_hashed.get(), true);
+			//ref_idx = new SeedArray(ref_seqs, sid, range, query_seeds_hashed.get(), true);
 		else
 			ref_idx = new SeedArray(ref_seqs, sid, ref_hst.get(sid), range, ref_hst.partition(), ref_buffer, &no_filter, target_seeds);
 
