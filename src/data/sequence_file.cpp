@@ -120,7 +120,7 @@ Block* SequenceFile::load_seqs(const size_t max_letters, bool load_ids, const Bi
 	if (fetch_seqs) {
 		block->seqs_.finish_reserve();
 		if (load_ids) block->ids_.finish_reserve();
-		if (type_ == Type::BLAST && config.algo == Config::Algo::QUERY_INDEXED && config.threads_ > 1 && !use_filter) {
+		if (false && type_ == Type::BLAST && config.algo == Config::Algo::QUERY_INDEXED && config.threads_ > 1 && !use_filter) {
 			assert(!use_filter);
 			partition<size_t> p(filtered_seq_count, config.threads_);
 			vector<std::thread> t;
