@@ -83,7 +83,7 @@ string best_id(const list<CRef<CSeq_id>>& ids) {
 }
 
 BlastDB::BlastDB(const std::string& file_name, Metadata metadata, Flags flags) :
-	SequenceFile(Type::BLAST),
+	SequenceFile(Type::BLAST, Alphabet::NCBI),
 	file_name_(file_name),	
 	db_(new CSeqDBExpert(file_name, CSeqDB::eProtein)),
 	oid_(0),
@@ -147,20 +147,7 @@ void BlastDB::read_seq_data(Letter* dst, size_t len, size_t& pos, bool seek)
 	*(dst + len) = Sequence::DELIMITER;
 	const char* buf;
 	const int db_len = db_->GetSequence((int)pos, &buf);
-	if (size_t(db_len) != len)
-		throw std::runtime_error("Incorrect length");
-	
-	for (int i = 0; i < db_len; ++i) {
-		const char l = buf[i];
-		if ((size_t)l >= sizeof(NCBI_TO_STD) || NCBI_TO_STD[(int)l] < 0) {
-			list<CRef<CSeq_id>> ids = db_->GetSeqIDs(pos);
-			throw std::runtime_error("Unrecognized sequence character in BLAST database ("
-				+ std::to_string((int)l)
-				+ ", id=" + ids.front()->GetSeqIdString()
-				+ ", pos=" + std::to_string(i) + ')');
-		}
-		*(dst++) = NCBI_TO_STD[(int)l];
-	}
+	std::copy(buf, buf + len, dst);
 	++pos;
 	db_->RetSequence(&buf);
 }

@@ -60,7 +60,7 @@ struct Seed_set_callback
 	vector<bool> *data;
 };
 
-Seed_set::Seed_set(const SequenceSet &seqs, double max_coverage):
+Seed_set::Seed_set(SequenceSet &seqs, double max_coverage):
 	data_((size_t)pow(1llu<<Reduction::reduction.bit_size(), shapes[0].length_))
 {
 	if (!shapes[0].contiguous())
@@ -86,7 +86,7 @@ struct Hashed_seed_set_callback
 	PtrVector<HashSet<Modulo2, Identity> > &dst;
 };
 
-HashedSeedSet::HashedSeedSet(const SequenceSet &seqs)
+HashedSeedSet::HashedSeedSet(SequenceSet &seqs)
 {
 	for (size_t i = 0; i < shapes.count(); ++i)
 		data_.push_back(new Table(next_power_of_2(seqs.letters() * HASH_TABLE_FACTOR)));

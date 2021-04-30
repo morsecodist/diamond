@@ -101,7 +101,7 @@ struct BuildCallback
 };
 
 template<typename _filter>
-SeedArray::SeedArray(const SequenceSet &seqs, size_t shape, const shape_histogram &hst, const SeedPartitionRange &range, const vector<size_t> &seq_partition, char *buffer, const _filter *filter, bool hashed_seeds) :
+SeedArray::SeedArray(SequenceSet &seqs, size_t shape, const shape_histogram &hst, const SeedPartitionRange &range, const vector<size_t> &seq_partition, char *buffer, const _filter *filter, bool hashed_seeds) :
 	key_bits(hashed_seeds ? sizeof(Entry::Key) * 8 : ceil(shapes[0].weight_ * Reduction::reduction.bit_size_exact()) - Const::seedp_bits),
 	data_((Entry*)buffer)
 {
@@ -116,9 +116,9 @@ SeedArray::SeedArray(const SequenceSet &seqs, size_t shape, const shape_histogra
 	enum_seeds(&seqs, cb, seq_partition, shape, shape + 1, filter, hashed_seeds);
 }
 
-template SeedArray::SeedArray(const SequenceSet &, size_t, const shape_histogram &, const SeedPartitionRange &, const vector<size_t>&, char *buffer, const No_filter *, bool);
-template SeedArray::SeedArray(const SequenceSet &, size_t, const shape_histogram &, const SeedPartitionRange &, const vector<size_t>&, char *buffer, const Seed_set *, bool);
-template SeedArray::SeedArray(const SequenceSet &, size_t, const shape_histogram &, const SeedPartitionRange &, const vector<size_t>&, char *buffer, const HashedSeedSet *, bool);
+template SeedArray::SeedArray(SequenceSet &, size_t, const shape_histogram &, const SeedPartitionRange &, const vector<size_t>&, char *buffer, const No_filter *, bool);
+template SeedArray::SeedArray(SequenceSet &, size_t, const shape_histogram &, const SeedPartitionRange &, const vector<size_t>&, char *buffer, const Seed_set *, bool);
+template SeedArray::SeedArray(SequenceSet &, size_t, const shape_histogram &, const SeedPartitionRange &, const vector<size_t>&, char *buffer, const HashedSeedSet *, bool);
 
 struct BufferedWriter2
 {
@@ -177,7 +177,7 @@ struct BuildCallback2
 };
 
 template<typename _filter>
-SeedArray::SeedArray(const SequenceSet& seqs, size_t shape, const SeedPartitionRange& range, const _filter* filter, bool hashed_seeds) :
+SeedArray::SeedArray(SequenceSet& seqs, size_t shape, const SeedPartitionRange& range, const _filter* filter, bool hashed_seeds) :
 	key_bits(hashed_seeds ? sizeof(Entry::Key) * 8 : ceil(shapes[0].weight_ * Reduction::reduction.bit_size_exact()) - Const::seedp_bits),
 	data_(nullptr)
 {
@@ -200,4 +200,4 @@ SeedArray::SeedArray(const SequenceSet& seqs, size_t shape, const SeedPartitionR
 	}
 }
 
-template SeedArray::SeedArray(const SequenceSet&, size_t, const SeedPartitionRange&, const HashedSeedSet*, bool);
+template SeedArray::SeedArray(SequenceSet&, size_t, const SeedPartitionRange&, const HashedSeedSet*, bool);

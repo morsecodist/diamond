@@ -30,7 +30,7 @@ struct Block {
 
 	typedef String_set<char, '\0'> IdSet;
 
-	Block();
+	Block(Alphabet alphabet);
 	Block(std::list<TextInputFile>::iterator file_begin,
 		std::list<TextInputFile>::iterator file_end,
 		const Sequence_file_format& format,
@@ -43,6 +43,7 @@ struct Block {
 	TranslatedSequence translated(size_t block_id) const;
 	bool long_offsets() const;
 	bool empty() const;
+	void convert_to_std_alph(size_t i);
 	SequenceSet& seqs() {
 		return seqs_;
 	}
@@ -71,6 +72,9 @@ struct Block {
 	}
 	size_t block_id2oid(size_t i) const {
 		return block2oid_[i];
+	}
+	Alphabet alphabet() const {
+		return seqs_.alphabet();
 	}
 	bool fetch_seq_if_unmasked(size_t block_id, std::vector<Letter>& seq);
 	void write_masked_seq(size_t block_id, const std::vector<Letter>& seq);

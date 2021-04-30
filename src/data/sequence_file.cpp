@@ -67,7 +67,7 @@ Block* SequenceFile::load_seqs(const size_t max_letters, bool load_ids, const Bi
 	size_t database_id = tell_seq();
 	size_t letters = 0, seqs = 0, id_letters = 0, seqs_processed = 0, filtered_seq_count = 0;
 	vector<uint64_t> filtered_pos;
-	Block* block = new Block();
+	Block* block = new Block(alphabet_);
 	
 	SeqInfo r = read_seqinfo();
 	size_t offset = r.pos;
@@ -240,8 +240,9 @@ size_t SequenceFile::total_blocks() const {
 	return (this->letters() + c - 1) / c;
 }
 
-SequenceFile::SequenceFile(Type type):
-	type_(type)
+SequenceFile::SequenceFile(Type type, Alphabet alphabet):
+	type_(type),
+	alphabet_(alphabet)
 {}
 
 void db_info() {

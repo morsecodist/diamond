@@ -119,7 +119,7 @@ void DatabaseFile::init(Flags flags)
 }
 
 DatabaseFile::DatabaseFile(const string &input_file, Metadata metadata, Flags flags):
-	SequenceFile(SequenceFile::Type::DMND),
+	SequenceFile(SequenceFile::Type::DMND, Alphabet::STD),
 	InputFile(auto_append_extension_if_exists(input_file, FILE_EXTENSION), InputFile::BUFFERED),
 	temporary(false)
 {
@@ -143,7 +143,7 @@ DatabaseFile::DatabaseFile(const string &input_file, Metadata metadata, Flags fl
 }
 
 DatabaseFile::DatabaseFile(TempFile &tmp_file):
-	SequenceFile(SequenceFile::Type::DMND),
+	SequenceFile(SequenceFile::Type::DMND, Alphabet::STD),
 	InputFile(tmp_file, 0),
 	temporary(true)
 {

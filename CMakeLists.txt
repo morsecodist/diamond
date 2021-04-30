@@ -267,6 +267,7 @@ set(OBJECTS
   src/tools/find_shapes.cpp
   src/data/block.cpp
   src/run/config.cpp
+  src/data/sequence_set.cpp
 )
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")

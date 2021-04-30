@@ -81,7 +81,7 @@ void search_shape(unsigned sid, unsigned query_block, char *query_buffer, char *
 	::partition<unsigned> p(Const::seedp, config.lowmem);
 	DoubleArray<SeedArray::_pos> query_seed_hits[Const::seedp], ref_seed_hits[Const::seedp];
 	log_rss();
-	const SequenceSet& ref_seqs = cfg.target->seqs(), query_seqs = cfg.query->seqs();
+	SequenceSet& ref_seqs = cfg.target->seqs(), query_seqs = cfg.query->seqs();
 	const Partitioned_histogram& ref_hst = cfg.target->hst(), query_hst = cfg.query->hst();
 
 	for (unsigned chunk = 0; chunk < p.parts; ++chunk) {

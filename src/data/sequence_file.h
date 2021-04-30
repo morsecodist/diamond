@@ -71,7 +71,7 @@ struct SequenceFile {
 		FULL_SEQIDS            = 0x4
 	};
 
-	SequenceFile(Type type);
+	SequenceFile(Type type, Alphabet alphabet);
 
 	virtual void init_seqinfo_access() = 0;
 	virtual void init_seq_access() = 0;
@@ -130,7 +130,8 @@ private:
 
 	void load_block(size_t block_id_begin, size_t block_id_end, size_t pos, bool use_filter, const vector<uint64_t>* filtered_pos, bool load_ids, Block* block);
 
-	Type type_;
+	const Type type_;
+	const Alphabet alphabet_;
 
 };
 

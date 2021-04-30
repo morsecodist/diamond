@@ -87,7 +87,7 @@ struct Partitioned_histogram
 	Partitioned_histogram();
 	
 	template<typename _filter>
-	Partitioned_histogram(const SequenceSet &seqs, bool serial, const _filter *filter, bool hashed_seeds) :
+	Partitioned_histogram(SequenceSet &seqs, bool serial, const _filter *filter, bool hashed_seeds) :
 		data_(shapes.count()),
 		p_(seqs.partition(config.threads_))
 	{

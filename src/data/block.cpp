@@ -29,11 +29,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 using std::mutex;
 using std::lock_guard;
 
-Block::Block() {
+Block::Block(Alphabet alphabet):
+	seqs_(alphabet),
+	source_seqs_(Alphabet::STD),
+	unmasked_seqs_(alphabet)
+{
 }
 
 bool Block::empty() const {
 	return seqs_.get_length() == 0;
+}
+
+void Block::convert_to_std_alph(size_t block_id)
+{
+	throw std::runtime_error("");
 }
 
 unsigned Block::source_len(unsigned block_id) const
@@ -87,7 +96,10 @@ Block::Block(std::list<TextInputFile>::iterator file_begin,
 	const Value_traits& value_traits,
 	bool with_quals,
 	bool lazy_masking,
-	size_t modulo)
+	size_t modulo):
+	seqs_(Alphabet::STD),
+	source_seqs_(Alphabet::STD),
+	unmasked_seqs_(Alphabet::STD)
 {
 	size_t letters = 0, n = 0;
 	vector<Letter> seq;
