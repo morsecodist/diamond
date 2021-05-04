@@ -28,6 +28,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../data/reference.h"
 #include "../util/io/input_stream_buffer.h"
 #include "../data/blastdb/blastdb.h"
+#include "../util/data_structures/deque.h"
+#define _REENTRANT
+#include "../lib/ips4o/ips4o.hpp"
 
 using std::vector;
 using std::string;
@@ -209,6 +212,22 @@ void load_blast_seqid_lin() {
 	message_stream << n << endl;
 }
 
+static void sort() {
+	typedef uint64_t T;
+	typedef vector<T> Container;
+	const size_t SIZE = 1 * GIGABYTES;
+	const size_t N = SIZE / sizeof(T);
+	task_timer timer("Generating data");
+	Container v;
+	v.reserve(N);
+	std::default_random_engine generator;
+	std::uniform_int_distribution<T> r(0, std::numeric_limits<T>::max());
+	for (size_t i = 0; i < N; ++i)
+		v.push_back(r(generator));
+	timer.go("Sorting");
+	ips4o::parallel::sort(v.begin(), v.end(), std::less<T>(), config.threads_);
+}
+
 void benchmark_io() {
 	if (config.type == "seedhit")
 		seed_hit_files();
@@ -224,4 +243,6 @@ void benchmark_io() {
 		load_blast_seqid();
 	else if (config.type == "blast_seqid_lin")
 		load_blast_seqid_lin();
+	else if (config.type == "ips4o")
+		sort();
 }
