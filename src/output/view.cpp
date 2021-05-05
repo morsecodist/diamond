@@ -43,7 +43,7 @@ struct View_writer
 	{ }
 	void operator()(TextBuffer &buf)
 	{
-		f_->write(buf.get_begin(), buf.size());
+		f_->write(buf.data(), buf.size());
 		buf.clear();
 	}
 	~View_writer()

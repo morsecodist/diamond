@@ -27,12 +27,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../dp/ungapped.h"
 #include "../basic/shape_config.h"
 #include "../basic/statistics.h"
-#include "trace_pt_buffer.h"
 #include "../util/algo/pattern_matcher.h"
 #include "../util/scores/cutoff_table.h"
 #include "finger_print.h"
 #include "../util/memory/alignment.h"
 #include "../run/workflow.h"
+#include "../util/async_buffer.h"
+#include "hit.h"
 
 // #define UNGAPPED_SPOUGE
 
@@ -96,7 +97,7 @@ struct WorkSet {
 	const Search::Config& cfg;
 	unsigned shape_id;
 	Statistics stats;
-	Trace_pt_buffer::Iterator out;
+	AsyncBuffer<Hit>::Iterator out;
 #ifndef __APPLE__
 	std::vector<FingerPrint, Util::Memory::AlignmentAllocator<FingerPrint, 16>> vq, vs;
 #endif

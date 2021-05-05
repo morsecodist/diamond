@@ -38,6 +38,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../util/string/string.h"
 #include "../util/system/system.h"
 #include "../data/dmnd/dmnd.h"
+#include "../search/hit.h"
+#include "../util/async_buffer.h"
 
 using std::endl;
 using std::string;

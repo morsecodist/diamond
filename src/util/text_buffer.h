@@ -65,7 +65,7 @@ struct TextBuffer
 	operator char*() const
 	{ return ptr_; }
 
-	char* get_begin() const
+	char* data() const
 	{ return data_; }
 
 	void clear()

@@ -24,13 +24,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../util/io/output_file.h"
 #include "../util/io/input_file.h"
 #include "../util/log_stream.h"
-#include "../search/trace_pt_buffer.h"
 #include "../data/reference.h"
 #include "../util/io/input_stream_buffer.h"
 #include "../data/blastdb/blastdb.h"
 #include "../util/data_structures/deque.h"
 #define _REENTRANT
 #include "../lib/ips4o/ips4o.hpp"
+#include "../search/hit.h"
 
 using std::vector;
 using std::string;
@@ -75,12 +75,12 @@ static void seed_hit_files() {
 		delete[] buf;
 	}
 	else {
-		vector<hit> out;
+		vector<Search::Hit> out;
 		out.reserve(total_count);
 		auto it = std::back_inserter(out);
 		size_t count = 0;
 		try {
-			while (true) count += hit::read(in, it, false);
+			//while (true) count += Search::Hit::read(in, it, { false });
 		}
 		catch (EndOfStream&) {}
 		message_stream << "Read " << count << " hits." << endl;

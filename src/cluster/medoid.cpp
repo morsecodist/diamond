@@ -30,6 +30,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../run/workflow.h"
 #include "../basic/statistics.h"
 #include "../util/sequence/sequence.h"
+#include "../search/hit.h"
+#include "../util/async_buffer.h"
 
 using std::string;
 using std::endl;

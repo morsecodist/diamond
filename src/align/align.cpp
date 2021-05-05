@@ -41,7 +41,7 @@ DpStat dp_stat;
 
 struct Align_fetcher
 {
-	static void init(size_t qbegin, size_t qend, hit* begin, hit* end)
+	static void init(size_t qbegin, size_t qend, Search::Hit* begin, Search::Hit* end)
 	{
 		it_ = begin;
 		end_ = end;
@@ -68,16 +68,16 @@ struct Align_fetcher
 			queue_->release();
 	}
 	size_t query;
-	hit* begin, *end;
+	Search::Hit* begin, *end;
 	bool target_parallel;
 private:	
-	static hit* it_, *end_;
+	static Search::Hit* it_, *end_;
 	static unique_ptr<Queue> queue_;
 };
 
 unique_ptr<Queue> Align_fetcher::queue_;
-hit* Align_fetcher::it_;
-hit* Align_fetcher::end_;
+Search::Hit* Align_fetcher::it_;
+Search::Hit* Align_fetcher::end_;
 
 TextBuffer* legacy_pipeline(Align_fetcher &hits, const Search::Config& cfg, Statistics &stat) {
 	if (hits.end == hits.begin) {
@@ -149,7 +149,7 @@ void align_worker(size_t thread_id, const Search::Config* cfg)
 	}
 }
 
-void align_queries(Trace_pt_buffer &trace_pts, Consumer* output_file, const Search::Config& cfg)
+void align_queries(Consumer* output_file, const Search::Config& cfg)
 {
 	size_t max_size = std::min(size_t(config.chunk_size*1e9 * 10 * 2) / config.lowmem / 3, config.trace_pt_fetch_size);
 	if (config.memory_limit != 0.0)
@@ -165,23 +165,23 @@ void align_queries(Trace_pt_buffer &trace_pts, Consumer* output_file, const Sear
 	if (!blocked_processing)
 		cfg.db->init_random_access();
 	
-	trace_pts.load(max_size, cfg.target->long_offsets());
+	cfg.seed_hit_buf->load(max_size);
 
 	while (true) {
 		timer.go("Loading trace points");				
-		tuple<vector<hit>*, size_t, size_t> input = trace_pts.retrieve();
+		tuple<vector<Search::Hit>*, size_t, size_t> input = cfg.seed_hit_buf->retrieve();
 		if (get<0>(input) == nullptr)
 			break;
 		statistics.inc(Statistics::TIME_LOAD_SEED_HITS, timer.microseconds());
-		vector<hit>* hit_buf = get<0>(input);
+		vector<Search::Hit>* hit_buf = get<0>(input);
 		query_range = { get<1>(input), get<2>(input) };
-		trace_pts.load(max_size, cfg.target->long_offsets());
+		cfg.seed_hit_buf->load(max_size);
 
 		timer.go("Sorting trace points");
 #if _MSC_FULL_VER == 191627042
 		radix_sort<hit, hit::Query>(hit_buf->data(), hit_buf->data() + hit_buf->size(), (uint32_t)query_range.second * align_mode.query_contexts, config.threads_);
 #else
-		ips4o::parallel::sort(hit_buf->data(), hit_buf->data() + hit_buf->size(), std::less<hit>(), config.threads_);
+		ips4o::parallel::sort(hit_buf->data(), hit_buf->data() + hit_buf->size(), std::less<Search::Hit>(), config.threads_);
 #endif
 		statistics.inc(Statistics::TIME_SORT_SEED_HITS, timer.microseconds());
 
@@ -203,7 +203,7 @@ void align_queries(Trace_pt_buffer &trace_pts, Consumer* output_file, const Sear
 		timer.go("Deallocating buffers");
 		delete hit_buf;
 	}
-	statistics.max(Statistics::SEARCH_TEMP_SPACE, trace_pts.total_disk_size());
+	statistics.max(Statistics::SEARCH_TEMP_SPACE, cfg.seed_hit_buf->total_disk_size());
 	for (auto i : Extension::target_matrices)
 		delete[] i;
 	Extension::target_matrices.clear();

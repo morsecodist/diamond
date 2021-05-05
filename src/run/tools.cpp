@@ -187,7 +187,7 @@ void read_sim()
 				buf << nucleotide_traits.alphabet[rand() % 4];
 		}
 		buf << '\n';
-		out.write(buf.get_begin(), buf.size());
+		out.write(buf.data(), buf.size());
 		buf.clear();
 	}
 	out.close();
@@ -301,7 +301,7 @@ void reverse() {
 		Sequence(seq).print(buf, amino_acid_traits, Sequence::Reversed());
 		buf << '\n';
 		buf << '\0';
-		cout << buf.get_begin();
+		cout << buf.data();
 		buf.clear();
 	}
 	in.close();

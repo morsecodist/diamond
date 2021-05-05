@@ -110,9 +110,10 @@ void run_ref_chunk(SequenceFile &db_file,
 	}
 
 	timer.go("Initializing temporary storage");
-	Trace_pt_buffer::instance = new Trace_pt_buffer(query_seqs.get_length() / align_mode.query_contexts,
+	cfg.seed_hit_buf.reset(new AsyncBuffer<Search::Hit>(query_seqs.get_length() / align_mode.query_contexts,
 		config.tmpdir,
-		config.query_bins);
+		config.query_bins,
+		{ cfg.target->long_offsets() }));
 
 	if (!config.swipe_all) {
 		timer.go("Building reference histograms");
@@ -163,8 +164,8 @@ void run_ref_chunk(SequenceFile &db_file,
 	}
 
 	timer.go("Computing alignments");
-	align_queries(*Trace_pt_buffer::instance, out, cfg);
-	delete Trace_pt_buffer::instance;
+	align_queries(out, cfg);
+	cfg.seed_hit_buf.reset();
 
 	if (blocked_processing)
 		IntermediateRecord::finish_file(*out);

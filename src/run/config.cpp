@@ -3,6 +3,8 @@
 #include "../data/block.h"
 #include "../data/taxonomy_nodes.h"
 #include "../data/sequence_file.h"
+#include "../search/hit.h"
+#include "../util/async_buffer.h"
 
 namespace Search {
 

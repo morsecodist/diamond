@@ -19,23 +19,25 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ****/
 
 #include "target.h"
+#include "../search/hit.h"
+#include "../data/sequence_set.h"
 
 namespace Extension {
 
-void load_hits(hit* begin, hit* end, FlatArray<SeedHit> &hits, vector<uint32_t> &target_block_ids, vector<TargetScore> &target_scores, unsigned query_len, const SequenceSet& ref_seqs) {
+void load_hits(Search::Hit* begin, Search::Hit* end, FlatArray<SeedHit> &hits, vector<uint32_t> &target_block_ids, vector<TargetScore> &target_scores, unsigned query_len, const SequenceSet& ref_seqs) {
 	hits.clear();
 	hits.reserve(end - begin);
 	target_block_ids.clear();
 	target_scores.clear();
 	if (begin >= end)
 		return;
-	std::sort(begin, end, hit::CmpSubject());
+	std::sort(begin, end, Search::Hit::CmpSubject());
 	const size_t total_subjects = ref_seqs.get_length();
 	unsigned target_len;
 	uint32_t target = UINT32_MAX;
 	uint16_t score = 0;
 	if (std::log2(total_subjects) * (end - begin) < total_subjects / 10) {
-		for (hit* i = begin; i < end; ++i) {
+		for (Search::Hit* i = begin; i < end; ++i) {
 			std::pair<size_t, size_t> l = ref_seqs.local_position((uint64_t)i->subject_);
 			const uint32_t t = (uint32_t)l.first;
 			if (t != target) {
@@ -58,7 +60,7 @@ void load_hits(hit* begin, hit* end, FlatArray<SeedHit> &hits, vector<uint32_t> 
 	}
 	else {
 		typename vector<size_t>::const_iterator limit_begin = ref_seqs.limits_begin(), it = limit_begin;
-		for (const hit* i = begin; i < end; ++i) {
+		for (const Search::Hit* i = begin; i < end; ++i) {
 			const size_t subject_offset = (uint64_t)i->subject_;
 			while (*it <= subject_offset) ++it;
 			uint32_t t = (uint32_t)(it - limit_begin) - 1;

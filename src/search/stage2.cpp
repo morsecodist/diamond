@@ -66,11 +66,8 @@ static void search_query_offset(uint64_t q,
 	FlatArray<uint32_t>::ConstIterator hits_end,
 	WorkSet& work_set)
 {
-	thread_local TextBuffer output_buf;
-
 	constexpr auto N = vector<Stage1_hit>::const_iterator::difference_type(::DISPATCH_ARCH::SIMD::Vector<int8_t>::CHANNELS);
 	const SequenceSet& ref_seqs = work_set.cfg.target->seqs(), &query_seqs = work_set.cfg.query->seqs();
-	const bool long_subject_offsets = work_set.cfg.target->long_offsets();
 	const Letter* query = query_seqs.data(q);
 
 	const Letter* subjects[N];
@@ -81,13 +78,14 @@ static void search_query_offset(uint64_t q,
 	std::pair<size_t, size_t> l = query_seqs.local_position(q);
 	query_id = (unsigned)l.first;
 	seed_offset = (unsigned)l.second;
+	const unsigned source_query_id = query_id / align_mode.query_contexts;
 	const int query_len = query_seqs.length(query_id);
 	const int score_cutoff = ungapped_cutoff(query_len, work_set.context);
 	const int window = ungapped_window(query_len);
 	const Sequence query_clipped = Util::Seq::clip(query - window, window * 2, window);
 	const int window_left = int(query - query_clipped.data()), window_clipped = (int)query_clipped.length();
 	const unsigned sid = work_set.shape_id;
-	size_t hit_count = 0, n = 0;
+	size_t n = 0;
 
 	const int interval_mod = config.left_most_interval > 0 ? seed_offset % config.left_most_interval : window_left, interval_overhang = std::max(window_left - interval_mod, 0);
 
@@ -108,28 +106,10 @@ static void search_query_offset(uint64_t q,
 				work_set.stats.inc(Statistics::TENTATIVE_MATCHES2);
 				if (left_most_filter(query_clipped + interval_overhang, subjects[j] + interval_overhang, window_left - interval_overhang, shapes[sid].length_, work_set.context, sid == 0, sid, score_cutoff)) {
 					work_set.stats.inc(Statistics::TENTATIVE_MATCHES3);
-					if (hit_count == 0) {
-						output_buf.clear();
-						output_buf.write_varint(query_id);
-						output_buf.write_varint(seed_offset);
-					}
-					if (long_subject_offsets)
-						output_buf.write_raw((const char*)&s[*(i + j)], 5);
-					else
-						output_buf.write(s[*(i + j)].low);
-					output_buf.write((uint16_t)scores[j]);
-					++hit_count;
+					work_set.out.push(source_query_id, { query_id, s[*(i + j)], seed_offset, (uint16_t)scores[j] });
 				}
 			}
 		}
-	}
-
-	if (hit_count > 0) {
-		if (long_subject_offsets)
-			output_buf.write(packed_uint40_t(0));
-		else
-			output_buf.write((uint32_t)0);
-		work_set.out.push(query_id / align_mode.query_contexts, output_buf.get_begin(), output_buf.size(), hit_count);
 	}
 }
 

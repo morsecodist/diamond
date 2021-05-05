@@ -43,7 +43,7 @@ void format(Sequence seq, const char *id, const char *qual, OutputFile &out, con
 	}
 	else
 		throw runtime_error("Invalid sequence file format");
-	out.write(buf.get_begin(), buf.size());
+	out.write(buf.data(), buf.size());
 	buf.clear();
 }
 

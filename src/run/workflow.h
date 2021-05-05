@@ -30,8 +30,11 @@ struct Consumer;
 struct TextInputFile;
 struct Block;
 struct TaxonomyNodes;
+template<typename T> struct AsyncBuffer;
 
 namespace Search {
+
+struct Hit;
 
 struct Config {
 
@@ -48,6 +51,7 @@ struct Config {
 	std::vector<std::string>* taxonomy_scientific_names;
 
 	std::unique_ptr<Block> query, target;
+	std::unique_ptr<AsyncBuffer<Hit>> seed_hit_buf;
 
 	uint64_t db_seqs, db_letters, ref_blocks;
 	Util::Scores::CutoffTable cutoff_gapped1, cutoff_gapped2;

@@ -29,7 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../data/seed_array.h"
 #include "../data/queries.h"
 #include "../data/frequent_seeds.h"
-#include "trace_pt_buffer.h"
 #include "../util/data_structures/double_array.h"
 #include "../util/system/system.h"
 
@@ -37,8 +36,6 @@ using std::vector;
 using std::atomic;
 using std::endl;
 using std::unique_ptr;
-
-Trace_pt_buffer* Trace_pt_buffer::instance;
 
 void seed_join_worker(
 	SeedArray *query_seeds,
@@ -65,9 +62,9 @@ void seed_join_worker(
 void search_worker(atomic<unsigned> *seedp, const SeedPartitionRange *seedp_range, unsigned shape, size_t thread_id, DoubleArray<SeedArray::_pos> *query_seed_hits, DoubleArray<SeedArray::_pos> *ref_seed_hits, const Search::Context *context, const Search::Config* cfg)
 {
 #ifdef __APPLE__
-	unique_ptr<Search::WorkSet> work_set(new Search::WorkSet{ *context, *cfg, shape, {},  {*Trace_pt_buffer::instance, thread_id}, {} });
+	unique_ptr<Search::WorkSet> work_set(new Search::WorkSet{ *context, *cfg, shape, {},  {*cfg->seed_hit_buf, thread_id}, {} });
 #else
-	unique_ptr<Search::WorkSet> work_set(new Search::WorkSet{ *context, *cfg, shape, {},  {*Trace_pt_buffer::instance, thread_id}, {}, {}, {} });
+	unique_ptr<Search::WorkSet> work_set(new Search::WorkSet{ *context, *cfg, shape, {},  {*cfg->seed_hit_buf, thread_id}, {}, {}, {} });
 #endif
 	unsigned p;
 	while ((p = (*seedp)++) < seedp_range->end())

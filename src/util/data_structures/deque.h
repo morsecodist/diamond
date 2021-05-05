@@ -22,8 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <list>
 #include <vector>
-#include <utility>
-#include <iterator>
 
 template<typename _t>
 struct Deque {

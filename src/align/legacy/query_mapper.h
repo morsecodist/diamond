@@ -25,7 +25,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <list>
 #include <set>
 #include <float.h>
-#include "../../search/trace_pt_buffer.h"
 #include "../../data/queries.h"
 #include "../../util/ptr_vector.h"
 #include "../../dp/dp.h"
@@ -33,6 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../../dp/hsp_traits.h"
 #include "../../basic/match.h"
 #include "../../run/workflow.h"
+#include "../search/hit.h"
 
 struct Seed_hit
 {
@@ -155,7 +155,7 @@ struct Target
 
 struct QueryMapper
 {
-	QueryMapper(size_t query_id, hit* begin, hit* end, const Search::Config &metadata, bool target_parallel = false);
+	QueryMapper(size_t query_id, Search::Hit* begin, Search::Hit* end, const Search::Config &metadata, bool target_parallel = false);
 	void init();
 	bool generate_output(TextBuffer &buffer, Statistics &stat);
 	void rank_targets(double ratio, double factor);
@@ -180,7 +180,7 @@ struct QueryMapper
 	virtual void run(Statistics &stat) = 0;
 	virtual ~QueryMapper() {}
 
-	pair<hit*, hit*> source_hits;
+	pair<Search::Hit*, Search::Hit*> source_hits;
 	unsigned query_id, targets_finished, next_target;
 	unsigned source_query_len, unaligned_from;
 	PtrVector<Target> targets;
@@ -192,7 +192,7 @@ struct QueryMapper
 
 private:
 
-	static pair<hit*, hit*> get_query_data();
+	static pair<Search::Hit*, Search::Hit*> get_query_data();
 	unsigned count_targets();
 	Sequence query_source_seq() const
 	{

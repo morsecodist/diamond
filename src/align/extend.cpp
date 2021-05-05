@@ -34,6 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../util/util.h"
 #include "global_ranking/global_ranking.h"
 #include "../basic/masking.h"
+#include "../search/hit.h"
 
 using std::vector;
 using std::list;
@@ -231,7 +232,7 @@ vector<Match> extend(
 	return matches;
 }
 
-vector<Match> extend(size_t query_id, hit* begin, hit* end, const Search::Config &cfg, Statistics &stat, int flags) {	
+vector<Match> extend(size_t query_id, Search::Hit* begin, Search::Hit* end, const Search::Config &cfg, Statistics &stat, int flags) {
 	task_timer timer(flags & DP::PARALLEL ? config.target_parallel_verbosity : UINT_MAX);
 	timer.go("Loading seed hits");
 	thread_local FlatArray<SeedHit> seed_hits;

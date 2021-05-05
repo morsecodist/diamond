@@ -110,7 +110,7 @@ struct JoinWriter
 	{}
 	void operator()(TextBuffer& buf)
 	{
-		f_.consume(buf.get_begin(), buf.size());
+		f_.consume(buf.data(), buf.size());
 		buf.clear();
 	}
 	Consumer &f_;

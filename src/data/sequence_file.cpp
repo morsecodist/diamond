@@ -191,7 +191,7 @@ void SequenceFile::get_seq()
 			else
 				buf << Sequence(seq) << '\n';
 		}
-		out.write(buf.get_begin(), buf.size());
+		out.write(buf.data(), buf.size());
 		letters += seq.size();
 		if (letters >= max_letters)
 			break;

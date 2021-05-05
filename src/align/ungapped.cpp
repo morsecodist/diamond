@@ -48,6 +48,40 @@ std::vector<int16_t*> target_matrices;
 std::mutex target_matrices_lock;
 atomic<size_t> target_matrix_count(0);
 
+WorkTarget::WorkTarget(size_t block_id, const Sequence& seq, int query_len, const Stats::Composition& query_comp, const int16_t** query_matrix) :
+	block_id(block_id),
+	seq(seq)
+{
+	ungapped_score.fill(0);
+	if (config.comp_based_stats == Stats::CBS::HAUSER_AND_AVG_MATRIX_ADJUST) {
+		const int l = (int)seq.length();
+		const auto c = Stats::composition(seq);
+		auto r = Stats::s_TestToApplyREAdjustmentConditional(query_len, l, query_comp.data(), c.data(), score_matrix.background_freqs());
+		if (r == Stats::eCompoScaleOldMatrix)
+			return;
+		if (*query_matrix == nullptr) {
+			*query_matrix = Stats::make_16bit_matrix(Stats::CompositionMatrixAdjust(query_len, query_len, query_comp.data(), query_comp.data(), Stats::CBS::AVG_MATRIX_SCALE, score_matrix.ideal_lambda(), score_matrix.joint_probs(), score_matrix.background_freqs()));
+			++target_matrix_count;
+		}
+		if (target_matrices[block_id] == nullptr) {
+			int16_t* target_matrix = Stats::make_16bit_matrix(Stats::CompositionMatrixAdjust(l, l, c.data(), c.data(), Stats::CBS::AVG_MATRIX_SCALE, score_matrix.ideal_lambda(), score_matrix.joint_probs(), score_matrix.background_freqs()));
+			bool del = false;
+			{
+				std::lock_guard<std::mutex> lock(target_matrices_lock);
+				if (target_matrices[block_id] == nullptr)
+					target_matrices[block_id] = target_matrix;
+				else del = true;
+			}
+			if (del)
+				delete[] target_matrix;
+			++target_matrix_count;
+		}
+		matrix = Stats::TargetMatrix(*query_matrix, target_matrices[block_id]);
+	}
+	else
+		matrix = Stats::TargetMatrix(query_comp, query_len, seq);
+}
+
 WorkTarget ungapped_stage(FlatArray<SeedHit>::Iterator begin, FlatArray<SeedHit>::Iterator end, const Sequence *query_seq, const Bias_correction *query_cb, const Stats::Composition& query_comp, const int16_t** query_matrix, uint32_t block_id, Statistics& stat, const Block& targets) {
 	array<vector<Diagonal_segment>, MAX_CONTEXT> diagonal_segments;
 	task_timer timer;

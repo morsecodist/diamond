@@ -127,7 +127,8 @@ template SeedArray::SeedArray(SequenceSet &, size_t, const shape_histogram &, co
 struct BufferedWriter2
 {
 	static const unsigned BUFFER_SIZE = 16;
-	BufferedWriter2()
+	BufferedWriter2():
+		out(Const::seedp, {config.deque_bucket_size})
 	{
 		memset(n, 0, sizeof(n));
 	}
@@ -152,7 +153,7 @@ struct BufferedWriter2
 			if (n[p] > 0)
 				flush(p);
 	}
-	Deque<SeedArray::Entry> out[Const::seedp];
+	vector<Deque<SeedArray::Entry>> out;
 	SeedArray::Entry buf[Const::seedp][BUFFER_SIZE];
 	uint8_t n[Const::seedp];
 };

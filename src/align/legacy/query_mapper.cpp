@@ -75,7 +75,7 @@ bool Target::is_outranked(const vector<int32_t> &v, double treshold) {
 	return true;
 }
 
-QueryMapper::QueryMapper(size_t query_id, hit* begin, hit* end, const Search::Config &metadata, bool target_parallel) :
+QueryMapper::QueryMapper(size_t query_id, Search::Hit* begin, Search::Hit* end, const Search::Config &metadata, bool target_parallel) :
 	source_hits(std::make_pair(begin, end)),
 	query_id((unsigned)query_id),
 	targets_finished(0),
@@ -103,9 +103,9 @@ void QueryMapper::init()
 
 unsigned QueryMapper::count_targets()
 {
-	std::sort(source_hits.first, source_hits.second, hit::CmpSubject());
+	std::sort(source_hits.first, source_hits.second, Search::Hit::CmpSubject());
 	const size_t n = source_hits.second - source_hits.first;
-	const hit* hits = source_hits.first;
+	const Search::Hit* hits = source_hits.first;
 	size_t subject_id = std::numeric_limits<size_t>::max();
 	unsigned n_subject = 0;
 	for (size_t i = 0; i < n; ++i) {
