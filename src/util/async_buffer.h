@@ -36,6 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "io/input_stream_buffer.h"
 #include "text_buffer.h"
 #include "io/serialize.h"
+#include "data_structures/writer.h"
 
 template<typename T>
 struct AsyncBuffer
@@ -73,7 +74,7 @@ struct AsyncBuffer
 		return std::min((bin + 1)*bin_size_, input_count_);
 	}
 
-	struct Iterator
+	struct Iterator : public Writer<T>
 	{
 		Iterator(AsyncBuffer &parent, size_t thread_num) :
 			buffer_(parent.bins()),
@@ -86,14 +87,15 @@ struct AsyncBuffer
 				out_.push_back(&parent.tmp_file_[i]);
 			}
 		}
-		void push(unsigned id, const T& x)
+		virtual Iterator& operator=(const T& x) override
 		{
-			const unsigned bin = id / parent_.bin_size_;
+			const unsigned bin = ser_.front().traits.key(x) / parent_.bin_size_;
 			assert(bin < parent_.bins());
 			ser_[bin] << x;
 			++count_[bin];
 			if (buffer_[bin].size() >= buffer_size)
 				flush(bin);
+			return *this;
 		}
 		void flush(unsigned bin)
 		{

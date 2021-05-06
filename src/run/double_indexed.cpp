@@ -113,7 +113,7 @@ void run_ref_chunk(SequenceFile &db_file,
 	cfg.seed_hit_buf.reset(new AsyncBuffer<Search::Hit>(query_seqs.get_length() / align_mode.query_contexts,
 		config.tmpdir,
 		config.query_bins,
-		{ cfg.target->long_offsets() }));
+		{ cfg.target->long_offsets(), align_mode.query_contexts }));
 
 	if (!config.swipe_all) {
 		timer.go("Building reference histograms");

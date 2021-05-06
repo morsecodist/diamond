@@ -22,14 +22,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 #include <limits>
+#include <array>
 #include "../basic/seed.h"
 #include "sequence_set.h"
 #include "../basic/shape_config.h"
 #include "../basic/seed_iterator.h"
-#include "../util/data_structures/array.h"
 #include "enum_seeds.h"
 
-typedef vector<Array<unsigned, Const::seedp>> shape_histogram;
+typedef std::vector<std::array<unsigned, Const::seedp>> shape_histogram;
 
 struct SeedPartitionRange
 {
@@ -91,8 +91,11 @@ struct Partitioned_histogram
 		data_(shapes.count()),
 		p_(seqs.partition(config.threads_))
 	{
-		for (unsigned s = 0; s < shapes.count(); ++s)
+		for (unsigned s = 0; s < shapes.count(); ++s) {
 			data_[s].resize(p_.size() - 1);
+			for (std::array<unsigned, Const::seedp>& h : data_[s])
+				h.fill(0);
+		}
 		PtrVector<Callback> cb;
 		for (size_t i = 0; i < p_.size() - 1; ++i)
 			cb.push_back(new Callback(i, data_));
@@ -120,7 +123,7 @@ private:
 		Callback(size_t seqp, vector<shape_histogram> &data)
 		{
 			for (unsigned s = 0; s < shapes.count(); ++s)
-				ptr.push_back(data[s][seqp].begin());
+				ptr.push_back(data[s][seqp].data());
 		}
 		bool operator()(uint64_t seed, uint64_t pos, size_t shape)
 		{

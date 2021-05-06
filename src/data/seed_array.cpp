@@ -28,7 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 using std::array;
 
-typedef vector<Array<SeedArray::Entry*, Const::seedp>> PtrSet;
+typedef vector<array<SeedArray::Entry*, Const::seedp>> PtrSet;
 
 char* SeedArray::alloc_buffer(const Partitioned_histogram &hst)
 {
@@ -116,7 +116,7 @@ SeedArray::SeedArray(SequenceSet &seqs, size_t shape, const shape_histogram &hst
 	PtrSet iterators(build_iterators(*this, hst));
 	PtrVector<BuildCallback> cb;
 	for (size_t i = 0; i < seq_partition.size() - 1; ++i)
-		cb.push_back(new BuildCallback(range, iterators[i].begin()));
+		cb.push_back(new BuildCallback(range, iterators[i].data()));
 	enum_seeds(&seqs, cb, seq_partition, shape, shape + 1, filter, hashed_seeds);
 }
 

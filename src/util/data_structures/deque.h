@@ -22,35 +22,43 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <list>
 #include <vector>
+#include "../parallel/mutex.h"
+#include "writer.h"
 
-template<typename _t>
+template<typename T, typename Sync = ::Sync>
 struct Deque {
 
-	typedef std::vector<_t> Bucket;
+	typedef std::vector<T> Bucket;
 
 	Deque(size_t bucket_size = 4 * (1llu << 30)) :
-		max_size_(bucket_size / sizeof(_t))
+		max_size_(bucket_size / sizeof(T))
 	{
-		buckets.emplace_back();
-		buckets.back().reserve(max_size_);
+		new_bucket();
 	}
 
 	void reserve(size_t n) {}
 
-	void push_back(const _t& x) {
+	void push_back(const T& x) {
 		if (buckets.back().size() >= max_size_) {
-			buckets.emplace_back();
-			buckets.back().reserve(max_size_);
+			new_bucket();
 		}
 		buckets.back().push_back(x);
 	}
 
-	void push_back(const _t* ptr, size_t n) {
+	void push_back(const T* ptr, size_t n) {
 		if (buckets.back().size() + n > max_size_) {
-			buckets.emplace_back();
-			buckets.back().reserve(max_size_);
+			new_bucket();
 		}
 		buckets.back().insert(buckets.back().end(), ptr, ptr + n);
+	}
+
+	template<typename It>
+	void push_back(It begin, It end) {
+		mtx_.lock();
+		if (buckets.back().size() + (end - begin) > max_size_)
+			new_bucket();
+		buckets.back().insert(buckets.back().end(), begin, end);
+		mtx_.unlock();
 	}
 
 	size_t size() const {
@@ -60,7 +68,7 @@ struct Deque {
 		return n;
 	}
 
-	void move(std::vector<_t>& dst) {
+	void move(std::vector<T>& dst) {
 		if (buckets.size() == 1 && dst.empty())
 			dst = std::move(buckets.front());
 		else {
@@ -76,21 +84,21 @@ struct Deque {
 
 		Iterator() {}
 
-		Iterator(size_t i, _t** data) :
+		Iterator(size_t i, T** data) :
 			i_(i),
 			data_(data)
 		{
 		}
 
-		_t& operator*() {
+		T& operator*() {
 			return data_[i_ >> 29][i_ & (0x20000000 - 1)];
 		}
 
-		_t& operator*() const {
+		T& operator*() const {
 			return data_[i_ >> 29][i_ & (0x20000000 - 1)];
 		}
 
-		_t& operator[](ptrdiff_t i) {
+		T& operator[](ptrdiff_t i) {
 			ptrdiff_t j = i_ + i;
 			return data_[j >> 29][j & (0x20000000 - 1)];
 		}
@@ -159,7 +167,7 @@ struct Deque {
 	private:
 
 		ptrdiff_t i_;
-		_t** data_;
+		T** data_;
 
 	};
 
@@ -184,10 +192,16 @@ private:
 		}
 	}
 
+	void new_bucket() {
+		buckets.emplace_back();
+		buckets.back().reserve(max_size_);
+	}
+
 	std::list<Bucket> buckets;
-	std::vector<_t*> data_;
+	std::vector<T*> data_;
 	const size_t max_size_;
 	size_t total_;
+	Mutex<Sync> mtx_;
 
 };
 
@@ -199,3 +213,28 @@ namespace std {
 		typedef std::random_access_iterator_tag iterator_category;
 	};
 }
+
+template<typename T>
+struct AsyncWriter : public Writer<T> {
+
+	AsyncWriter(Deque<T, Async>& dst):
+		dst_(&dst)
+	{}
+
+	virtual AsyncWriter& operator=(const T& v) override {
+		buf_->push_back(v);
+		if (buf_->size() >= BUF_SIZE) {
+			dst_->push_back(buf_.begin(), buf_.end());
+			buf_.clear();
+		}
+		return *this;
+	}
+
+private:
+
+	static const size_t BUF_SIZE = 4096;
+
+	Deque<T, Async>* dst_;
+	std::vector<T> buf_;
+
+};

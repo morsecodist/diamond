@@ -78,7 +78,6 @@ static void search_query_offset(uint64_t q,
 	std::pair<size_t, size_t> l = query_seqs.local_position(q);
 	query_id = (unsigned)l.first;
 	seed_offset = (unsigned)l.second;
-	const unsigned source_query_id = query_id / align_mode.query_contexts;
 	const int query_len = query_seqs.length(query_id);
 	const int score_cutoff = ungapped_cutoff(query_len, work_set.context);
 	const int window = ungapped_window(query_len);
@@ -106,7 +105,7 @@ static void search_query_offset(uint64_t q,
 				work_set.stats.inc(Statistics::TENTATIVE_MATCHES2);
 				if (left_most_filter(query_clipped + interval_overhang, subjects[j] + interval_overhang, window_left - interval_overhang, shapes[sid].length_, work_set.context, sid == 0, sid, score_cutoff)) {
 					work_set.stats.inc(Statistics::TENTATIVE_MATCHES3);
-					work_set.out.push(source_query_id, { query_id, s[*(i + j)], seed_offset, (uint16_t)scores[j] });
+					*work_set.out = { query_id, s[*(i + j)], seed_offset, (uint16_t)scores[j] };
 				}
 			}
 		}

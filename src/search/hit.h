@@ -124,13 +124,23 @@ struct Hit
 }
 
 template<> struct SerializerTraits<Search::Hit> {
-	bool long_subject_offsets;
+	SerializerTraits(bool long_subject_offsets, uint32_t query_contexts):
+		long_subject_offsets(long_subject_offsets),
+		key{ query_contexts }
+	{}
+	const bool long_subject_offsets;
+	const struct Key {
+		uint32_t operator()(const Search::Hit& hit) const {
+			return hit.query_ / query_contexts;
+		}
+		const uint32_t query_contexts;
+	} key;
 };
 
 template<> struct TypeSerializer<Search::Hit> {
 
 	TypeSerializer(TextBuffer& buf, const SerializerTraits<Search::Hit>& traits):
-		traits_(traits),
+		traits(traits),
 		buf_(&buf),
 		current_query_(UINT32_MAX)
 	{}
@@ -142,7 +152,7 @@ template<> struct TypeSerializer<Search::Hit> {
 			buf_->write_varint(hit.seed_offset_);
 		}
 		buf_->write((uint16_t)hit.score_);
-		if (traits_.long_subject_offsets)
+		if (traits.long_subject_offsets)
 			buf_->write_raw((const char*)&hit.subject_, 5);
 		else
 			buf_->write(hit.subject_.low);
@@ -150,10 +160,10 @@ template<> struct TypeSerializer<Search::Hit> {
 		return *this;
 	}
 
+	const SerializerTraits<Search::Hit> traits;
 
 private:
 
-	const SerializerTraits<Search::Hit> traits_;
 	TextBuffer* buf_;
 	uint32_t current_query_;
 
