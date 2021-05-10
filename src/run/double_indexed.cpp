@@ -50,6 +50,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../util/system/system.h"
 #include "../align/target.h"
 #include "../data/seed_set.h"
+#include "../util/data_structures/deque.h"
+#include "../align/global_ranking/global_ranking.h"
+#include "../align/align.h"
 
 using std::unique_ptr;
 using std::endl;
@@ -110,10 +113,13 @@ void run_ref_chunk(SequenceFile &db_file,
 	}
 
 	timer.go("Initializing temporary storage");
-	cfg.seed_hit_buf.reset(new AsyncBuffer<Search::Hit>(query_seqs.get_length() / align_mode.query_contexts,
-		config.tmpdir,
-		config.query_bins,
-		{ cfg.target->long_offsets(), align_mode.query_contexts }));
+	if (config.global_ranking_targets)
+		cfg.global_ranking_buffer.reset(new Deque<Search::Hit, Async>());
+	else
+		cfg.seed_hit_buf.reset(new AsyncBuffer<Search::Hit>(query_seqs.get_length() / align_mode.query_contexts,
+			config.tmpdir,
+			config.query_bins,
+			{ cfg.target->long_offsets(), align_mode.query_contexts }));
 
 	if (!config.swipe_all) {
 		timer.go("Building reference histograms");
@@ -163,9 +169,16 @@ void run_ref_chunk(SequenceFile &db_file,
 		mask_seqs(ref_seqs, Masking::get(), true, Masking::Algo::SEG);
 	}
 
-	timer.go("Computing alignments");
-	align_queries(out, cfg);
-	cfg.seed_hit_buf.reset();
+	if (config.global_ranking_targets) {
+		timer.go("Updating ranking table");
+		Extension::GlobalRanking::update_table(cfg);
+		cfg.global_ranking_buffer.reset();
+	}
+	else {
+		timer.go("Computing alignments");
+		align_queries(out, cfg);
+		cfg.seed_hit_buf.reset();
+	}	
 
 	if (blocked_processing)
 		IntermediateRecord::finish_file(*out);

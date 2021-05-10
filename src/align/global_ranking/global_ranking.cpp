@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../data/queries.h"
 #include "../util/sequence/sequence.h"
 #include "../../dp/ungapped.h"
+#include "../../util/util.h"
 
 using std::mutex;
 using std::vector;

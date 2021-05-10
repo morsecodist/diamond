@@ -32,8 +32,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "finger_print.h"
 #include "../util/memory/alignment.h"
 #include "../run/workflow.h"
-#include "../util/async_buffer.h"
 #include "hit.h"
+#include "../util/data_structures/writer.h"
 
 // #define UNGAPPED_SPOUGE
 
@@ -97,7 +97,7 @@ struct WorkSet {
 	const Search::Config& cfg;
 	unsigned shape_id;
 	Statistics stats;
-	AsyncBuffer<Hit>::Iterator out;
+	Writer<Hit>* out;
 #ifndef __APPLE__
 	std::vector<FingerPrint, Util::Memory::AlignmentAllocator<FingerPrint, 16>> vq, vs;
 #endif

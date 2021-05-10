@@ -44,5 +44,18 @@ size_t write_merged_query_list_intro(uint32_t query_id, TextBuffer& buf);
 void finish_merged_query_list(TextBuffer& buf, size_t seek_pos);
 void extend(SequenceFile& db, TempFile& merged_query_list, BitVector& ranking_db_filter, Search::Config& cfg, Consumer& master_out);
 QueryList fetch_query_targets(InputFile& query_list, uint32_t& next_query);
+void update_table(Search::Config& cfg);
+
+struct Hit {
+	Hit(uint32_t oid, uint16_t score):
+		oid(oid),
+		score(score)
+	{}
+	uint32_t oid;
+	uint16_t score;
+	bool operator<(const Hit& x) const {
+		return score > x.score || (score == x.score && oid < x.oid);
+	}
+};
 
 }}

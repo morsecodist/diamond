@@ -31,6 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../data/ref_dictionary.h"
 #include "../util/log_stream.h"
 #include "../align/global_ranking/global_ranking.h"
+#include "../util/task_queue.h"
 
 using namespace std;
 

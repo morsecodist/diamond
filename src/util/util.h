@@ -1,6 +1,6 @@
 /****
 DIAMOND protein aligner
-Copyright (C) 2013-2020 Max Planck Society for the Advancement of Science e.V.
+Copyright (C) 2013-2021 Max Planck Society for the Advancement of Science e.V.
                         Benjamin Buchfink
                         Eberhard Karls Universitaet Tuebingen
 						
@@ -32,8 +32,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdint.h>
 #include <set>
 #include <random>
+#include <mutex>
 #include "simd.h"
 #include "../basic/const.h"
+#include "text_buffer.h"
 
 template<typename _t=size_t>
 struct partition
@@ -125,14 +127,6 @@ struct Pair
 	_t2 second;
 };
 
-inline size_t find_first_of(const char *s, const char *delimiters)
-{
-	const char *t = s;
-	while(*t && strchr(delimiters, *t) == 0)
-		++t;
-	return t-s;
-}
-
 inline std::string blast_id(const std::string &title)
 {
 	return title.substr(0, find_first_of(title.c_str(), Const::id_delimiters));
@@ -186,37 +180,6 @@ inline int abs_diff(unsigned x, unsigned y)
 {
 	return abs((int)x - int(y));
 }
-
-template<typename _t, int _n>
-struct Static_vector
-{
-	Static_vector():
-		n(0)
-	{}
-	_t& operator[](int i)
-	{
-		return data[i];
-	}
-	const _t& operator[](int i) const
-	{
-		return data[i];
-	}
-	int size() const
-	{
-		return n;
-	}
-	void push_back(const _t &x)
-	{
-		data[n++] = x;
-	}
-	void erase(int i)
-	{
-		memmove(&data[i], &data[i + 1], (--n - i)*sizeof(_t));
-	}
-private:
-	_t data[_n];
-	int n;
-};
 
 template<typename _t>
 inline void assign_ptr(_t& dst, _t *src)
@@ -483,4 +446,73 @@ std::vector<std::pair<_t1, _t2>> combine(const std::vector<_t1> &v1, const std::
 	for (size_t i = 0; i < v1.size(); ++i)
 		r.emplace_back(v1[i], v2[i]);
 	return r;
+}
+
+template<typename It, typename Key>
+struct AsyncKeyMerger {
+	AsyncKeyMerger(It begin, It end, const Key& key) :
+		it_(begin),
+		end_(end),
+		key_(key)
+	{}
+	std::pair<It, It> operator++() {
+		std::lock_guard<std::mutex> lock(mtx_);
+		if (it_ == end_)
+			return { end_, end_ };
+		It begin = it_++;
+		auto key = key_(*begin);
+		while (it_ != end_ && key_(*it_) == key) ++it_;
+		return { begin, it_ };
+	}
+private:
+	It it_;
+	const It end_;
+	const Key key_;
+	std::mutex mtx_;
+};
+
+template<typename It, typename Key>
+struct KeyMergeIterator {
+	typedef typename std::result_of<Key(const typename It::value_type&)>::type KeyType;
+	KeyMergeIterator(const It& begin, const It& end, const Key& key) :
+		end_(end),
+		key_end_(begin),
+		get_key_(key),
+		next_key_(key(*begin))
+	{
+		assert(begin != end);
+		this->operator++();
+	}
+	void operator++()
+	{
+		begin_ = key_end_;
+		key_ = next_key_;
+		++key_end_;
+		while (key_end_ != end_ && (next_key_ = get_key_(*key_end_)) == key_) ++key_end_;
+	}
+	bool good() const
+	{
+		return begin_ != end_;
+	}
+	It& begin()
+	{
+		return begin_;
+	}
+	It& end()
+	{
+		return key_end_;
+	}
+	KeyType key() const {
+		return key_;
+	}
+private:
+	const It end_;
+	It begin_, key_end_;
+	const Key get_key_;
+	KeyType key_, next_key_;
+};
+
+template<typename It, typename Key>
+KeyMergeIterator<It, Key> inline merge_keys(const It& begin, const It& end, const Key& key) {
+	return KeyMergeIterator<It, Key>(begin, end, key);
 }

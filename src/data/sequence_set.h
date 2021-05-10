@@ -73,3 +73,6 @@ private:
 	Alphabet alphabet_;
 
 };
+
+size_t max_id_len(const String_set<char, 0>& ids);
+std::vector<std::string> seq_titles(const char* title);

@@ -5,6 +5,8 @@
 #include "../data/sequence_file.h"
 #include "../search/hit.h"
 #include "../util/async_buffer.h"
+#include "../search/hit.h"
+#include "../util/data_structures/deque.h"
 
 namespace Search {
 

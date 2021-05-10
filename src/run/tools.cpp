@@ -36,6 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../basic/packed_transcript.h"
 #include "../data/reference.h"
 #include "../data/dmnd/dmnd.h"
+#include "../util/util.h"
 
 using namespace std;
 using std::chrono::high_resolution_clock;

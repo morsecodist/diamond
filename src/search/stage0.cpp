@@ -31,11 +31,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../data/frequent_seeds.h"
 #include "../util/data_structures/double_array.h"
 #include "../util/system/system.h"
+#include "../util/data_structures/deque.h"
+#include "../util/util.h"
 
 using std::vector;
 using std::atomic;
 using std::endl;
 using std::unique_ptr;
+using Search::Hit;
 
 void seed_join_worker(
 	SeedArray *query_seeds,
@@ -61,10 +64,15 @@ void seed_join_worker(
 
 void search_worker(atomic<unsigned> *seedp, const SeedPartitionRange *seedp_range, unsigned shape, size_t thread_id, DoubleArray<SeedArray::_pos> *query_seed_hits, DoubleArray<SeedArray::_pos> *ref_seed_hits, const Search::Context *context, const Search::Config* cfg)
 {
+	unique_ptr<Writer<Hit>> writer;
+	if (config.global_ranking_targets)
+		writer.reset(new AsyncWriter<Hit>(*cfg->global_ranking_buffer));
+	else
+		writer.reset(new AsyncBuffer<Hit>::Iterator(*cfg->seed_hit_buf, thread_id));
 #ifdef __APPLE__
-	unique_ptr<Search::WorkSet> work_set(new Search::WorkSet{ *context, *cfg, shape, {},  {*cfg->seed_hit_buf, thread_id}, {} });
+	unique_ptr<Search::WorkSet> work_set(new Search::WorkSet{ *context, *cfg, shape, {}, writer.get(), {} });
 #else
-	unique_ptr<Search::WorkSet> work_set(new Search::WorkSet{ *context, *cfg, shape, {},  {*cfg->seed_hit_buf, thread_id}, {}, {}, {} });
+	unique_ptr<Search::WorkSet> work_set(new Search::WorkSet{ *context, *cfg, shape, {}, writer.get(), {}, {}, {} });
 #endif
 	unsigned p;
 	while ((p = (*seedp)++) < seedp_range->end())

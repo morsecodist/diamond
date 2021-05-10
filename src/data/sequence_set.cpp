@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ****/
 
 #include "sequence_set.h"
+#include "../util/util.h"
 
 SequenceSet::SequenceSet(Alphabet alphabet) :
 	alphabet_(alphabet)
@@ -109,4 +110,17 @@ void SequenceSet::convert_to_std_alph(size_t id)
 		}
 		ptr[i] = NCBI_TO_STD[(int)l];
 	}
+}
+
+size_t max_id_len(const String_set<char, 0>& ids)
+{
+	size_t max(0);
+	for (size_t i = 0; i < ids.get_length(); ++i)
+		max = std::max(max, find_first_of(ids[i], Const::id_delimiters));
+	return max;
+}
+
+vector<string> seq_titles(const char* title)
+{
+	return tokenize(title, "\1");
 }

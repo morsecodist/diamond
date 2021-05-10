@@ -32,6 +32,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../util/sequence/sequence.h"
 #include "../search/hit.h"
 #include "../util/async_buffer.h"
+#include "../search/hit.h"
+#include "../util/data_structures/deque.h"
 
 using std::string;
 using std::endl;

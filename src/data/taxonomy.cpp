@@ -30,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "reference.h"
 #include "../util/string/string.h"
 #include "../util/string/tokenizer.h"
+#include "../util/util.h"
 
 using std::string;
 using std::map;

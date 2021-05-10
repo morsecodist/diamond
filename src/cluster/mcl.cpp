@@ -21,6 +21,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <iomanip>
 #include "mcl.h"
 #include "sparse_matrix_stream.h"
+#include "../search/hit.h"
+#include "../util/data_structures/deque.h"
+#include "../util/util.h"
 
 #define MASK_INVERSE        0xC000000000000000
 #define MASK_NORMAL_NODE    0x4000000000000000

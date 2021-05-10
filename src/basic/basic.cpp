@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "statistics.h"
 #include "sequence.h"
 #include "masking.h"
+#include "../util/util.h"
 
 const char* Const::version_string = "2.0.9";
 const char* Const::program_name = "diamond";
@@ -225,4 +226,30 @@ void Statistics::print() const
 	verbose_stream << "Temporary disk space used (search): " << (double)data_[SEARCH_TEMP_SPACE] / (1 << 30) << " GB" << endl;
 	message_stream << "Reported " << data_[PAIRWISE] << " pairwise alignments, " << data_[MATCHES] << " HSPs." << endl;
 	message_stream << data_[ALIGNED] << " queries aligned." << endl;
+}
+
+Reduction::Reduction(const char* definition_string)
+{
+	memset(map_, 0, sizeof(map_));
+	memset(map8_, 0, sizeof(map8_));
+	memset(map8b_, 0, sizeof(map8b_));
+	map_[(long)MASK_LETTER] = MASK_LETTER;
+	map_[(long)STOP_LETTER] = MASK_LETTER;
+	const vector<string> tokens(tokenize(definition_string, " "));
+	size_ = (unsigned)tokens.size();
+	bit_size_exact_ = log(size_) / log(2);
+	bit_size_ = (uint64_t)ceil(bit_size_exact_);
+	for (unsigned i = 0; i < size_; ++i)
+		for (unsigned j = 0; j < tokens[i].length(); ++j) {
+			const char ch = tokens[i][j];
+			map_[(long)value_traits.from_char(ch)] = i;
+			map8_[(long)value_traits.from_char(ch)] = i;
+			map8b_[(long)value_traits.from_char(ch)] = i;
+		}
+	map8_[(long)MASK_LETTER] = (Letter)size_;
+	map8_[(long)STOP_LETTER] = (Letter)size_;
+	map8_[(long)DELIMITER_LETTER] = (Letter)size_;
+	map8b_[(long)MASK_LETTER] = (Letter)(size_ + 1);
+	map8b_[(long)STOP_LETTER] = (Letter)(size_ + 1);
+	map8b_[(long)DELIMITER_LETTER] = (Letter)(size_ + 1);
 }

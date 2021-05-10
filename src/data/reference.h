@@ -29,18 +29,5 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 extern unsigned current_ref_block;
 extern bool blocked_processing;
 
-inline size_t max_id_len(const String_set<char, 0>& ids)
-{
-	size_t max(0);
-	for (size_t i = 0; i < ids.get_length(); ++i)
-		max = std::max(max, find_first_of(ids[i], Const::id_delimiters));
-	return max;
-}
-
-inline vector<string> seq_titles(const char* title)
-{
-	return tokenize(title, "\1");
-}
-
 Chunk to_chunk(const string& line);
 string to_string(const Chunk& c);

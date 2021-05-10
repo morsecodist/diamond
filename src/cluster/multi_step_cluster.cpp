@@ -17,6 +17,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ****/
 
 #include "multi_step_cluster.h"
+#include "../search/hit.h"
+#include "../util/data_structures/deque.h"
+#include "../util/util.h"
 #include <unordered_map>
 
 using namespace std;

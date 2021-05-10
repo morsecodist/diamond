@@ -31,6 +31,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../stats/score_matrix.h"
 #include "../data/taxonomy.h"
 #include "daa_write.h"
+#include "../search/hit.h"
+#include "../util/data_structures/deque.h"
 
 using namespace std;
 

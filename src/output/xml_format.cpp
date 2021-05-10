@@ -2,6 +2,7 @@
 #include "output_format.h"
 #include "../util/escape_sequences.h"
 #include "../data/taxonomy.h"
+#include "../util/util.h"
 
 using std::endl;
 

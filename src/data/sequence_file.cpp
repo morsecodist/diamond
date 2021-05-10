@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "reference.h"
 #include "dmnd/dmnd.h"
 #include "../util/system/system.h"
+#include "../util/util.h"
 #ifdef WITH_BLASTDB
 #include "blastdb/blastdb.h"
 #endif

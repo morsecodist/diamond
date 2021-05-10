@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "output_format.h"
 #include "../data/taxonomy.h"
 #include "../data/queries.h"
+#include "../util/util.h"
 
 using namespace Output;
 using std::endl;

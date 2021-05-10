@@ -268,6 +268,8 @@ set(OBJECTS
   src/data/block.cpp
   src/run/config.cpp
   src/data/sequence_set.cpp
+  src/align/global_ranking/table.cpp
+  src/output/daa_write.cpp
 )
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")

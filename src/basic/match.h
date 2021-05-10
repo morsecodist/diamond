@@ -25,7 +25,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <limits>
 #include <list>
 #include "sequence.h"
-#include "../util/util.h"
 #include "../util/async_buffer.h"
 #include "packed_loc.h"
 #include "../util/system.h"

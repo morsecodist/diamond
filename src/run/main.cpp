@@ -25,6 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../output/recursive_parser.h"
 #include "../util/simd.h"
 #include "../data/dmnd/dmnd.h"
+#include "../search/hit.h"
+#include "../util/data_structures/deque.h"
 
 using std::cout;
 using std::cerr;

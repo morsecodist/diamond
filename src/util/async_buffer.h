@@ -102,7 +102,7 @@ struct AsyncBuffer
 			out_[bin]->write(buffer_[bin].data(), buffer_[bin].size());
 			buffer_[bin].clear();
 		}
-		~Iterator()
+		virtual ~Iterator()
 		{
 			for (unsigned bin = 0; bin < parent_.bins_; ++bin) {
 				flush(bin);

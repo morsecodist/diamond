@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <thread>
 #include <algorithm>
 #include "../../basic/config.h"
-#include "../util/util.h"
 
 template<typename _t>
 struct Relation

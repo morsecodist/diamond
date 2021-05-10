@@ -38,6 +38,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../taxonomy.h"
 #include "../util/system/system.h"
 #include "../util/algo/external_sort.h"
+#include "../../util/util.h"
 
 using std::tuple;
 using std::string;

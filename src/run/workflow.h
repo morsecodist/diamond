@@ -32,6 +32,9 @@ struct Block;
 struct TaxonomyNodes;
 template<typename T> struct AsyncBuffer;
 
+struct Async;
+template<typename T, typename Sync> struct Deque;
+
 namespace Search {
 
 struct Hit;
@@ -41,17 +44,18 @@ struct Config {
 	Config(bool dealloc);
 	void free();
 
-	const bool                dealloc;
-	bool                      self;
-	SequenceFile*             db;
-	Consumer*                 consumer;
-	std::list<TextInputFile>* query_file;
-	BitVector                 db_filter;
-	TaxonomyNodes*            taxon_nodes;
-	std::vector<std::string>* taxonomy_scientific_names;
+	const bool                                 dealloc;
+	bool                                       self;
+	SequenceFile*                              db;
+	Consumer*                                  consumer;
+	std::list<TextInputFile>*                  query_file;
+	BitVector                                  db_filter;
+	TaxonomyNodes*                             taxon_nodes;
+	std::vector<std::string>*                  taxonomy_scientific_names;
 
-	std::unique_ptr<Block> query, target;
-	std::unique_ptr<AsyncBuffer<Hit>> seed_hit_buf;
+	std::unique_ptr<Block>                     query, target;
+	std::unique_ptr<AsyncBuffer<Hit>>          seed_hit_buf;
+	std::unique_ptr<Deque<Search::Hit, Async>> global_ranking_buffer;
 
 	uint64_t db_seqs, db_letters, ref_blocks;
 	Util::Scores::CutoffTable cutoff_gapped1, cutoff_gapped2;

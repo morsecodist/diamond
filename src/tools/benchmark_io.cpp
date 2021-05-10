@@ -214,7 +214,7 @@ void load_blast_seqid_lin() {
 
 static void sort() {
 	typedef uint64_t T;
-	typedef vector<T> Container;
+	typedef Deque<T> Container;
 	const size_t SIZE = 1 * GIGABYTES;
 	const size_t N = SIZE / sizeof(T);
 	task_timer timer("Generating data");

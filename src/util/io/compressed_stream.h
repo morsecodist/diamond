@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <string>
 #include <zlib.h>
 #include "stream_entity.h"
-#include "../util.h"
 
 using std::string;
 

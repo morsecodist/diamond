@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "frequent_seeds.h"
 #include "queries.h"
 #include "../util/parallel/thread_pool.h"
+#include "../util/util.h"
 
 using std::endl;
 using std::atomic;
@@ -32,7 +33,7 @@ using std::atomic;
 const double Frequent_seeds::hash_table_factor = 1.3;
 Frequent_seeds frequent_seeds;
 
-void Frequent_seeds::compute_sd(atomic<unsigned> *seedp, DoubleArray<SeedArray::_pos> *query_seed_hits, DoubleArray<SeedArray::_pos> *ref_seed_hits, vector<Sd> *ref_out, vector<Sd> *query_out)
+static void compute_sd(atomic<unsigned> *seedp, DoubleArray<SeedArray::_pos> *query_seed_hits, DoubleArray<SeedArray::_pos> *ref_seed_hits, vector<Sd> *ref_out, vector<Sd> *query_out)
 {
 	unsigned p;
 	while ((p = (*seedp)++) < current_range.end()) {

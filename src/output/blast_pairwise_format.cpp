@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ****/
 
 #include "output_format.h"
+#include "../util/util.h"
 
 void Pairwise_format::print_match(const Hsp_context& r, const Search::Config& metadata, TextBuffer &out)
 {

@@ -50,9 +50,6 @@ private:
 		vector<unsigned> *counts,
 		Search::Config* cfg);
 
-	static void compute_sd(std::atomic<unsigned> *seedp, DoubleArray<SeedArray::_pos> *query_seed_hits, DoubleArray<SeedArray::_pos> *ref_seed_hits, vector<Sd> *ref_out, vector<Sd> *query_out);
-
 };
 
 extern Frequent_seeds frequent_seeds;
-

@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <list>
 #include <vector>
+#include <iterator>
 #include "../parallel/mutex.h"
 #include "writer.h"
 
@@ -80,7 +81,11 @@ struct Deque {
 
 	struct Iterator {
 
-		typedef ptrdiff_t difference_type;
+		using iterator_category = std::random_access_iterator_tag;
+		using difference_type = ptrdiff_t;
+		using value_type = T;
+		using pointer = T*;
+		using reference = T&;
 
 		Iterator() {}
 
@@ -92,6 +97,10 @@ struct Deque {
 
 		T& operator*() {
 			return data_[i_ >> 29][i_ & (0x20000000 - 1)];
+		}
+
+		T* operator->() {
+			return &data_[i_ >> 29][i_ & (0x20000000 - 1)];
 		}
 
 		T& operator*() const {
@@ -113,6 +122,10 @@ struct Deque {
 
 		Iterator operator+(ptrdiff_t i) const {
 			return Iterator(i_ + i, data_);
+		}
+
+		Iterator operator-(ptrdiff_t i) const {
+			return Iterator(i_ - i, data_);
 		}
 
 		Iterator& operator++() {
@@ -205,15 +218,6 @@ private:
 
 };
 
-namespace std {
-	template<>
-	struct iterator_traits<Deque<uint64_t>::Iterator> {
-		typedef ptrdiff_t difference_type;
-		typedef uint64_t value_type;
-		typedef std::random_access_iterator_tag iterator_category;
-	};
-}
-
 template<typename T>
 struct AsyncWriter : public Writer<T> {
 
@@ -222,12 +226,16 @@ struct AsyncWriter : public Writer<T> {
 	{}
 
 	virtual AsyncWriter& operator=(const T& v) override {
-		buf_->push_back(v);
-		if (buf_->size() >= BUF_SIZE) {
+		buf_.push_back(v);
+		if (buf_.size() >= BUF_SIZE) {
 			dst_->push_back(buf_.begin(), buf_.end());
 			buf_.clear();
 		}
 		return *this;
+	}
+
+	virtual ~AsyncWriter() {
+		dst_->push_back(buf_.begin(), buf_.end());
 	}
 
 private:

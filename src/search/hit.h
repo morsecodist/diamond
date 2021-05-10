@@ -1,6 +1,6 @@
 /****
 DIAMOND protein aligner
-Copyright (C) 2013-2020 Max Planck Society for the Advancement of Science e.V.
+Copyright (C) 2013-2021 Max Planck Society for the Advancement of Science e.V.
                         Benjamin Buchfink
                         Eberhard Karls Universitaet Tuebingen
 						
@@ -92,6 +92,12 @@ struct Hit
 			return h.query_;
 		}
 	};
+	struct SourceQuery {
+		unsigned operator()(const Hit& h) const {
+			return h.query_ / contexts;
+		}
+		const uint32_t contexts;
+	};
 	struct Subject {
 		uint64_t operator()(const Hit& h) const {
 			return h.subject_;
@@ -102,6 +108,11 @@ struct Hit
 		{
 			return lhs.subject_ < rhs.subject_
 				|| (lhs.subject_ == rhs.subject_ && lhs.seed_offset_ < rhs.seed_offset_);
+		}
+	};
+	struct CmpQueryTarget {
+		bool operator()(const Hit& x, const Hit& y) const {
+			return x.query_ < y.query_ || (x.query_ == y.query_ && x.subject_ < y.subject_);
 		}
 	};
 	static bool cmp_normalized_subject(const Hit &lhs, const Hit &rhs)
