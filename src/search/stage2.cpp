@@ -32,6 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "finger_print.h"
 #include "../util/text_buffer.h"
 #include "../util/memory/alignment.h"
+#include "../run/config.h"
 
 using std::vector;
 

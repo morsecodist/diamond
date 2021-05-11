@@ -31,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../util/scores/cutoff_table.h"
 #include "finger_print.h"
 #include "../util/memory/alignment.h"
-#include "../run/workflow.h"
+#include "../run/config.h"
 #include "hit.h"
 #include "../util/data_structures/writer.h"
 

@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../data/queries.h"
 #include "output.h"
 #include "../util/util.h"
+#include "../run/config.h"
 
 using namespace std;
 

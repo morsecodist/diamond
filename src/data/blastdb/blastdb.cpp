@@ -274,9 +274,9 @@ void BlastDB::reopen()
 		db_.reset(new CSeqDBExpert(file_name_, CSeqDB::eProtein));
 }
 
-BitVector BlastDB::filter_by_accession(const std::string& file_name)
+BitVector* BlastDB::filter_by_accession(const std::string& file_name)
 {
-	BitVector v(sequence_count());
+	BitVector* v = new BitVector(sequence_count());
 	TextInputFile in(file_name);
 	vector<string> accs;
 	while (in.getline(), (!in.line.empty() || !in.eof())) {
@@ -299,15 +299,15 @@ BitVector BlastDB::filter_by_accession(const std::string& file_name)
 			else
 				throw std::runtime_error("Accession not found in database: " + accs[i] + ". Use --skip-missing-seqids to ignore.");
 		else
-			v.set(oids[i]);
+			v->set(oids[i]);
 	}
 
 	return v;
 }
 
-BitVector BlastDB::filter_by_taxonomy(const std::string& include, const std::string& exclude, TaxonomyNodes& nodes)
+BitVector* BlastDB::filter_by_taxonomy(const std::string& include, const std::string& exclude, TaxonomyNodes& nodes)
 {
-	return BitVector();
+	return nullptr;
 }
 
 std::string BlastDB::file_name()

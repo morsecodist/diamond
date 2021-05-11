@@ -33,6 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../data/ref_dictionary.h"
 #include "../util/io/consumer.h"
 #include "output_format.h"
+#include "../run/config.h"
 
 inline unsigned get_length_flag(unsigned x)
 {

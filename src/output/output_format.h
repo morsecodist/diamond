@@ -33,7 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../util/io/consumer.h"
 #include "../output/recursive_parser.h"
 #include "../util/enum.h"
-#include "../run/workflow.h"
+#include "../run/config.h"
 
 namespace Output {
 

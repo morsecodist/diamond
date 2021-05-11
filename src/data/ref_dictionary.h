@@ -30,7 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../util/ptr_vector.h"
 #include "../util/io/output_file.h"
 #include "reference.h"
-#include "../run/workflow.h"
+#include "../run/config.h"
 
 struct ReferenceDictionary
 {

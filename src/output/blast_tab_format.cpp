@@ -30,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../data/taxonomy.h"
 #include "../data/queries.h"
 #include "../util/util.h"
+#include "../run/config.h"
 
 using namespace Output;
 using std::endl;

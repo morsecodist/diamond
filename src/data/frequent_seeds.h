@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "seed_array.h"
 #include "../util/algo/join_result.h"
 #include "../util/range.h"
-#include "../run/workflow.h"
+#include "../run/config.h"
 
 struct Frequent_seeds
 {

@@ -38,42 +38,35 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../util/string/string.h"
 #include "../util/system/system.h"
 #include "../data/dmnd/dmnd.h"
-#include "../search/hit.h"
-#include "../util/async_buffer.h"
-#include "../search/hit.h"
-#include "../util/data_structures/deque.h"
 
 using std::endl;
 using std::string;
 using std::vector;
 using std::cout;
 using std::list;
+using std::shared_ptr;
 
 namespace Test {
 
-size_t run_testcase(size_t i, DatabaseFile &db, list<TextInputFile> &query_file, size_t max_width, bool bootstrap, bool log, bool to_cout) {
+size_t run_testcase(size_t i, shared_ptr<DatabaseFile> &db, shared_ptr<list<TextInputFile>>& query_file, size_t max_width, bool bootstrap, bool log, bool to_cout) {
 	vector<string> args = tokenize(test_cases[i].command_line, " ");
 	args.emplace(args.begin(), "diamond");
 	if (log)
 		args.push_back("--log");
 	config = Config((int)args.size(), charp_array(args.begin(), args.end()).data(), false);
 	statistics.reset();
-	Search::Config opt(false);
-	opt.db = &db;
-	query_file.front().rewind();
-	opt.query_file = &query_file;
+	query_file->front().rewind();
 
 	if (to_cout) {
-		Search::run(opt);
+		Search::run(db, query_file);
 		return 0;
 	}
 	
-	TempFile output_file(!bootstrap);
-	opt.consumer = &output_file;
+	shared_ptr<TempFile> output_file(new TempFile(!bootstrap));
 
-	Search::run(opt);
+	Search::run(db, query_file, output_file);
 
-	InputFile out_in(output_file);
+	InputFile out_in(*output_file);
 	uint64_t hash = out_in.hash();
 
 	if (bootstrap)
@@ -101,14 +94,14 @@ int run() {
 	TempFile proteins;
 	for (size_t i = 0; i < seqs.size(); ++i)
 		Util::Seq::format(Sequence::from_string(seqs[i].second.c_str()), seqs[i].first.c_str(), nullptr, proteins, "fasta", amino_acid_traits);
-	list<TextInputFile> query_file;
-	query_file.emplace_back(proteins);
+	shared_ptr<list<TextInputFile>> query_file(new list<TextInputFile>);
+	query_file->emplace_back(proteins);
 	timer.finish();
 
 	config.command = Config::makedb;
 	TempFile *db_file;
-	DatabaseFile::make_db(&db_file, &query_file);
-	DatabaseFile db(*db_file);
+	DatabaseFile::make_db(&db_file, query_file.get());
+	shared_ptr<DatabaseFile> db(new DatabaseFile(*db_file));
 
 	const size_t n = test_cases.size(),
 		max_width = std::accumulate(test_cases.begin(), test_cases.end(), (size_t)0, [](size_t l, const TestCase& t) { return std::max(l, strlen(t.desc)); });
@@ -118,8 +111,8 @@ int run() {
 
 	cout << endl << "#Test cases passed: " << passed << '/' << n << endl; // << endl;
 	
-	query_file.front().close_and_delete();
-	db.close();
+	query_file->front().close_and_delete();
+	db->close();
 	delete db_file;
 	return passed == n ? 0 : 1;
 }

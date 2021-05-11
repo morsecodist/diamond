@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../basic/match.h"
 #include "../basic/statistics.h"
 #include "../util/text_buffer.h"
-#include "../run/workflow.h"
+#include "../run/config.h"
 
 namespace Extension {
 

@@ -1,6 +1,6 @@
 /****
 DIAMOND protein aligner
-Copyright (C) 2016-2020 Max Planck Society for the Advancement of Science e.V.
+Copyright (C) 2016-2021 Max Planck Society for the Advancement of Science e.V.
                         Benjamin Buchfink
 						
 Code developed by Benjamin Buchfink <benjamin.buchfink@tue.mpg.de>
@@ -20,49 +20,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ****/
 
 #pragma once
-#include <list>
 #include <memory>
-#include "../util/data_structures/bit_vector.h"
-#include "../util/scores/cutoff_table.h"
-
-struct SequenceFile;
-struct Consumer;
-struct TextInputFile;
-struct Block;
-struct TaxonomyNodes;
-template<typename T> struct AsyncBuffer;
-
-struct Async;
-template<typename T, typename Sync> struct Deque;
+#include "../data/sequence_file.h"
+#include "../util/io/text_input_file.h"
+#include "../util/io/consumer.h"
 
 namespace Search {
 
-struct Hit;
-
-struct Config {
-
-	Config(bool dealloc);
-	void free();
-
-	const bool                                 dealloc;
-	bool                                       self;
-	SequenceFile*                              db;
-	Consumer*                                  consumer;
-	std::list<TextInputFile>*                  query_file;
-	BitVector                                  db_filter;
-	TaxonomyNodes*                             taxon_nodes;
-	std::vector<std::string>*                  taxonomy_scientific_names;
-
-	std::unique_ptr<Block>                     query, target;
-	std::unique_ptr<AsyncBuffer<Hit>>          seed_hit_buf;
-	std::unique_ptr<Deque<Search::Hit, Async>> global_ranking_buffer;
-
-	uint64_t db_seqs, db_letters, ref_blocks;
-	Util::Scores::CutoffTable cutoff_gapped1, cutoff_gapped2;
-	Util::Scores::CutoffTable2D cutoff_gapped1_new, cutoff_gapped2_new;
-
-};
-
-void run(Config &options);
+void run(const std::shared_ptr<SequenceFile>& db = nullptr, const std::shared_ptr<std::list<TextInputFile>>& query = nullptr, const std::shared_ptr<Consumer>& out = nullptr, const std::shared_ptr<BitVector>& db_filter = nullptr);
 
 }

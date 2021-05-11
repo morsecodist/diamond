@@ -102,8 +102,8 @@ struct SequenceFile {
 	virtual void close() = 0;
 	virtual void close_weakly() = 0;
 	virtual void reopen() = 0;
-	virtual BitVector filter_by_accession(const std::string& file_name) = 0;
-	virtual BitVector filter_by_taxonomy(const std::string& include, const std::string& exclude, TaxonomyNodes& nodes) = 0;
+	virtual BitVector* filter_by_accession(const std::string& file_name) = 0;
+	virtual BitVector* filter_by_taxonomy(const std::string& include, const std::string& exclude, TaxonomyNodes& nodes) = 0;
 	virtual std::vector<unsigned> taxids(size_t oid) const = 0;
 	virtual const BitVector* builtin_filter() = 0;
 	virtual std::string file_name() = 0;

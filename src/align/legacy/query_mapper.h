@@ -31,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../../data/reference.h"
 #include "../../dp/hsp_traits.h"
 #include "../../basic/match.h"
-#include "../../run/workflow.h"
+#include "../../run/config.h"
 #include "../search/hit.h"
 
 struct Seed_hit

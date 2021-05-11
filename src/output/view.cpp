@@ -31,8 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../stats/score_matrix.h"
 #include "../data/taxonomy.h"
 #include "daa_write.h"
-#include "../search/hit.h"
-#include "../util/data_structures/deque.h"
+#include "../run/config.h"
 
 using namespace std;
 
@@ -141,7 +140,7 @@ void view()
 	message_stream << "DB sequences used = " << daa.db_seqs_used() << endl;
 	message_stream << "DB letters = " << daa.db_letters() << endl;
 
-	Search::Config cfg(false);
+	Search::Config cfg;
 	cfg.db_seqs = daa.db_seqs();
 	cfg.db_letters = daa.db_letters();
 
