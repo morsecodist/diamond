@@ -98,12 +98,12 @@ void extend(SequenceFile& db, TempFile& merged_query_list, BitVector& ranking_db
 	db.set_seqinfo_ptr(0);
 	cfg.target.reset(db.load_seqs(SIZE_MAX, false, &ranking_db_filter, true));
 	TargetMap db2block_id;
-	const size_t db_count = cfg.target->seqs().get_length();
+	const size_t db_count = cfg.target->seqs().size();
 	db2block_id.reserve(db_count);
 	for (size_t i = 0; i < db_count; ++i)
 		db2block_id[cfg.target->block_id2oid(i)] = i;
 	timer.finish();
-	verbose_stream << "#Ranked database sequences: " << cfg.target->seqs().get_length() << endl;
+	verbose_stream << "#Ranked database sequences: " << cfg.target->seqs().size() << endl;
 
 	if (config.masking == 1) {
 		timer.go("Masking reference");

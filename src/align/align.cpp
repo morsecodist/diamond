@@ -119,7 +119,7 @@ void align_worker(size_t thread_id, const Search::Config* cfg)
 		Align_fetcher hits;
 		Statistics stat;
 		DpStat dp_stat;
-		const bool parallel = config.swipe_all && (cfg->target->seqs().get_length() >= cfg->query->seqs().get_length());
+		const bool parallel = config.swipe_all && (cfg->target->seqs().size() >= cfg->query->seqs().size());
 		while (hits.get()) {
 			if (config.frame_shift != 0) {
 				TextBuffer* buf = legacy_pipeline(hits, *cfg, stat);
@@ -156,7 +156,7 @@ void align_queries(Consumer* output_file, const Search::Config& cfg)
 		max_size = std::max(max_size, size_t(config.memory_limit * 1e9));
 	pair<size_t, size_t> query_range;
 	if (Stats::CBS::avg_matrix(config.comp_based_stats)) {
-		Extension::target_matrices.insert(Extension::target_matrices.end(), cfg.target->seqs().get_length(), nullptr);
+		Extension::target_matrices.insert(Extension::target_matrices.end(), cfg.target->seqs().size(), nullptr);
 		Extension::target_matrix_count = 0;
 	}
 
@@ -192,7 +192,7 @@ void align_queries(Consumer* output_file, const Search::Config& cfg)
 		if (config.verbosity >= 3 && config.load_balancing == Config::query_parallel && !config.no_heartbeat && !config.swipe_all)
 			threads.emplace_back(heartbeat_worker, query_range.second, &cfg);
 		size_t n_threads = config.threads_align == 0 ? config.threads_ : config.threads_align;
-		if (config.load_balancing == Config::target_parallel || (config.swipe_all && (cfg.target->seqs().get_length() >= cfg.query->seqs().get_length())))
+		if (config.load_balancing == Config::target_parallel || (config.swipe_all && (cfg.target->seqs().size() >= cfg.query->seqs().size())))
 			n_threads = 1;
 		for (size_t i = 0; i < n_threads; ++i)
 			threads.emplace_back(align_worker, i, &cfg);

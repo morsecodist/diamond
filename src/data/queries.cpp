@@ -30,7 +30,7 @@ unique_ptr<HashedSeedSet> query_seeds_hashed;
 
 void write_unaligned(const Block& query, OutputFile *file)
 {
-	const size_t n = query.ids().get_length();
+	const size_t n = query.ids().size();
 	TextBuffer buf;
 	for (size_t i = 0; i < n; ++i) {
 		if (!query_aligned[i]) {
@@ -46,7 +46,7 @@ void write_unaligned(const Block& query, OutputFile *file)
 
 void write_aligned(const Block& query, OutputFile *file)
 {
-	const size_t n = query.ids().get_length();
+	const size_t n = query.ids().size();
 	TextBuffer buf;
 	for (size_t i = 0; i < n; ++i) {
 		if (query_aligned[i]) {

@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../../search/hit.h"
 #include "../../util/data_structures/deque.h"
 #include "../../util/util.h"
+#include "../../util/algo/algo.h"
 
 using std::endl;
 using std::thread;
@@ -31,8 +32,10 @@ using SeedHits = Deque<Search::Hit, Async>;
 
 namespace Extension { namespace GlobalRanking {
 
-static void update_query(SeedHits::Iterator begin, SeedHits::Iterator end, vector<Hit>& hits, Search::Config& cfg) {
+static void update_query(SeedHits::Iterator begin, SeedHits::Iterator end, vector<Hit>& hits, vector<Hit>& merged, std::atomic_size_t& merged_count, Search::Config& cfg) {
+	const size_t N = config.global_ranking_targets;
 	hits.clear();
+	merged.clear();
 	const SequenceSet& target_seqs = cfg.target->seqs();
 	auto get_target = [&target_seqs](const Search::Hit& hit) { return target_seqs.local_position((uint64_t)hit.subject_).first; };
 	auto it = merge_keys(begin, end, get_target);
@@ -44,6 +47,11 @@ static void update_query(SeedHits::Iterator begin, SeedHits::Iterator end, vecto
 		++it;
 	}
 	std::sort(hits.begin(), hits.end());
+	const size_t q = begin->query_;
+	vector<Hit>::iterator table_begin = cfg.ranking_table->begin() + q * N, table_end = table_begin + N;
+	while (table_end > table_begin && (table_end - 1)->score == 0) --table_end;
+	merged_count += Util::Algo::merge_capped(table_begin, table_end, hits.begin(), hits.end(), N, std::back_inserter(merged));
+	std::copy(merged.begin(), merged.end(), table_begin);
 }
 
 void update_table(Search::Config& cfg) {
@@ -53,13 +61,14 @@ void update_table(Search::Config& cfg) {
 	ips4o::parallel::sort(hits.begin(), hits.end(), Search::Hit::CmpQueryTarget(), config.threads_);
 	timer.go("Processing seed hits");
 	AsyncKeyMerger<SeedHits::Iterator, Search::Hit::SourceQuery> it(hits.begin(), hits.end(), { align_mode.query_contexts });
-	auto worker = [&it, &cfg] {
-		vector<Hit> hits;
+	std::atomic_size_t merged_count(0);
+	auto worker = [&it, &cfg, &merged_count] {
+		vector<Hit> hits, merged;
 		for (;;) {
 			auto r = ++it;
 			if (r.first == r.second)
 				return;
-			update_query(r.first, r.second, hits, cfg);
+			update_query(r.first, r.second, hits, merged, merged_count, cfg);
 		}
 	};
 	vector<thread> threads;
@@ -67,6 +76,8 @@ void update_table(Search::Config& cfg) {
 		threads.emplace_back(worker);
 	for (thread& t : threads)
 		t.join();
+	timer.finish();
+	log_stream << "Merged targets = " << merged_count << endl;
 }
 
 }}

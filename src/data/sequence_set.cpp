@@ -29,12 +29,12 @@ SequenceSet::SequenceSet(Alphabet alphabet) :
 
 void SequenceSet::print_stats() const
 {
-	verbose_stream << "Sequences = " << this->get_length() << ", letters = " << this->letters() << ", average length = " << this->avg_len() << std::endl;
+	verbose_stream << "Sequences = " << this->size() << ", letters = " << this->letters() << ", average length = " << this->avg_len() << std::endl;
 }
 
 std::pair<size_t, size_t> SequenceSet::len_bounds(size_t min_len) const
 {
-	const size_t l(this->get_length());
+	const size_t l(this->size());
 	size_t max = 0, min = std::numeric_limits<size_t>::max();
 	for (size_t i = 0; i < l; ++i) {
 		max = std::max(this->length(i), max);
@@ -56,14 +56,14 @@ std::vector<size_t> SequenceSet::partition(unsigned n_part) const
 	std::vector<size_t> v;
 	const size_t l = (this->letters() + n_part - 1) / n_part;
 	v.push_back(0);
-	for (unsigned i = 0; i < this->get_length();) {
+	for (unsigned i = 0; i < this->size();) {
 		size_t n = 0;
-		while (i < this->get_length() && n < l)
+		while (i < this->size() && n < l)
 			n += this->length(i++);
 		v.push_back(i);
 	}
 	for (size_t i = v.size(); i < n_part + 1; ++i)
-		v.push_back(this->get_length());
+		v.push_back(this->size());
 	return v;
 }
 
@@ -88,7 +88,7 @@ TranslatedSequence SequenceSet::translated_seq(const Sequence& source, size_t i)
 
 size_t SequenceSet::avg_len() const
 {
-	return this->letters() / this->get_length();
+	return this->letters() / this->size();
 }
 
 SequenceSet::~SequenceSet()
@@ -115,7 +115,7 @@ void SequenceSet::convert_to_std_alph(size_t id)
 size_t max_id_len(const String_set<char, 0>& ids)
 {
 	size_t max(0);
-	for (size_t i = 0; i < ids.get_length(); ++i)
+	for (size_t i = 0; i < ids.size(); ++i)
 		max = std::max(max, find_first_of(ids[i], Const::id_delimiters));
 	return max;
 }

@@ -108,7 +108,7 @@ void Frequent_seeds::build(unsigned sid, const SeedPartitionRange &range, Double
 }
 
 void Frequent_seeds::clear_masking(SequenceSet& seqs) {
-	for (size_t i = 0; i < seqs.get_length(); ++i) {
+	for (size_t i = 0; i < seqs.size(); ++i) {
 		const size_t len = seqs.length(i);
 		Letter* p = seqs.ptr(i), *end = p + len;
 		for (; p < end; ++p)

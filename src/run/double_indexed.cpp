@@ -118,7 +118,7 @@ void run_ref_chunk(SequenceFile &db_file,
 	if (config.global_ranking_targets)
 		cfg.global_ranking_buffer.reset(new Deque<Search::Hit, Async>());
 	else
-		cfg.seed_hit_buf.reset(new AsyncBuffer<Search::Hit>(query_seqs.get_length() / align_mode.query_contexts,
+		cfg.seed_hit_buf.reset(new AsyncBuffer<Search::Hit>(query_seqs.size() / align_mode.query_contexts,
 			config.tmpdir,
 			config.query_bins,
 			{ cfg.target->long_offsets(), align_mode.query_contexts }));
@@ -232,6 +232,11 @@ void run_query_chunk(unsigned query_chunk,
 	char *query_buffer = nullptr;
 	const pair<size_t, size_t> query_len_bounds = query_seqs.len_bounds(shapes[0].length_);
 
+	if (config.global_ranking_targets) {
+		timer.go("Allocating global ranking table");
+		options.ranking_table.reset(new Search::Config::RankingTable(query_seqs.size() * config.global_ranking_targets));
+	}
+
 	if (!config.swipe_all && !config.target_indexed) {
 		timer.go("Building query histograms");
 		options.query->hst() = Partitioned_histogram(query_seqs, false, &no_filter, query_seeds_hashed.get());
@@ -245,9 +250,9 @@ void run_query_chunk(unsigned query_chunk,
 
 	PtrVector<TempFile> tmp_file;
 	query_aligned.clear();
-	query_aligned.insert(query_aligned.end(), query_ids.get_length(), false);
+	query_aligned.insert(query_aligned.end(), query_ids.size(), false);
 	if(config.query_memory)
-		Extension::memory = new Extension::Memory(query_ids.get_length());
+		Extension::memory = new Extension::Memory(query_ids.size());
 	db_file.set_seqinfo_ptr(0);
 	bool mp_last_chunk = false;
 	const bool lazy_masking = config.algo == ::Config::Algo::QUERY_INDEXED && (config.masking == 1 || config.target_seg == 1) && (config.global_ranking_targets == 0);

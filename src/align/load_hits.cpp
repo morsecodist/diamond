@@ -32,7 +32,7 @@ void load_hits(Search::Hit* begin, Search::Hit* end, FlatArray<SeedHit> &hits, v
 	if (begin >= end)
 		return;
 	std::sort(begin, end, Search::Hit::CmpSubject());
-	const size_t total_subjects = ref_seqs.get_length();
+	const size_t total_subjects = ref_seqs.size();
 	unsigned target_len;
 	uint32_t target = UINT32_MAX;
 	uint16_t score = 0;

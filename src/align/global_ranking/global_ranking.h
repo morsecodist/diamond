@@ -47,6 +47,10 @@ QueryList fetch_query_targets(InputFile& query_list, uint32_t& next_query);
 void update_table(Search::Config& cfg);
 
 struct Hit {
+	Hit():
+		oid(),
+		score(0)
+	{}
 	Hit(uint32_t oid, uint16_t score):
 		oid(oid),
 		score(score)

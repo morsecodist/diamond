@@ -83,7 +83,7 @@ struct String_set
 	size_t length(size_t i) const
 	{ return limits_[i+1] - limits_[i] - _padding; }
 
-	size_t get_length() const
+	size_t size() const
 	{ return limits_.size() - 1; }
 
 	bool empty() const {
@@ -94,7 +94,7 @@ struct String_set
 	{ return limits_.back(); }
 
 	size_t letters() const
-	{ return raw_len() - get_length() - PERIMETER_PADDING; }
+	{ return raw_len() - size() - PERIMETER_PADDING; }
 
 	_t* data(uint64_t p = 0)
 	{ return &data_[p]; }

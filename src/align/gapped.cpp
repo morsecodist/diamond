@@ -1,6 +1,6 @@
 /****
 DIAMOND protein aligner
-Copyright (C) 2013-2020 Max Planck Society for the Advancement of Science e.V.
+Copyright (C) 2013-2021 Max Planck Society for the Advancement of Science e.V.
                         Benjamin Buchfink
                         Eberhard Karls Universitaet Tuebingen
 
@@ -195,7 +195,7 @@ vector<Target> full_db_align(const Sequence *query_seq, const Bias_correction *q
 	const SequenceSet& ref_seqs = target_block.seqs();
 	
 	for (unsigned frame = 0; frame < align_mode.query_contexts; ++frame) {
-		ContainerIterator<DpTarget, SequenceSet> target_it(ref_seqs, ref_seqs.get_length());
+		ContainerIterator<DpTarget, SequenceSet> target_it(ref_seqs, ref_seqs.size());
 		list<Hsp> frame_hsp = DP::BandedSwipe::swipe(
 			query_seq[frame],
 			v,

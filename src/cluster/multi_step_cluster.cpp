@@ -248,7 +248,7 @@ void MultiStep::run() {
 	vector<unsigned> rep_block_id(seq_count);
 	db->set_seqinfo_ptr(0);
 	Block* block = db->load_seqs((size_t)1e11, true, previous_reps.get());
-	for (size_t i = 0; i < block->seqs().get_length(); ++i)
+	for (size_t i = 0; i < block->seqs().size(); ++i)
 		rep_block_id[block->block_id2oid(i)] = (unsigned)i;
 
 	ostream* out = config.output_file.empty() ? &cout : new ofstream(config.output_file.c_str());

@@ -335,7 +335,7 @@ void join_blocks(unsigned ref_blocks, Consumer &master_out, const PtrVector<Temp
 	JoinFetcher::finish();
 	if (*output_format != Output_format::daa && config.report_unaligned != 0) {
 		TextBuffer out;
-		for (unsigned i = JoinFetcher::query_last + 1; i < query_ids.get_length(); ++i) {
+		for (unsigned i = JoinFetcher::query_last + 1; i < query_ids.size(); ++i) {
 			output_format->print_query_intro(i, query_ids[i], cfg.query->source_len(i), out, true, cfg);
 			output_format->print_query_epilog(out, query_ids[i], true, cfg);
 		}

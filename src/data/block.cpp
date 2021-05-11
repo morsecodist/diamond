@@ -37,7 +37,7 @@ Block::Block(Alphabet alphabet):
 }
 
 bool Block::empty() const {
-	return seqs_.get_length() == 0;
+	return seqs_.size() == 0;
 }
 
 void Block::convert_to_std_alph(size_t block_id)
@@ -123,7 +123,7 @@ Block::Block(std::list<TextInputFile>::iterator file_begin,
 			if (with_quals)
 				qual_.push_back(qual.begin(), qual.end());
 			++n;
-			if (seqs_.get_length() > (size_t)std::numeric_limits<int>::max())
+			if (seqs_.size() > (size_t)std::numeric_limits<int>::max())
 				throw std::runtime_error("Number of sequences in file exceeds supported maximum.");
 		}
 		++file_it;
