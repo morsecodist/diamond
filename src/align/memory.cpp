@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../basic/config.h"
 #include "target.h"
 #include "../util/util.h"
+#include "../util/algo/partition.h"
 
 using std::pair;
 

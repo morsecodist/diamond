@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "dmnd/dmnd.h"
 #include "../util/system/system.h"
 #include "../util/util.h"
+#include "../util/algo/partition.h"
 #ifdef WITH_BLASTDB
 #include "blastdb/blastdb.h"
 #endif
