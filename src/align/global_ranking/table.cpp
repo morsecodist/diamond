@@ -43,7 +43,7 @@ static void update_query(SeedHits::Iterator begin, SeedHits::Iterator end, vecto
 		uint16_t score = 0;
 		for (SeedHits::Iterator i = it.begin(); i != it.end(); ++i)
 			score = std::max(score, i->score_);
-		hits.emplace_back((uint32_t)it.key(), score);
+		hits.emplace_back((uint32_t)cfg.target->block_id2oid(it.key()), score);
 		++it;
 	}
 	std::sort(hits.begin(), hits.end());

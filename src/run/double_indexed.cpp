@@ -315,7 +315,7 @@ void run_query_chunk(unsigned query_chunk,
 	log_rss();
 
 	if (blocked_processing || config.multiprocessing) {
-		timer.go("Joining output blocks");
+		if(!config.global_ranking_targets) timer.go("Joining output blocks");
 
 		if (config.multiprocessing) {
 			P->create_stack_from_file(stack_join_todo, get_ref_part_file_name(stack_join_todo, query_chunk));
@@ -373,7 +373,10 @@ void run_query_chunk(unsigned query_chunk,
 			}
 			P->delete_stack(stack_join_todo);
 		} else {
-			join_blocks(current_ref_block, master_out, tmp_file, options, db_file);
+			if (config.global_ranking_targets)
+				Extension::GlobalRanking::extend(options);
+			else
+				join_blocks(current_ref_block, master_out, tmp_file, options, db_file);
 		}
 	}
 
