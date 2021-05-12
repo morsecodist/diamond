@@ -44,7 +44,7 @@ struct OutputFile : public Serializer
 		TextBuffer buf;
 		for (typename std::map<_k, _v>::const_iterator i = begin; i != end; ++i) {
 			buf << i->first << '\t' << i->second << '\n';
-			write(buf.get_begin(), buf.size());
+			write(buf.data(), buf.size());
 			buf.clear();
 		}
 	}
