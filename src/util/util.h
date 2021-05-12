@@ -36,6 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "simd.h"
 #include "../basic/const.h"
 #include "text_buffer.h"
+#include "algo/partition.h"
 
 template<typename _it, typename _key>
 inline std::vector<size_t> map_partition(_it begin, _it end, const _key& key, size_t min_size, size_t max_segments, size_t min_segments)
