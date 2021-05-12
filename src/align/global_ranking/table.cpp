@@ -28,7 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 using std::endl;
 using std::thread;
-using SeedHits = Deque<Search::Hit, Async>;
+using SeedHits = Search::Config::RankingBuffer;
 
 namespace Extension { namespace GlobalRanking {
 

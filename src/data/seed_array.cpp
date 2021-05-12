@@ -128,7 +128,7 @@ struct BufferedWriter2
 {
 	static const unsigned BUFFER_SIZE = 16;
 	BufferedWriter2():
-		out(Const::seedp, {config.deque_bucket_size})
+		out(Const::seedp)
 	{
 		memset(n, 0, sizeof(n));
 	}
@@ -153,7 +153,7 @@ struct BufferedWriter2
 			if (n[p] > 0)
 				flush(p);
 	}
-	vector<Deque<SeedArray::Entry>> out;
+	vector<Deque<SeedArray::Entry, 15>> out;
 	SeedArray::Entry buf[Const::seedp][BUFFER_SIZE];
 	uint8_t n[Const::seedp];
 };

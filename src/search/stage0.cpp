@@ -66,7 +66,7 @@ void search_worker(atomic<unsigned> *seedp, const SeedPartitionRange *seedp_rang
 {
 	unique_ptr<Writer<Hit>> writer;
 	if (config.global_ranking_targets)
-		writer.reset(new AsyncWriter<Hit>(*cfg->global_ranking_buffer));
+		writer.reset(new AsyncWriter<Hit, Search::Config::RankingBuffer::EXPONENT>(*cfg->global_ranking_buffer));
 	else
 		writer.reset(new AsyncBuffer<Hit>::Iterator(*cfg->seed_hit_buf, thread_id));
 #ifdef __APPLE__

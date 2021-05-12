@@ -26,13 +26,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../parallel/mutex.h"
 #include "writer.h"
 
-template<typename T, typename Sync = ::Sync>
+template<typename T, size_t E, typename Sync = ::Sync>
 struct Deque {
+
+	static const size_t EXPONENT = E;
+	static const size_t N = (size_t)1 << E;
+	static const ptrdiff_t SHIFT = E;
+	static const ptrdiff_t MASK = ((ptrdiff_t)1 << E) - 1;
 
 	typedef std::vector<T> Bucket;
 
-	Deque(size_t bucket_size = 4 * (1llu << 30)) :
-		max_size_(bucket_size / sizeof(T))
+	Deque()
 	{
 		new_bucket();
 	}
@@ -40,14 +44,14 @@ struct Deque {
 	void reserve(size_t n) {}
 
 	void push_back(const T& x) {
-		if (buckets.back().size() >= max_size_) {
+		if (buckets.back().size() >= N) {
 			new_bucket();
 		}
 		buckets.back().push_back(x);
 	}
 
 	void push_back(const T* ptr, size_t n) {
-		if (buckets.back().size() + n > max_size_) {
+		if (buckets.back().size() + n > N) {
 			new_bucket();
 		}
 		buckets.back().insert(buckets.back().end(), ptr, ptr + n);
@@ -56,9 +60,13 @@ struct Deque {
 	template<typename It>
 	void push_back(It begin, It end) {
 		mtx_.lock();
-		if (buckets.back().size() + (end - begin) > max_size_)
-			new_bucket();
-		buckets.back().insert(buckets.back().end(), begin, end);
+		while (begin < end) {
+			if (buckets.back().size() == N)
+				new_bucket();
+			const ptrdiff_t n = end - begin, f = ptrdiff_t(N - buckets.back().size()), c = std::min(n, f);
+			buckets.back().insert(buckets.back().end(), begin, begin + c);
+			begin += c;
+		}		
 		mtx_.unlock();
 	}
 
@@ -96,20 +104,20 @@ struct Deque {
 		}
 
 		T& operator*() {
-			return data_[i_ >> 29][i_ & (0x20000000 - 1)];
+			return data_[i_ >> SHIFT][i_ & MASK];
 		}
 
 		T* operator->() {
-			return &data_[i_ >> 29][i_ & (0x20000000 - 1)];
+			return &data_[i_ >> SHIFT][i_ & MASK];
 		}
 
 		T& operator*() const {
-			return data_[i_ >> 29][i_ & (0x20000000 - 1)];
+			return data_[i_ >> SHIFT][i_ & MASK];
 		}
 
 		T& operator[](ptrdiff_t i) {
 			ptrdiff_t j = i_ + i;
-			return data_[j >> 29][j & (0x20000000 - 1)];
+			return data_[j >> SHIFT][j & MASK];
 		}
 
 		ptrdiff_t operator-(Iterator& it) {
@@ -207,21 +215,20 @@ private:
 
 	void new_bucket() {
 		buckets.emplace_back();
-		buckets.back().reserve(max_size_);
+		buckets.back().reserve(N);
 	}
 
 	std::list<Bucket> buckets;
 	std::vector<T*> data_;
-	const size_t max_size_;
 	size_t total_;
 	Mutex<Sync> mtx_;
 
 };
 
-template<typename T>
+template<typename T, size_t E>
 struct AsyncWriter : public Writer<T> {
 
-	AsyncWriter(Deque<T, Async>& dst):
+	AsyncWriter(Deque<T, E, Async>& dst):
 		dst_(&dst)
 	{}
 
@@ -242,7 +249,7 @@ private:
 
 	static const size_t BUF_SIZE = 4096;
 
-	Deque<T, Async>* dst_;
+	Deque<T, E, Async>* dst_;
 	std::vector<T> buf_;
 
 };

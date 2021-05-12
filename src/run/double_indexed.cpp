@@ -116,7 +116,7 @@ void run_ref_chunk(SequenceFile &db_file,
 
 	timer.go("Initializing temporary storage");
 	if (config.global_ranking_targets)
-		cfg.global_ranking_buffer.reset(new Deque<Search::Hit, Async>());
+		cfg.global_ranking_buffer.reset(new Config::RankingBuffer());
 	else
 		cfg.seed_hit_buf.reset(new AsyncBuffer<Search::Hit>(query_seqs.size() / align_mode.query_contexts,
 			config.tmpdir,

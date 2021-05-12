@@ -33,7 +33,7 @@ struct TaxonomyNodes;
 template<typename T> struct AsyncBuffer;
 
 struct Async;
-template<typename T, typename Sync> struct Deque;
+template<typename T, size_t E, typename Sync> struct Deque;
 
 namespace Extension { namespace GlobalRanking {
 	struct Hit;
@@ -46,6 +46,7 @@ struct Hit;
 struct Config {
 
 	using RankingTable = std::vector<Extension::GlobalRanking::Hit>;
+	using RankingBuffer = Deque<Search::Hit, 28, Async>;
 
 	Config();
 	void free();
@@ -61,7 +62,7 @@ struct Config {
 
 	std::unique_ptr<Block>                     query, target;
 	std::unique_ptr<AsyncBuffer<Hit>>          seed_hit_buf;
-	std::unique_ptr<Deque<Search::Hit, Async>> global_ranking_buffer;
+	std::unique_ptr<RankingBuffer>             global_ranking_buffer;
 	std::unique_ptr<RankingTable>              ranking_table;
 
 	uint64_t db_seqs, db_letters, ref_blocks;
