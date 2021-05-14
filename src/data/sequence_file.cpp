@@ -124,10 +124,10 @@ Block* SequenceFile::load_seqs(const size_t max_letters, bool load_ids, const Bi
 		if (load_ids) block->ids_.finish_reserve();
 		if (false && type_ == Type::BLAST && config.algo == Config::Algo::QUERY_INDEXED && config.threads_ > 1 && !use_filter) {
 			assert(!use_filter);
-			partition<size_t> p(filtered_seq_count, config.threads_);
+			Partition<size_t> p(filtered_seq_count, config.threads_);
 			vector<std::thread> t;
 			for (size_t i = 0; i < p.parts; ++i)
-				t.emplace_back(&SequenceFile::load_block, this, p.getMin(i), p.getMax(i), offset + p.getMin(i), use_filter, &filtered_pos, false, block);
+				t.emplace_back(&SequenceFile::load_block, this, p.begin(i), p.end(i), offset + p.begin(i), use_filter, &filtered_pos, false, block);
 			for (std::thread& i : t)
 				i.join();
 		}

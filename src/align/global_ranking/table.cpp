@@ -60,7 +60,7 @@ void update_table(Search::Config& cfg) {
 	task_timer timer("Sorting seed hits");
 	ips4o::parallel::sort(hits.begin(), hits.end(), Search::Hit::CmpQueryTarget(), config.threads_);
 	timer.go("Processing seed hits");
-	AsyncKeyMerger<SeedHits::Iterator, Search::Hit::SourceQuery> it(hits.begin(), hits.end(), { align_mode.query_contexts });
+	/*AsyncKeyMerger<SeedHits::Iterator, Search::Hit::SourceQuery> it(hits.begin(), hits.end(), { align_mode.query_contexts });
 	std::atomic_size_t merged_count(0);
 	auto worker = [&it, &cfg, &merged_count] {
 		vector<Hit> hits, merged;
@@ -70,10 +70,20 @@ void update_table(Search::Config& cfg) {
 				return;
 			update_query(r.first, r.second, hits, merged, merged_count, cfg);
 		}
+	};*/
+	std::atomic_size_t merged_count(0);
+	auto worker = [&cfg, &merged_count](SeedHits::Iterator begin, SeedHits::Iterator end) {
+		auto it = merge_keys(begin, end, ::Search::Hit::Query());
+		while (it.good()) {
+			vector<Hit> hits, merged;
+			update_query(it.begin(), it.end(), hits, merged, merged_count, cfg);
+			++it;
+		}
 	};
 	vector<thread> threads;
-	for (size_t i = 0; i < config.threads_; ++i)
-		threads.emplace_back(worker);
+	auto p = Util::Algo::partition_table(hits.begin(), hits.end(), config.threads_, ::Search::Hit::Query());
+	for (size_t i = 0; i < p.size() - 1; ++i)
+		threads.emplace_back(worker, p[i], p[i + 1]);
 	for (thread& t : threads)
 		t.join();
 	timer.finish();

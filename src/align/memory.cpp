@@ -86,11 +86,11 @@ void Memory::update(size_t query_id, std::vector<Target>::const_iterator begin, 
 		return;
 
 	const size_t cutoff = config.max_alignments;
-	partition<size_t> p(cutoff, N);
+	Partition<size_t> p(cutoff, N);
 	size_t total = count_[query_id], overflow_count = 0;
 	int overflow_score = 0;
 	for (size_t i = 0; i < p.parts; ++i) {
-		const size_t size = p.getCount(i);
+		const size_t size = p.size(i);
 		size_t count = std::min(total, size);
 		int low_score = this->min_score(query_id, i);
 		if (overflow_count >= size)

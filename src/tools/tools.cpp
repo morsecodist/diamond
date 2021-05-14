@@ -2,7 +2,6 @@
 #include <vector>
 #include "tsv_record.h"
 #include "../basic/config.h"
-#include "../util/math/sparse_matrix.h"
 #include "../basic/value.h"
 #include "../util/util.h"
 #include "../basic/sequence.h"
@@ -28,11 +27,6 @@ void filter_blasttab() {
 		if(query_hit < config.max_alignments && r.evalue <= config.max_evalue)
 			cout << r << endl;
 	}
-}
-
-void mcl() {
-	SparseMatrix graph(std::cin);
-	graph.print_stats();
 }
 
 void split() {

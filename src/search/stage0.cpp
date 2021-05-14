@@ -83,7 +83,7 @@ void search_worker(atomic<unsigned> *seedp, const SeedPartitionRange *seedp_rang
 
 void search_shape(unsigned sid, unsigned query_block, char *query_buffer, char *ref_buffer, Search::Config& cfg, const HashedSeedSet* target_seeds)
 {
-	::partition<unsigned> p(Const::seedp, config.lowmem);
+	Partition<unsigned> p(Const::seedp, config.lowmem);
 	DoubleArray<SeedArray::_pos> query_seed_hits[Const::seedp], ref_seed_hits[Const::seedp];
 	log_rss();
 	SequenceSet& ref_seqs = cfg.target->seqs(), query_seqs = cfg.query->seqs();
@@ -96,7 +96,7 @@ void search_shape(unsigned sid, unsigned query_block, char *query_buffer, char *
 		if (config.lowmem > 1)
 			message_stream << ", index chunk " << chunk + 1 << "/" << config.lowmem;
 		message_stream << '.' << endl;
-		const SeedPartitionRange range(p.getMin(chunk), p.getMax(chunk));
+		const SeedPartitionRange range(p.begin(chunk), p.end(chunk));
 		current_range = range;
 
 		task_timer timer("Building reference seed array", true);

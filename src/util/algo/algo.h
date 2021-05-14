@@ -1,6 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include <vector>
+#include "partition.h"
 
 namespace Util { namespace Algo {
 
@@ -37,6 +38,28 @@ size_t merge_capped(It i0, It i1, It j0, It j1, size_t cap, Out out) {
 		++n;
 	}
 	return count;
+}
+
+template<typename It, typename Key>
+std::vector<It> partition_table(It begin, It end, size_t n, Key key) {
+	std::vector<It> v;
+	const size_t count = size_t(end - begin);
+	if (count == 0)
+		return v;
+	Partition<size_t> p(count, n);
+	v.reserve(p.parts);
+	It e = begin;
+	v.push_back(e);
+	for (size_t i = 0; i < p.parts; ++i) {
+		It it = begin + p.end(i);
+		if (it <= e)
+			continue;
+		const auto k = key(*(it - 1));
+		while (it < end && key(*it) == k) ++it;
+		v.push_back(it);
+		e = it;
+	}
+	return v;
 }
 
 }}

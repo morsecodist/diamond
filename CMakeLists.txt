@@ -195,7 +195,6 @@ set(OBJECTS
   src/tools/tsv_record.cpp
   src/tools/tools.cpp
   src/util/system/getRSS.cpp
-  src/util/math/sparse_matrix.cpp
   src/lib/tantan/LambdaCalculator.cc
   src/util/algo/upgma.cpp
   src/util/algo/upgma_mc.cpp

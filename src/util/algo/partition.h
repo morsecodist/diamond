@@ -2,32 +2,34 @@
 #include <algorithm>
 
 template<typename _t = size_t>
-struct partition
+struct Partition
 {
-	_t items, parts, size, remainder;
-	partition() : items(0), parts(0), size(0), remainder(0)
+	Partition() : items(0), parts(0), size_(0), remainder(0)
 	{ }
-	partition(_t items, _t parts) : items(items), parts(std::min(parts, items))
+	Partition(_t items, _t parts) : items(items), parts(std::min(parts, items))
 	{
 		if (this->parts > 0) {
-			size = items / this->parts;
+			size_ = items / this->parts;
 			remainder = items % this->parts;
 		}
 		else {
-			size = 0;
+			size_ = 0;
 			remainder = 0;
 		}
 	}
-	_t getMin(_t i) const
+	_t begin(_t i) const
 	{
-		_t b = std::min(i, remainder); return b * (size + 1) + (i - b) * size;
+		_t b = std::min(i, remainder); return b * (size_ + 1) + (i - b) * size_;
 	}
-	_t getMax(_t i) const
+	_t end(_t i) const
 	{
-		return getMin(i) + getCount(i);
+		return begin(i) + size(i);
 	}
-	_t getCount(_t i) const
+	_t size(_t i) const
 	{
-		return i < remainder ? (size + 1) : size;
+		return i < remainder ? (size_ + 1) : size_;
 	}
+	const _t parts;
+private:
+	_t items, size_, remainder;
 };
