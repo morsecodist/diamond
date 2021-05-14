@@ -38,27 +38,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "text_buffer.h"
 #include "algo/partition.h"
 
-template<typename _it, typename _key>
-inline std::vector<size_t> map_partition(_it begin, _it end, const _key& key, size_t min_size, size_t max_segments, size_t min_segments)
-{
-	const size_t n = end - begin;
-	const ::partition<size_t> p (n, std::max(min_segments, std::min(max_segments, n/min_size)));
-	std::vector<size_t> v (p.parts+1);
-	v[0] = p.getMin(0);
-	v[p.parts] = p.getMax(p.parts-1);
-	for(unsigned i=0;i<p.parts-1;++i) {
-		size_t e = p.getMax(i);
-		if(v[i] >= e) {
-			v[i+1] = v[i];
-			continue;
-		}
-		while(e < n && key(*(begin+e)) == key(*(begin+e-1)))
-			++e;
-		v[i+1] = e;
-	}
-	return v;
-}
-
 template<typename _t>
 inline _t div_up(_t x, _t m)
 { return (x + (m-1)) / m; }
