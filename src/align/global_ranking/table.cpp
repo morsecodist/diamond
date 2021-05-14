@@ -57,6 +57,8 @@ static void update_query(SeedHits::Iterator begin, SeedHits::Iterator end, vecto
 void update_table(Search::Config& cfg) {
 	SeedHits& hits = *cfg.global_ranking_buffer;
 	log_stream << "Seed hits = " << hits.size() << endl;
+	if (hits.size() == 0)
+		return;
 	task_timer timer("Sorting seed hits");
 	ips4o::parallel::sort(hits.begin(), hits.end(), Search::Hit::CmpQueryTarget(), config.threads_);
 	timer.go("Processing seed hits");
