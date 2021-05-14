@@ -32,7 +32,7 @@ using SeedHits = Search::Config::RankingBuffer;
 
 namespace Extension { namespace GlobalRanking {
 
-static void update_query(SeedHits::Iterator begin, SeedHits::Iterator end, vector<Hit>& hits, vector<Hit>& merged, std::atomic_size_t& merged_count, Search::Config& cfg) {
+static void update_query(SeedHits::Iterator begin, SeedHits::Iterator end, vector<Hit>& hits, vector<Hit>& merged, size_t& merged_count, Search::Config& cfg) {
 	const size_t N = config.global_ranking_targets;
 	hits.clear();
 	merged.clear();
@@ -62,25 +62,16 @@ void update_table(Search::Config& cfg) {
 	task_timer timer("Sorting seed hits");
 	ips4o::parallel::sort(hits.begin(), hits.end(), Search::Hit::CmpQueryTarget(), config.threads_);
 	timer.go("Processing seed hits");
-	/*AsyncKeyMerger<SeedHits::Iterator, Search::Hit::SourceQuery> it(hits.begin(), hits.end(), { align_mode.query_contexts });
-	std::atomic_size_t merged_count(0);
-	auto worker = [&it, &cfg, &merged_count] {
-		vector<Hit> hits, merged;
-		for (;;) {
-			auto r = ++it;
-			if (r.first == r.second)
-				return;
-			update_query(r.first, r.second, hits, merged, merged_count, cfg);
-		}
-	};*/
 	std::atomic_size_t merged_count(0);
 	auto worker = [&cfg, &merged_count](SeedHits::Iterator begin, SeedHits::Iterator end) {
 		auto it = merge_keys(begin, end, ::Search::Hit::Query());
+		size_t n = 0;
 		while (it.good()) {
 			vector<Hit> hits, merged;
-			update_query(it.begin(), it.end(), hits, merged, merged_count, cfg);
+			update_query(it.begin(), it.end(), hits, merged, n, cfg);
 			++it;
 		}
+		merged_count += n;
 	};
 	vector<thread> threads;
 	auto p = Util::Algo::partition_table(hits.begin(), hits.end(), config.threads_, ::Search::Hit::Query());
