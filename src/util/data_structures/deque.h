@@ -63,9 +63,8 @@ struct Deque {
 		while (begin < end) {
 			if (buckets.back().size() == N)
 				new_bucket();
-			const ptrdiff_t n = end - begin, f = ptrdiff_t(N - buckets.back().size()), c = std::min(n, f);
-			buckets.back().insert(buckets.back().end(), begin, begin + c);
-			begin += c;
+			const ptrdiff_t n = std::min(end - begin, ptrdiff_t(N - buckets.back().size()));
+			buckets.back().insert(buckets.back().end(), begin, begin += n);
 		}		
 		mtx_.unlock();
 	}
