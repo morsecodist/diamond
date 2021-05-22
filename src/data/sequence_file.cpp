@@ -39,20 +39,29 @@ using std::setw;
 const EMap<SequenceFile::Type> EnumTraits<SequenceFile::Type>::to_string = { {SequenceFile::Type::DMND, "Diamond database" }, {SequenceFile::Type::BLAST, "BLAST database"} };
 
 void SequenceFile::load_block(size_t block_id_begin, size_t block_id_end, size_t pos, bool use_filter, const vector<uint64_t>* filtered_pos, bool load_ids, Block* block) {
+	static const size_t MAX_LOAD_SIZE = 2 * GIGABYTES;
 	seek_offset(pos);
+	size_t load_size = 0;
 	for (size_t i = block_id_begin; i < block_id_end; ++i) {
 		bool seek = false;
 		if (use_filter && (*filtered_pos)[i]) {
 			pos = (*filtered_pos)[i];
 			seek = true;
 		}
-		read_seq_data(block->seqs_.ptr(i), block->seqs_.length(i), pos, seek);
+		const size_t l = block->seqs_.length(i);
+		load_size += l;
+		read_seq_data(block->seqs_.ptr(i), l, pos, seek);
 		if (load_ids)
 			read_id_data(block->ids_.ptr(i), block->ids_.length(i));
 		else
 			skip_id_data();
 		if (type_ == Type::DMND)
 			Masking::get().remove_bit_mask(block->seqs_.ptr(i), block->seqs_.length(i));
+		if (load_size > MAX_LOAD_SIZE) {
+			close_weakly();
+			reopen();
+			load_size = 0;
+		}
 	}
 }
 
