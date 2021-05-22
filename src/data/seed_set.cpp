@@ -44,7 +44,7 @@ struct Seed_set_callback
 		max_coverage(max_coverage),
 		data(&data)
 	{}
-	bool operator()(uint64_t seed, uint64_t pos, uint64_t shape)
+	bool operator()(uint64_t seed, uint64_t pos, uint32_t block_id, uint64_t shape)
 	{
 		if ((*data)[seed] == false) {
 			(*data)[seed] = true;
@@ -76,7 +76,7 @@ struct Hashed_seed_set_callback
 	Hashed_seed_set_callback(PtrVector<HashSet<Modulo2, Identity>> &dst):
 		dst(dst)
 	{}
-	bool operator()(uint64_t seed, uint64_t pos, uint64_t shape)
+	bool operator()(uint64_t seed, uint64_t pos, uint32_t block_id, uint64_t shape)
 	{
 		dst[shape].insert(seed);
 		return true;

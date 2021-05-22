@@ -19,7 +19,7 @@ void enum_seeds(SequenceSet* seqs, _f* f, unsigned begin, unsigned end, std::pai
 			while (it.good()) {
 				if (it.get(key, sh))
 					if (filter->contains(key, shape_id))
-						(*f)(key, seqs->position(i, j), shape_id);
+						(*f)(key, seqs->position(i, j), i, shape_id);
 				++j;
 			}
 		}
@@ -44,7 +44,7 @@ void enum_seeds_hashed(SequenceSet* seqs, _f* f, unsigned begin, unsigned end, s
 			while (it.good()) {
 				if (it.get(key, shape_mask)) {
 					if (filter->contains(key, shape_id))
-						(*f)(key, seqs->position(i, j), shape_id);
+						(*f)(key, seqs->position(i, j), i, shape_id);
 				}
 				++j;
 			}

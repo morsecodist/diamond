@@ -43,12 +43,12 @@ struct BufferedWriter
 		memset(n, 0, sizeof(n));
 		memcpy(this->ptr, ptr, sizeof(this->ptr));
 	}
-	void push(Packed_seed key, Loc value, const SeedPartitionRange &range)
+	void push(Packed_seed key, Loc value, uint32_t block_id, const SeedPartitionRange &range)
 	{
 		const unsigned p = seed_partition(key);
 		if (range.contains(p)) {
 			assert(n[p] < BUFFER_SIZE);
-			buf[p][n[p]++] = SeedArray::Entry(seed_partition_offset(key), value);
+			buf[p][n[p]++] = SeedArray::Entry(seed_partition_offset(key), value, block_id);
 			if (n[p] == BUFFER_SIZE)
 				flush(p);
 		}
@@ -87,9 +87,9 @@ struct BuildCallback
 		range(range),
 		it(new BufferedWriter(ptr))
 	{ }
-	bool operator()(uint64_t seed, uint64_t pos, size_t shape)
+	bool operator()(uint64_t seed, uint64_t pos, uint32_t block_id, size_t shape)
 	{
-		it->push(seed, pos, range);
+		it->push(seed, pos, block_id, range);
 		return true;
 	}
 	void finish()
@@ -164,7 +164,7 @@ struct BuildCallback2
 		range(range),
 		it(new BufferedWriter2())
 	{ }
-	bool operator()(uint64_t seed, uint64_t pos, size_t shape)
+	bool operator()(uint64_t seed, uint64_t pos, uint32_t block_id, size_t shape)
 	{
 		it->push(seed, pos, range);
 		return true;

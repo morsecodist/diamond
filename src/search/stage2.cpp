@@ -106,7 +106,14 @@ static void search_query_offset(uint64_t q,
 				work_set.stats.inc(Statistics::TENTATIVE_MATCHES2);
 				if (left_most_filter(query_clipped + interval_overhang, subjects[j] + interval_overhang, window_left - interval_overhang, shapes[sid].length_, work_set.context, sid == 0, sid, score_cutoff)) {
 					work_set.stats.inc(Statistics::TENTATIVE_MATCHES3);
+#ifdef KEEP_TARGET_ID
+					if(config.global_ranking_targets)
+						*work_set.out = { query_id, (uint64_t)s[*(i + j)].block_id, seed_offset, (uint16_t)scores[j] };
+					else
+						*work_set.out = { query_id, (uint64_t)s[*(i + j)].pos, seed_offset, (uint16_t)scores[j] };
+#else
 					*work_set.out = { query_id, (uint64_t)s[*(i + j)], seed_offset, (uint16_t)scores[j] };
+#endif
 				}
 			}
 		}

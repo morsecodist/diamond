@@ -125,7 +125,7 @@ private:
 			for (unsigned s = 0; s < shapes.count(); ++s)
 				ptr.push_back(data[s][seqp].data());
 		}
-		bool operator()(uint64_t seed, uint64_t pos, size_t shape)
+		bool operator()(uint64_t seed, uint64_t pos, uint32_t block_id, size_t shape)
 		{
 			++ptr[shape][seed_partition(seed)];
 			return true;

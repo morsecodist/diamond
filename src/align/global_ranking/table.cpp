@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../../util/data_structures/deque.h"
 #include "../../util/util.h"
 #include "../../util/algo/algo.h"
+#include "../../data/seed_array.h"
 
 using std::endl;
 using std::thread;
@@ -39,6 +40,17 @@ static void update_query(SeedHits::Iterator begin, SeedHits::Iterator end, vecto
 	hits.clear();
 	merged.clear();
 	const SequenceSet& target_seqs = cfg.target->seqs();
+#ifdef KEEP_TARGET_ID
+	auto get_target = [](const Search::Hit& hit) { return (uint64_t)hit.subject_; };
+	auto it = merge_keys(begin, end, get_target);
+	while (it.good()) {
+		uint16_t score = 0;
+		for (SeedHits::Iterator i = it.begin(); i != it.end(); ++i)
+			score = std::max(score, i->score_);
+		hits.emplace_back((uint32_t)cfg.target->block_id2oid(it.key()), score);
+		++it;
+	}
+#else
 #ifdef BATCH_BINSEARCH
 	vector<Hit> hit1;
 	hit1.reserve(end - begin);
@@ -64,6 +76,7 @@ static void update_query(SeedHits::Iterator begin, SeedHits::Iterator end, vecto
 		hits.emplace_back((uint32_t)cfg.target->block_id2oid(it.key()), score);
 		++it;
 	}
+#endif
 #endif
 	std::sort(hits.begin(), hits.end());
 	const size_t q = begin->query_;
