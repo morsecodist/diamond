@@ -31,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 struct Frequent_seeds
 {
 
-	void build(unsigned sid, const SeedPartitionRange &range, DoubleArray<SeedArray::_pos> *query_seed_hits, DoubleArray<SeedArray::_pos> *ref_seed_hits, Search::Config& cfg);
+	void build(unsigned sid, const SeedPartitionRange &range, DoubleArray<SeedArray::Entry::Value> *query_seed_hits, DoubleArray<SeedArray::Entry::Value> *ref_seed_hits, Search::Config& cfg);
 	static void clear_masking(SequenceSet& seqs);
 
 private:
@@ -41,8 +41,8 @@ private:
 	static void build_worker(
 		size_t seedp,
 		size_t thread_id,
-		DoubleArray<SeedArray::_pos> *query_seed_hits,
-		DoubleArray<SeedArray::_pos> *ref_seed_hits,
+		DoubleArray<SeedArray::Entry::Value> *query_seed_hits,
+		DoubleArray<SeedArray::Entry::Value> *ref_seed_hits,
 		const SeedPartitionRange *range,
 		unsigned sid,
 		unsigned ref_max_n,

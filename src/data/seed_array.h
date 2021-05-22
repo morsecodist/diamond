@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../basic/packed_loc.h"
 
 #pragma pack(1)
+//#define KEEP_TARGET_ID
 
 struct SeedArray
 {
@@ -40,14 +41,28 @@ struct SeedArray
 			value(value)
 		{ }
 		uint32_t key;
-		_pos value;
+		
 		struct GetKey {
 			uint32_t operator()(const Entry& e) const {
 				return e.key;
 			}
 		};
+#ifdef KEEP_TARGET_ID
+		struct Value {
+			Value() {}
+			Value(_pos pos) :
+				pos(pos) {}
+			operator uint64_t() const {
+				return (uint64_t)pos;
+			}
+			_pos pos;
+			uint32_t target;
+		};
+#else
 		typedef _pos Value;
+#endif
 		typedef uint32_t Key;
+		Value value;
 	} PACKED_ATTRIBUTE;
 
 	template<typename _filter>

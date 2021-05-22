@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 #include <stddef.h>
 #include "../basic/sequence.h"
+#include "../util/algo/binary_search.h"
 
 template<typename _t, char _pchar = '\xff', size_t _padding = 1lu>
 struct String_set
@@ -112,6 +113,11 @@ struct String_set
 	{
 		size_t i = std::upper_bound(limits_.begin(), limits_.end(), p) - limits_.begin() - 1;
 		return std::pair<size_t, size_t>(i, p - limits_[i]);
+	}
+
+	template<typename It, typename Out, typename Cmp>
+	void local_position_batch(It begin, It end, Out out, Cmp cmp) const {
+		batch_binary_search(begin, end, limits_.begin(), limits_.end(), out, cmp);
 	}
 
 	const _t* operator[](size_t i) const

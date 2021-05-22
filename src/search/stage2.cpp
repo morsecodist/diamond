@@ -62,7 +62,7 @@ static int ungapped_window(int query_len) {
 }
 
 static void search_query_offset(uint64_t q,
-	const PackedLoc* s,
+	const SeedArray::Entry::Value* s,
 	FlatArray<uint32_t>::ConstIterator hits,
 	FlatArray<uint32_t>::ConstIterator hits_end,
 	WorkSet& work_set)
@@ -106,7 +106,7 @@ static void search_query_offset(uint64_t q,
 				work_set.stats.inc(Statistics::TENTATIVE_MATCHES2);
 				if (left_most_filter(query_clipped + interval_overhang, subjects[j] + interval_overhang, window_left - interval_overhang, shapes[sid].length_, work_set.context, sid == 0, sid, score_cutoff)) {
 					work_set.stats.inc(Statistics::TENTATIVE_MATCHES3);
-					*work_set.out = { query_id, s[*(i + j)], seed_offset, (uint16_t)scores[j] };
+					*work_set.out = { query_id, (uint64_t)s[*(i + j)], seed_offset, (uint16_t)scores[j] };
 				}
 			}
 		}
@@ -117,13 +117,13 @@ static void FLATTEN search_tile(
 	const FlatArray<uint32_t> &hits,
 	uint32_t query_begin,
 	uint32_t subject_begin,
-	const PackedLoc* q,
-	const PackedLoc* s,
+	const SeedArray::Entry::Value* q,
+	const SeedArray::Entry::Value* s,
 	WorkSet& work_set)
 {
 	work_set.stats.inc(Statistics::TENTATIVE_MATCHES1, hits.data_size());
 	const uint32_t query_count = (uint32_t)hits.size();
-	const PackedLoc* q_begin = q + query_begin, *s_begin = s + subject_begin;
+	const SeedArray::Entry::Value* q_begin = q + query_begin, *s_begin = s + subject_begin;
 	for (uint32_t i = 0; i < query_count; ++i) {
 		FlatArray<uint32_t>::ConstIterator r1 = hits.begin(i), r2 = hits.end(i);
 		if (r2 == r1)
@@ -144,16 +144,16 @@ static void all_vs_all(const FingerPrint* a, uint32_t na, const FingerPrint* b, 
 	}
 }
 
-static void load_fps(const PackedLoc* p, size_t n, Container& v, const SequenceSet& seqs)
+static void load_fps(const SeedArray::Entry::Value* p, size_t n, Container& v, const SequenceSet& seqs)
 {
 	v.clear();
 	v.reserve(n);
-	const PackedLoc* end = p + n;
+	const SeedArray::Entry::Value* end = p + n;
 	for (; p < end; ++p)
 		v.emplace_back(seqs.data(*p));
 }
 
-void FLATTEN stage1(const PackedLoc* q, size_t nq, const PackedLoc* s, size_t ns, WorkSet& work_set)
+void FLATTEN stage1(const SeedArray::Entry::Value* q, size_t nq, const SeedArray::Entry::Value* s, size_t ns, WorkSet& work_set)
 {
 #ifdef __APPLE__
 	thread_local Container vq, vs;

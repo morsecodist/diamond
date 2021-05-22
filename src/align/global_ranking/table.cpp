@@ -30,6 +30,8 @@ using std::endl;
 using std::thread;
 using SeedHits = Search::Config::RankingBuffer;
 
+#define BATCH_BINSEARCH
+
 namespace Extension { namespace GlobalRanking {
 
 static void update_query(SeedHits::Iterator begin, SeedHits::Iterator end, vector<Hit>& hits, vector<Hit>& merged, size_t& merged_count, Search::Config& cfg) {
@@ -37,6 +39,22 @@ static void update_query(SeedHits::Iterator begin, SeedHits::Iterator end, vecto
 	hits.clear();
 	merged.clear();
 	const SequenceSet& target_seqs = cfg.target->seqs();
+#ifdef BATCH_BINSEARCH
+	vector<Hit> hit1;
+	hit1.reserve(end - begin);
+	target_seqs.local_position_batch(begin, end, std::back_inserter(hit1), Search::Hit::CmpTargetOffset());
+	for (size_t i = 0; i < hit1.size(); ++i) {
+		hit1[i].score = begin[i].score_;
+	}
+	auto it = merge_keys(hit1.begin(), hit1.end(), Hit::Target());
+	while (it.good()) {
+		uint16_t score = 0;
+		for (auto i = it.begin(); i != it.end(); ++i)
+			score = std::max(score, i->score);
+		hits.emplace_back((uint32_t)cfg.target->block_id2oid(it.key()), score);
+		++it;
+	}
+#else
 	auto get_target = [&target_seqs](const Search::Hit& hit) { return target_seqs.local_position((uint64_t)hit.subject_).first; };
 	auto it = merge_keys(begin, end, get_target);
 	while (it.good()) {
@@ -46,6 +64,7 @@ static void update_query(SeedHits::Iterator begin, SeedHits::Iterator end, vecto
 		hits.emplace_back((uint32_t)cfg.target->block_id2oid(it.key()), score);
 		++it;
 	}
+#endif
 	std::sort(hits.begin(), hits.end());
 	const size_t q = begin->query_;
 	vector<Hit>::iterator table_begin = cfg.ranking_table->begin() + q * N, table_end = table_begin + N;

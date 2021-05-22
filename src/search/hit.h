@@ -115,6 +115,11 @@ struct Hit
 			return x.query_ < y.query_ || (x.query_ == y.query_ && x.subject_ < y.subject_);
 		}
 	};
+	struct CmpTargetOffset {
+		bool operator()(const Hit& x, size_t s) const {
+			return (uint64_t)x.subject_ < s;
+		}
+	};
 	static bool cmp_normalized_subject(const Hit &lhs, const Hit &rhs)
 	{
 		const uint64_t x = (uint64_t)lhs.subject_ + (uint64_t)rhs.seed_offset_, y = (uint64_t)rhs.subject_ + (uint64_t)lhs.seed_offset_;

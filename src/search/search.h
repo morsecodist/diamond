@@ -34,6 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../run/config.h"
 #include "hit.h"
 #include "../util/data_structures/writer.h"
+#include "../data/seed_array.h"
 
 // #define UNGAPPED_SPOUGE
 
@@ -104,7 +105,7 @@ struct WorkSet {
 	FlatArray<uint32_t> hits;
 };
 
-DECL_DISPATCH(void, stage1, (const PackedLoc* q, size_t nq, const PackedLoc* s, size_t ns, WorkSet& work_set))
+DECL_DISPATCH(void, stage1, (const SeedArray::Entry::Value* q, size_t nq, const SeedArray::Entry::Value* s, size_t ns, WorkSet& work_set))
 
 }
 

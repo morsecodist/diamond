@@ -56,11 +56,20 @@ struct Hit {
 		oid(oid),
 		score(score)
 	{}
+	Hit(ptrdiff_t target_id):
+		oid(target_id),
+		score()
+	{}
 	uint32_t oid;
 	uint16_t score;
 	bool operator<(const Hit& x) const {
 		return score > x.score || (score == x.score && oid < x.oid);
 	}
+	struct Target {
+		uint32_t operator()(const Hit& h) const {
+			return h.oid;
+		}
+	};
 };
 
 }}

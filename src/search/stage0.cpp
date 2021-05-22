@@ -45,15 +45,15 @@ void seed_join_worker(
 	SeedArray *ref_seeds,
 	atomic<unsigned> *seedp,
 	const SeedPartitionRange *seedp_range,
-	DoubleArray<SeedArray::_pos> *query_seed_hits,
-	DoubleArray<SeedArray::_pos> *ref_seeds_hits)
+	DoubleArray<SeedArray::Entry::Value> *query_seed_hits,
+	DoubleArray<SeedArray::Entry::Value> *ref_seeds_hits)
 {
 	unsigned p;
 	const unsigned bits = query_seeds->key_bits;
 	if (bits != ref_seeds->key_bits)
 		throw std::runtime_error("Joining seed arrays with different key lengths.");
 	while ((p = (*seedp)++) < seedp_range->end()) {
-		std::pair<DoubleArray<SeedArray::_pos>, DoubleArray<SeedArray::_pos>> join = hash_join(
+		std::pair<DoubleArray<SeedArray::Entry::Value>, DoubleArray<SeedArray::Entry::Value>> join = hash_join(
 			Relation<SeedArray::Entry>(query_seeds->begin(p), query_seeds->size(p)),
 			Relation<SeedArray::Entry>(ref_seeds->begin(p), ref_seeds->size(p)),
 			bits);
@@ -62,7 +62,7 @@ void seed_join_worker(
 	}
 }
 
-void search_worker(atomic<unsigned> *seedp, const SeedPartitionRange *seedp_range, unsigned shape, size_t thread_id, DoubleArray<SeedArray::_pos> *query_seed_hits, DoubleArray<SeedArray::_pos> *ref_seed_hits, const Search::Context *context, const Search::Config* cfg)
+void search_worker(atomic<unsigned> *seedp, const SeedPartitionRange *seedp_range, unsigned shape, size_t thread_id, DoubleArray<SeedArray::Entry::Value> *query_seed_hits, DoubleArray<SeedArray::Entry::Value> *ref_seed_hits, const Search::Context *context, const Search::Config* cfg)
 {
 	unique_ptr<Writer<Hit>> writer;
 	if (config.global_ranking_targets)
@@ -76,7 +76,7 @@ void search_worker(atomic<unsigned> *seedp, const SeedPartitionRange *seedp_rang
 #endif
 	unsigned p;
 	while ((p = (*seedp)++) < seedp_range->end())
-		for (auto it = JoinIterator<SeedArray::_pos>(query_seed_hits[p].begin(), ref_seed_hits[p].begin()); it; ++it)
+		for (auto it = JoinIterator<SeedArray::Entry::Value>(query_seed_hits[p].begin(), ref_seed_hits[p].begin()); it; ++it)
 			Search::stage1(it.r->begin(), it.r->size(), it.s->begin(), it.s->size(), *work_set);
 	statistics += work_set->stats;
 }
@@ -84,7 +84,7 @@ void search_worker(atomic<unsigned> *seedp, const SeedPartitionRange *seedp_rang
 void search_shape(unsigned sid, unsigned query_block, char *query_buffer, char *ref_buffer, Search::Config& cfg, const HashedSeedSet* target_seeds)
 {
 	Partition<unsigned> p(Const::seedp, config.lowmem);
-	DoubleArray<SeedArray::_pos> query_seed_hits[Const::seedp], ref_seed_hits[Const::seedp];
+	DoubleArray<SeedArray::Entry::Value> query_seed_hits[Const::seedp], ref_seed_hits[Const::seedp];
 	log_rss();
 	SequenceSet& ref_seqs = cfg.target->seqs(), query_seqs = cfg.query->seqs();
 	const Partitioned_histogram& ref_hst = cfg.target->hst(), query_hst = cfg.query->hst();
