@@ -61,7 +61,7 @@ static int ungapped_window(int query_len) {
 		return config.ungapped_window;
 }
 
-static void search_query_offset(uint64_t q,
+static void search_query_offset(const SeedArray::Entry::Value& q,
 	const SeedArray::Entry::Value* s,
 	FlatArray<uint32_t>::ConstIterator hits,
 	FlatArray<uint32_t>::ConstIterator hits_end,
@@ -76,9 +76,14 @@ static void search_query_offset(uint64_t q,
 	std::fill(scores, scores + N, INT_MAX);
 
 	unsigned query_id = UINT_MAX, seed_offset = UINT_MAX;
+#ifdef KEEP_TARGET_ID
+	query_id = q.block_id;
+	seed_offset = (size_t)q.pos - query_seqs.position(query_id, 0);
+#else
 	std::pair<size_t, size_t> l = query_seqs.local_position(q);
 	query_id = (unsigned)l.first;
 	seed_offset = (unsigned)l.second;
+#endif
 	const int query_len = query_seqs.length(query_id);
 	const int score_cutoff = ungapped_cutoff(query_len, work_set.context);
 	const int window = ungapped_window(query_len);
