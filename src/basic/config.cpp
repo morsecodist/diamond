@@ -168,6 +168,7 @@ Config::Config(int argc, const char **argv, bool check_io)
 		.add_command("merge-tsv", "", merge_tsv)
 		.add_command("roc-id", "", rocid)
 		.add_command("find-shapes", "", find_shapes)
+		.add_command("composition", "", composition)
 #endif
 		;
 

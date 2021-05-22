@@ -7,6 +7,7 @@
 #include "../basic/sequence.h"
 #include "../util/seq_file_format.h"
 #include "../util/sequence/sequence.h"
+#include "../stats/cbs.h"
 
 using std::cout;
 using std::endl;
@@ -48,4 +49,16 @@ void split() {
 	}
 	out->close();
 	delete out;
+}
+
+void composition() {
+	TextInputFile in(config.single_query_file());
+	string id;
+	vector<Letter> seq;
+	while (FASTA_format().get_seq(id, seq, in, value_traits)) {
+		auto c = Stats::composition(seq);
+		for (double x : c)
+			std::cout << x << '\t';
+		std::cout << endl;
+	}
 }

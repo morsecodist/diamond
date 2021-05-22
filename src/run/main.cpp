@@ -53,6 +53,7 @@ void merge_tsv();
 void roc_id();
 void makeindex();
 void find_shapes();
+void composition();
 #ifdef WITH_BLASTDB
 void prep_blast_db();
 #endif
@@ -185,6 +186,9 @@ int main(int ac, const char* av[])
 			break;
 		case Config::prep_blast_db:
 			prep_blast_db();
+			break;
+		case Config::composition:
+			composition();
 			break;
 		default:
 			return 1;
