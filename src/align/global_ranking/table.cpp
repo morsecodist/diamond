@@ -31,7 +31,7 @@ using std::endl;
 using std::thread;
 using SeedHits = Search::Config::RankingBuffer;
 
-#define BATCH_BINSEARCH
+// #define BATCH_BINSEARCH
 
 namespace Extension { namespace GlobalRanking {
 

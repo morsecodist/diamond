@@ -116,7 +116,7 @@ void run_ref_chunk(SequenceFile &db_file,
 
 	timer.go("Initializing temporary storage");
 	if (config.global_ranking_targets)
-		cfg.global_ranking_buffer.reset(new Config::RankingBuffer());
+		;// cfg.global_ranking_buffer.reset(new Config::RankingBuffer());
 	else
 		cfg.seed_hit_buf.reset(new AsyncBuffer<Search::Hit>(query_seqs.size() / align_mode.query_contexts,
 			config.tmpdir,
@@ -141,8 +141,15 @@ void run_ref_chunk(SequenceFile &db_file,
 			timer.finish();
 		}
 
-		for (unsigned i = 0; i < shapes.count(); ++i)
+		for (unsigned i = 0; i < shapes.count(); ++i) {
+			if(config.global_ranking_targets)
+				cfg.global_ranking_buffer.reset(new Config::RankingBuffer());
 			search_shape(i, query_chunk, query_buffer, ref_buffer, cfg, target_seeds);
+			if (config.global_ranking_targets) {
+				Extension::GlobalRanking::update_table(cfg);
+				cfg.global_ranking_buffer.reset();
+			}
+		}
 
 		timer.go("Deallocating buffers");
 		delete[] ref_buffer;
@@ -172,9 +179,9 @@ void run_ref_chunk(SequenceFile &db_file,
 	}
 
 	if (config.global_ranking_targets) {
-		timer.go("Updating ranking table");
+		/*timer.go("Updating ranking table");
 		Extension::GlobalRanking::update_table(cfg);
-		cfg.global_ranking_buffer.reset();
+		cfg.global_ranking_buffer.reset();*/
 	}
 	else {
 		timer.go("Computing alignments");
