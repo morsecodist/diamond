@@ -7,7 +7,7 @@
 
 using std::endl;
 
-void XML_format::print_match(const Hsp_context& r, const Search::Config& metadata, TextBuffer& out)
+void XML_format::print_match(const HspContext& r, const Search::Config& metadata, TextBuffer& out)
 {
 	if (r.hsp_num == 0) {
 		if (r.hit_num > 0)
@@ -16,7 +16,7 @@ void XML_format::print_match(const Hsp_context& r, const Search::Config& metadat
 		out << "<Hit>" << '\n'
 			<< "  <Hit_num>" << r.hit_num + 1 << "</Hit_num>" << '\n';
 		string id, def;
-		const string target_seqid = metadata.db->seqid(r.subject_oid).c_str();
+		const string target_seqid = r.target_title;
 		Util::Seq::get_title_def(target_seqid, id, def);
 		if (config.xml_blord_format) {
 			out << "  <Hit_id>gnl|BL_ORD_ID|" << r.subject_oid << "</Hit_id>" << '\n'
@@ -58,19 +58,19 @@ void XML_format::print_match(const Hsp_context& r, const Search::Config& metadat
 		<< "      <Hsp_align-len>" << r.length() << "</Hsp_align-len>" << '\n'
 		<< "         <Hsp_qseq>";
 
-	for (Hsp_context::Iterator i = r.begin(); i.good(); ++i)
+	for (HspContext::Iterator i = r.begin(); i.good(); ++i)
 		out << i.query_char();
 
 	out << "</Hsp_qseq>" << '\n'
 		<< "         <Hsp_hseq>";
 
-	for (Hsp_context::Iterator i = r.begin(); i.good(); ++i)
+	for (HspContext::Iterator i = r.begin(); i.good(); ++i)
 		out << i.subject_char();
 
 	out << "</Hsp_hseq>" << '\n'
 		<< "      <Hsp_midline>";
 
-	for (Hsp_context::Iterator i = r.begin(); i.good(); ++i)
+	for (HspContext::Iterator i = r.begin(); i.good(); ++i)
 		out << i.midline_char();
 
 	out << "</Hsp_midline>" << '\n'

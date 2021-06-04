@@ -1,6 +1,6 @@
 /****
 DIAMOND protein aligner
-Copyright (C) 2013-2020 Max Planck Society for the Advancement of Science e.V.
+Copyright (C) 2013-2021 Max Planck Society for the Advancement of Science e.V.
                         Benjamin Buchfink
                         Eberhard Karls Universitaet Tuebingen
 						
@@ -45,7 +45,7 @@ bool Hsp::is_weakly_enveloped(const Hsp &j) const
 		&& query_range.overlap_factor(j.query_range) >= overlap_factor;
 }
 
-Hsp_context& Hsp_context::parse()
+HspContext& HspContext::parse()
 {
 	if (!(output_format->hsp_values & Output::TRANSCRIPT) && config.command != Config::view) {
 		hsp_.query_source_range = TranslatedPosition::absolute_interval(

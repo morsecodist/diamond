@@ -175,22 +175,22 @@ void print_taxon_names(_it begin, _it end, const Search::Config& cfg, TextBuffer
 	}
 }
 
-void Blast_tab_format::print_match(const Hsp_context& r, const Search::Config& cfg, TextBuffer &out)
+void Blast_tab_format::print_match(const HspContext& r, const Search::Config& cfg, TextBuffer &out)
 {
 	const StringSet& query_qual = cfg.query->qual();
 	for (vector<unsigned>::const_iterator i = fields.begin(); i != fields.end(); ++i) {
 		switch (*i) {
 		case 0:
-			out.write_until(r.query_name, Util::Seq::id_delimiters);
+			out.write_until(r.query_title, Util::Seq::id_delimiters);
 			break;
 		case 4:
 			out << r.query.source().length();
 			break;
 		case 5:
-			print_title(out, cfg.db->seqid(r.subject_oid).c_str(), false, false, "<>");
+			print_title(out, r.target_title, false, false, "<>");
 			break;
 		case 6:
-			print_title(out, cfg.db->seqid(r.subject_oid).c_str(), false, true, "<>");
+			print_title(out, r.target_title, false, true, "<>");
 			break;
 		case 12:
 			out << r.subject_len;
@@ -214,7 +214,7 @@ void Blast_tab_format::print_match(const Hsp_context& r, const Search::Config& c
 		{
 			vector<Letter> seq;
 			seq.reserve(r.subject_range().length());
-			for (Hsp_context::Iterator j = r.begin(); j.good(); ++j)
+			for (HspContext::Iterator j = r.begin(); j.good(); ++j)
 				if (!(j.op() == op_insertion))
 					seq.push_back(j.subject());
 			out << Sequence(seq);
@@ -259,7 +259,7 @@ void Blast_tab_format::print_match(const Hsp_context& r, const Search::Config& c
 		case 33:
 		{
 			unsigned n_matches = 0;
-			for (Hsp_context::Iterator i = r.begin(); i.good(); ++i) {
+			for (HspContext::Iterator i = r.begin(); i.good(); ++i) {
 				switch (i.op()) {
 				case op_match:
 					++n_matches;
@@ -307,16 +307,16 @@ void Blast_tab_format::print_match(const Hsp_context& r, const Search::Config& c
 			break;
 		}
 		case 39:
-			print_title(out, cfg.db->seqid(r.subject_oid).c_str(), true, false, "<>");
+			print_title(out, r.target_title, true, false, "<>");
 			break;
 		case 40:
-			print_title(out, cfg.db->seqid(r.subject_oid).c_str(), true, true, "<>");
+			print_title(out, r.target_title, true, true, "<>");
 			break;
 		case 43:
 			out << (double)r.query_source_range().length()*100.0 / r.query.source().length();
 			break;
 		case 45:
-			out << r.query_name;
+			out << r.query_title;
 			break;
 		case 46:
 			out << 0;
@@ -357,11 +357,11 @@ void Blast_tab_format::print_match(const Hsp_context& r, const Search::Config& c
 			r.query.source().print(out, input_value_traits);
 			break;
 		case 55:
-			for (Hsp_context::Iterator i = r.begin(); i.good(); ++i)
+			for (HspContext::Iterator i = r.begin(); i.good(); ++i)
 				out << i.query_char();
 			break;
 		case 56:
-			for (Hsp_context::Iterator i = r.begin(); i.good(); ++i)
+			for (HspContext::Iterator i = r.begin(); i.good(); ++i)
 				out << i.subject_char();
 			break;
 		case 57:
@@ -401,7 +401,7 @@ void Blast_tab_format::print_match(const Hsp_context& r, const Search::Config& c
 			if (config.frame_shift) {
 				vector<Letter> seq;
 				seq.reserve(r.query_range().length());
-				for (Hsp_context::Iterator j = r.begin(); j.good(); ++j)
+				for (HspContext::Iterator j = r.begin(); j.good(); ++j)
 					if (j.op() != op_deletion && j.op() != op_frameshift_forward && j.op() != op_frameshift_reverse)
 						seq.push_back(j.query());
 				out << Sequence(seq);
@@ -414,7 +414,7 @@ void Blast_tab_format::print_match(const Hsp_context& r, const Search::Config& c
 		case 64: {
 			string s;
 			size_t n = 0;
-			for (Hsp_context::Iterator j = r.begin(); j.good(); ++j) {
+			for (HspContext::Iterator j = r.begin(); j.good(); ++j) {
 				if (j.op() == op_deletion || j.op() == op_insertion) {
 					if (!s.empty()) {
 						if (n++ > 0) out << '\t';

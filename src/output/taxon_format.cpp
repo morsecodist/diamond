@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 using std::set;
 using std::endl;
 
-void Taxon_format::print_match(const Hsp_context &r, const Search::Config& cfg, TextBuffer &out)
+void Taxon_format::print_match(const HspContext &r, const Search::Config& cfg, TextBuffer &out)
 {
 	const vector<unsigned> taxons(cfg.db->taxids(r.subject_oid));
 	if (taxons.empty())
@@ -37,7 +37,7 @@ void Taxon_format::print_match(const Hsp_context &r, const Search::Config& cfg, 
 			taxid = cfg.taxon_nodes->get_lca(taxid, *i);
 	}
 	catch (std::exception &) {
-		std::cerr << "Query=" << r.query_name << endl << "Subject=" << cfg.db->seqid(r.subject_oid).c_str() << endl;
+		std::cerr << "Query=" << r.query_title << endl << "Subject=" << r.target_title << endl;
 		throw;
 	}
 }

@@ -124,6 +124,8 @@ struct DatabaseFile : public SequenceFile, public InputFile
 	virtual void read_id_data(char* dst, size_t len) override;
 	virtual void skip_id_data() override;
 	virtual std::string seqid(size_t oid) override;
+	virtual std::string dict_title(size_t dict_id) override;
+	virtual size_t dict_len(size_t dict_id) override;
 	virtual size_t sequence_count() const override;
 	virtual void read_seq(std::vector<Letter>& seq, std::string& id) override;
 	virtual size_t letters() const override;

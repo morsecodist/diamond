@@ -1,6 +1,6 @@
 /****
 DIAMOND protein aligner
-Copyright (C) 2013-2020 Max Planck Society for the Advancement of Science e.V.
+Copyright (C) 2013-2021 Max Planck Society for the Advancement of Science e.V.
                         Benjamin Buchfink
                         Eberhard Karls Universitaet Tuebingen
 
@@ -51,6 +51,7 @@ TextBuffer* generate_output(vector<Match> &targets, size_t query_block_id, Stati
 	for (size_t i = 0; i < targets.size(); ++i) {
 
 		const size_t subject_id = targets[i].target_block_id;
+		const string target_title = cfg.target->has_ids() ? cfg.target->ids()[subject_id] : cfg.db->seqid(subject_id);
 		const unsigned database_id = cfg.target->block_id2oid(subject_id);
 		const unsigned subject_len = (unsigned)ref_seqs[subject_id].length();
 
@@ -59,12 +60,13 @@ TextBuffer* generate_output(vector<Match> &targets, size_t query_block_id, Stati
 			if (*f == Output_format::daa)
 				write_daa_record(*out, hsp, subject_id, cfg);
 			else
-				f->print_match(Hsp_context(hsp,
+				f->print_match(HspContext(hsp,
 					query_block_id,
 					query,
 					query_title,
 					database_id,
 					subject_len,
+					target_title.c_str(),
 					i,
 					hit_hsps,
 					ref_seqs[subject_id],

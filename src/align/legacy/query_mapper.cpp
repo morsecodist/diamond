@@ -215,6 +215,9 @@ bool QueryMapper::generate_output(TextBuffer &buffer, Statistics &stat)
 	for (size_t i = 0; i < targets.size(); ++i) {
 
 		const size_t subject_id = targets[i].subject_block_id;
+		string target_title;
+		if (!blocked_processing)
+			target_title = metadata.target->has_ids() ? metadata.target->ids()[subject_id] : metadata.db->seqid(subject_id);
 		const unsigned database_id = metadata.target->block_id2oid(subject_id);
 		const unsigned subject_len = (unsigned)metadata.target->seqs()[subject_id].length();
 		targets[i].apply_filters(source_query_len, subject_len, query_title);
@@ -249,12 +252,13 @@ bool QueryMapper::generate_output(TextBuffer &buffer, Statistics &stat)
 				if (*f == Output_format::daa)
 					write_daa_record(buffer, *j, subject_id, metadata);
 				else
-					f->print_match(Hsp_context(*j,
+					f->print_match(HspContext(*j,
 						query_id,
 						translated_query,
 						query_title,
 						database_id,
 						subject_len,
+						target_title.c_str(),
 						n_target_seq,
 						hit_hsps,
 						metadata.target->seqs()[subject_id]), metadata, buffer);

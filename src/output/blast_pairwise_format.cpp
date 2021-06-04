@@ -19,13 +19,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "output_format.h"
 #include "../util/util.h"
 
-void Pairwise_format::print_match(const Hsp_context& r, const Search::Config& metadata, TextBuffer &out)
+void Pairwise_format::print_match(const HspContext& r, const Search::Config& metadata, TextBuffer &out)
 {
 	static const unsigned width = 60;
 	const int dna_len = (int)r.query.source().length();
 	const Strand strand = r.frame() < 3 ? FORWARD : REVERSE;
 	out << '>';
-	Output_format::print_title(out, metadata.db->seqid(r.subject_oid).c_str(), true, true, " ");
+	Output_format::print_title(out, r.target_title, true, true, " ");
 	out << "\nLength=" << r.subject_len << "\n\n";
 	out << " Score = " << r.bit_score() << " bits (" << r.score() << "),  Expect = ";
 	out.print_e(r.evalue());
@@ -37,7 +37,7 @@ void Pairwise_format::print_match(const Hsp_context& r, const Search::Config& me
 	out << '\n';
 	const unsigned digits = (unsigned)std::max(ceil(log10(r.subject_range().end_)), ceil(log10(r.query_source_range().end_)));
 
-	Hsp_context::Iterator qi = r.begin(), mi = r.begin(), si = r.begin();
+	HspContext::Iterator qi = r.begin(), mi = r.begin(), si = r.begin();
 	while (qi.good()) {
 		out << "Query  ";
 		out.print(qi.query_pos.absolute(dna_len) + 1, digits);

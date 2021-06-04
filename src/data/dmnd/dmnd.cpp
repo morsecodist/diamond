@@ -500,10 +500,22 @@ void DatabaseFile::seek_chunk(const Chunk& chunk) {
 	current_ref_block = chunk.i;
 	seek(chunk.offset);
 }
-
+
 std::string DatabaseFile::seqid(size_t oid)
 {
-	return std::string();
+	throw std::runtime_error("Operation not supported.");
+}
+std::string DatabaseFile::dict_title(size_t dict_id)
+{
+	if (dict_id >= dict_title_.size())
+		throw std::runtime_error("Dictionary not loaded.");
+	return dict_title_[dict_id];
+}
+size_t DatabaseFile::dict_len(size_t dict_id)
+{
+	if (dict_id >= dict_len_.size())
+		throw std::runtime_error("Dictionary not loaded.");
+	return dict_len_[dict_id];
 }
 size_t DatabaseFile::id_len(const SeqInfo& seq_info, const SeqInfo& seq_info_next) {
 	return seq_info_next.pos - seq_info.pos - seq_info.seq_len - 3;
@@ -623,11 +635,12 @@ std::vector<unsigned> DatabaseFile::taxids(size_t oid) const
 
 void DatabaseFile::seq_data(size_t oid, std::vector<Letter>& dst) const
 {
+	throw std::runtime_error("Operation not supported.");
 }
 
 size_t DatabaseFile::seq_length(size_t oid) const
 {
-	return size_t();
+	throw std::runtime_error("Operation not supported.");
 }
 
 void DatabaseFile::init_random_access()

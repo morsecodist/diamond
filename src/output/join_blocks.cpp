@@ -132,20 +132,21 @@ struct Join_record
 
 	bool db_precedence(const Join_record &rhs) const
 	{
-		return block_ < rhs.block_ || (block_ == rhs.block_ && info_.subject_oid < rhs.info_.subject_oid);
+		return block_ < rhs.block_ || (block_ == rhs.block_ && target_oid < rhs.target_oid);
 	}
 
-	Join_record(unsigned ref_block, unsigned subject, BinaryBuffer::Iterator &it):
+	Join_record(unsigned ref_block, unsigned subject, BinaryBuffer::Iterator &it, const SequenceFile& db):
 		block_(ref_block)
 	{
 		info_.read(it);
-		same_subject_ = info_.subject_oid == subject;
+		same_subject_ = info_.target_dict_id == subject;
+		target_oid = db.oid(info_.target_dict_id);
 	}
 
-	static bool push_next(unsigned block, unsigned subject, BinaryBuffer::Iterator &it, vector<Join_record> &v)
+	static bool push_next(unsigned block, unsigned subject, BinaryBuffer::Iterator &it, vector<Join_record> &v, const SequenceFile& db)
 	{
 		if (it.good()) {
-			v.push_back(Join_record(block, subject, it));
+			v.push_back(Join_record(block, subject, it, db));
 			return true;
 		}
 		else
@@ -153,6 +154,7 @@ struct Join_record
 	}
 
 	unsigned block_;
+	size_t target_oid;
 	bool same_subject_;
 	IntermediateRecord info_;
 
@@ -160,32 +162,33 @@ struct Join_record
 
 struct BlockJoiner
 {
-	BlockJoiner(vector<BinaryBuffer> &buf)
+	BlockJoiner(vector<BinaryBuffer> &buf, const SequenceFile& db)
 	{
 		for (unsigned i = 0; i < current_ref_block; ++i) {
 			it.push_back(buf[i].begin());
-			Join_record::push_next(i, std::numeric_limits<unsigned>::max(), it.back(), records);
+			Join_record::push_next(i, std::numeric_limits<unsigned>::max(), it.back(), records, db);
 		}
 		std::make_heap(records.begin(), records.end(), (config.toppercent == 100.0 && config.global_ranking_targets == 0) ? Join_record::cmp_evalue : Join_record::cmp_score);
 	}
-	bool get(vector<IntermediateRecord> &target_hsp, unsigned & block_idx)
+	bool get(vector<IntermediateRecord> &target_hsp, unsigned & block_idx, size_t& target_oid, const SequenceFile& db)
 	{
 		if (records.empty())
 			return false;
 		const Join_record &first = records.front();
 		const unsigned block = first.block_;
 		block_idx = block;
-		const unsigned subject = first.info_.subject_oid;
+		target_oid = first.target_oid;
+		const unsigned subject = first.info_.target_dict_id;
 		target_hsp.clear();
 		const auto pred = (config.toppercent == 100.0 && config.global_ranking_targets == 0) ? Join_record::cmp_evalue : Join_record::cmp_score;
 		do {
 			const Join_record &next = records.front();
-			if (next.block_ != block || next.info_.subject_oid != subject)
+			if (next.block_ != block || next.info_.target_dict_id != subject)
 				return true;
 			target_hsp.push_back(next.info_);
 			std::pop_heap(records.begin(), records.end(), pred);
 			records.pop_back();
-			if (Join_record::push_next(block, subject, it[block], records))
+			if (Join_record::push_next(block, subject, it[block], records, db))
 				std::push_heap(records.begin(), records.end(), pred);
 		} while (!records.empty());
 		return true;
@@ -206,16 +209,17 @@ void join_query(
 	BitVector& ranking_db_filter)
 {
 	TranslatedSequence query_seq(cfg.query->translated(query));
-	BlockJoiner joiner(buf);
+	BlockJoiner joiner(buf, *cfg.db);
 	vector<IntermediateRecord> target_hsp;
 	unique_ptr<TargetCulling> culling(TargetCulling::get());
 
 	unsigned n_target_seq = 0;
 	unsigned block_idx = 0;
+	size_t target_oid;
 
-	while (joiner.get(target_hsp, block_idx)) {
-		const size_t oid = target_hsp.front().subject_oid;
-		const set<unsigned> rank_taxon_ids = config.taxon_k ? cfg.taxon_nodes->rank_taxid(cfg.db->taxids(oid), Rank::species) : set<unsigned>();
+	while (joiner.get(target_hsp, block_idx, target_oid, *cfg.db)) {
+		const size_t dict_id = target_hsp.front().target_dict_id;
+		const set<unsigned> rank_taxon_ids = config.taxon_k ? cfg.taxon_nodes->rank_taxid(cfg.db->taxids(target_oid), Rank::species) : set<unsigned>();
 		const int c = culling->cull(target_hsp, rank_taxon_ids);
 		if (c == TargetCulling::FINISHED)
 			break;
@@ -232,13 +236,14 @@ void join_query(
 				Hsp hsp(*i, query_source_len);
 				vector<Letter> subject_seq;
 				if (flag_any(f.flags, Output::Flags::TARGET_SEQS))
-					cfg.db->seq_data(i->subject_oid, subject_seq);
-				f.print_match(Hsp_context(hsp,
+					cfg.db->seq_data(target_oid, subject_seq);
+				f.print_match(HspContext(hsp,
 					query,
 					query_seq,
 					query_name,
-					i->subject_oid,
-					cfg.db->seq_length(i->subject_oid),
+					target_oid,
+					cfg.db->dict_len(dict_id),
+					cfg.db->dict_title(dict_id).c_str(),
 					n_target_seq,
 					hsp_num,
 					Sequence(subject_seq)

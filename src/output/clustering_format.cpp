@@ -24,7 +24,7 @@ void Clustering_format::print_query_intro(size_t query_num, const char *query_na
 {
 }
 
-void Clustering_format::print_match(const Hsp_context& r, const Search::Config &metadata, TextBuffer &out) 
+void Clustering_format::print_match(const HspContext& r, const Search::Config &metadata, TextBuffer &out) 
 {
 	out.write((uint32_t) metadata.query->block_id2oid(r.query_id));
 	out.write((uint32_t) r.subject_oid);

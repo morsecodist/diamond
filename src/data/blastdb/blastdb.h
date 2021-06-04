@@ -20,6 +20,8 @@ struct BlastDB : public SequenceFile {
 	virtual void read_id_data(char* dst, size_t len) override;
 	virtual void skip_id_data() override;
 	virtual std::string seqid(size_t oid) override;
+	virtual std::string dict_title(size_t dict_id) override;
+	virtual size_t dict_len(size_t dict_id) override;
 	virtual size_t sequence_count() const override;
 	virtual size_t sparse_sequence_count() const override;
 	virtual size_t letters() const override;

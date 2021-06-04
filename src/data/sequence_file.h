@@ -85,6 +85,8 @@ struct SequenceFile {
 	virtual void read_id_data(char* dst, size_t len) = 0;
 	virtual void skip_id_data() = 0;
 	virtual std::string seqid(size_t oid) = 0;
+	virtual std::string dict_title(size_t dict_id) = 0;
+	virtual size_t dict_len(size_t dict_id) = 0;
 	virtual size_t sequence_count() const = 0;
 	virtual size_t sparse_sequence_count() const = 0;
 	virtual size_t letters() const = 0;
@@ -126,6 +128,7 @@ struct SequenceFile {
 	void init_dict();
 	void init_dict_block(size_t block, size_t seq_count);
 	uint32_t dict_id(size_t block, size_t block_id, size_t oid, size_t len, const char* id);
+	size_t oid(uint32_t dict_id) const;
 
 	static SequenceFile* auto_create(Flags flags = Flags::NONE, Metadata metadata = Metadata());
 

@@ -181,6 +181,20 @@ std::string BlastDB::seqid(size_t oid)
 	}
 }
 
+std::string BlastDB::dict_title(size_t dict_id)
+{
+	if (dict_id >= dict_oid_.size())
+		throw std::runtime_error("Dictionary not loaded.");
+	return seqid(dict_oid_[dict_id]);
+}
+
+size_t BlastDB::dict_len(size_t dict_id)
+{
+	if (dict_id >= dict_oid_.size())
+		throw std::runtime_error("Dictionary not loaded.");
+	return db_->GetSeqLength(dict_oid_[dict_id]);
+}
+
 size_t BlastDB::sequence_count() const
 {
 	return db_->GetNumOIDs();
@@ -332,7 +346,7 @@ void BlastDB::seq_data(size_t oid, std::vector<Letter>& dst) const
 
 size_t BlastDB::seq_length(size_t oid) const
 {
-	return size_t();
+	return db_->GetSeqLength(oid);
 }
 
 void BlastDB::init_random_access()

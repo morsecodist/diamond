@@ -27,15 +27,15 @@ void PAF_format::print_query_intro(size_t query_num, const char *query_name, uns
 	}
 }
 
-void PAF_format::print_match(const Hsp_context& r, const Search::Config& cfg, TextBuffer &out)
+void PAF_format::print_match(const HspContext& r, const Search::Config& cfg, TextBuffer &out)
 {
-	out.write_until(r.query_name, Util::Seq::id_delimiters);
+	out.write_until(r.query_title, Util::Seq::id_delimiters);
 	out << '\t' << r.query.source().length() << '\t'
 		<< r.query_source_range().begin_ << '\t'
 		<< r.query_source_range().end_ - 1 << '\t'
 		<< (Frame(r.frame()).strand == FORWARD ? '+' : '-') << '\t';
 
-	print_title(out, cfg.db->seqid(r.subject_oid).c_str(), false, false, "<>");
+	print_title(out, r.target_title, false, false, "<>");
 
 	out << '\t' << r.subject_len << '\t'
 		<< r.subject_range().begin_ << '\t'

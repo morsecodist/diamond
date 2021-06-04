@@ -78,7 +78,7 @@ struct Output_format
 	{}
 	virtual void print_query_epilog(TextBuffer &out, const char *query_title, bool unaligned, const Search::Config &parameters) const
 	{}
-	virtual void print_match(const Hsp_context& r, const Search::Config &metadata, TextBuffer &out)
+	virtual void print_match(const HspContext& r, const Search::Config &metadata, TextBuffer &out)
 	{}
 	virtual void print_header(Consumer &f, int mode, const char *matrix, int gap_open, int gap_extend, double evalue, const char *first_query_name, unsigned first_query_len) const
 	{ }
@@ -133,7 +133,7 @@ struct Blast_tab_format : public Output_format
 	Blast_tab_format();
 	virtual void print_header(Consumer &f, int mode, const char *matrix, int gap_open, int gap_extend, double evalue, const char *first_query_name, unsigned first_query_len) const override;
 	virtual void print_query_intro(size_t query_num, const char *query_name, unsigned query_len, TextBuffer &out, bool unaligned, const Search::Config& cfg) const override;
-	virtual void print_match(const Hsp_context& r, const Search::Config& metadata, TextBuffer &out) override;
+	virtual void print_match(const HspContext& r, const Search::Config& metadata, TextBuffer &out) override;
 	virtual ~Blast_tab_format()
 	{ }
 	virtual Output_format* clone() const override
@@ -149,7 +149,7 @@ struct PAF_format : public Output_format
 		Output_format(paf, Output::TRANSCRIPT, Output::Flags::NONE)
 	{}
 	virtual void print_query_intro(size_t query_num, const char *query_name, unsigned query_len, TextBuffer &out, bool unaligned, const Search::Config& cfg) const;
-	virtual void print_match(const Hsp_context& r, const Search::Config& metadata, TextBuffer &out);
+	virtual void print_match(const HspContext& r, const Search::Config& metadata, TextBuffer &out);
 	virtual ~PAF_format()
 	{ }
 	virtual Output_format* clone() const
@@ -163,7 +163,7 @@ struct Sam_format : public Output_format
 	Sam_format():
 		Output_format(sam, Output::TRANSCRIPT, Output::Flags::NONE)
 	{ }
-	virtual void print_match(const Hsp_context& r, const Search::Config &metadata, TextBuffer &out) override;
+	virtual void print_match(const HspContext& r, const Search::Config &metadata, TextBuffer &out) override;
 	virtual void print_header(Consumer &f, int mode, const char *matrix, int gap_open, int gap_extend, double evalue, const char *first_query_name, unsigned first_query_len) const override;
 	virtual void print_query_intro(size_t query_num, const char *query_name, unsigned query_len, TextBuffer &out, bool unaligned, const Search::Config& cfg) const override;
 	virtual ~Sam_format()
@@ -181,7 +181,7 @@ struct XML_format : public Output_format
 	{
 		config.salltitles = true;
 	} 
-	virtual void print_match(const Hsp_context& r, const Search::Config &metadata, TextBuffer &out) override;
+	virtual void print_match(const HspContext& r, const Search::Config &metadata, TextBuffer &out) override;
 	virtual void print_header(Consumer &f, int mode, const char *matrix, int gap_open, int gap_extend, double evalue, const char *first_query_name, unsigned first_query_len) const override;
 	virtual void print_query_intro(size_t query_num, const char *query_name, unsigned query_len, TextBuffer &out, bool unaligned, const Search::Config& cfg) const override;
 	virtual void print_query_epilog(TextBuffer &out, const char *query_title, bool unaligned, const Search::Config &parameters) const override;
@@ -201,7 +201,7 @@ struct Pairwise_format : public Output_format
 	{
 		config.salltitles = true;
 	}
-	virtual void print_match(const Hsp_context& r, const Search::Config &metadata, TextBuffer &out) override;
+	virtual void print_match(const HspContext& r, const Search::Config &metadata, TextBuffer &out) override;
 	virtual void print_header(Consumer &f, int mode, const char *matrix, int gap_open, int gap_extend, double evalue, const char *first_query_name, unsigned first_query_len) const override;
 	virtual void print_query_intro(size_t query_num, const char *query_name, unsigned query_len, TextBuffer &out, bool unaligned, const Search::Config& cfg) const override;
 	virtual void print_query_epilog(TextBuffer &out, const char *query_title, bool unaligned, const Search::Config &parameters) const override;
@@ -224,7 +224,7 @@ struct Taxon_format : public Output_format
 		needs_taxon_id_lists = true;
 		needs_taxon_nodes = true;
 	}
-	virtual void print_match(const Hsp_context& r, const Search::Config &metadata, TextBuffer &out) override;
+	virtual void print_match(const HspContext& r, const Search::Config &metadata, TextBuffer &out) override;
 	virtual void print_query_epilog(TextBuffer &out, const char *query_title, bool unaligned, const Search::Config &parameters) const override;
 	virtual ~Taxon_format()
 	{ }
@@ -242,7 +242,7 @@ struct Bin1_format : public Output_format
 		Output_format(bin1)
 	{}
 	virtual void print_query_intro(size_t query_num, const char *query_name, unsigned query_len, TextBuffer &out, bool unaligned, const Search::Config& cfg) const override;
-	virtual void print_match(const Hsp_context& r, const Search::Config &metadata, TextBuffer &out) override;
+	virtual void print_match(const HspContext& r, const Search::Config &metadata, TextBuffer &out) override;
 	virtual ~Bin1_format()
 	{ }
 	virtual Output_format* clone() const override
@@ -258,7 +258,7 @@ struct Clustering_format : public Output_format
 		this->format = RecursiveParser::clean_expression(format);
 	}
 	virtual void print_query_intro(size_t query_num, const char *query_name, unsigned query_len, TextBuffer &out, bool unaligned, const Search::Config& cfg) const override;
-	virtual void print_match(const Hsp_context& r, const Search::Config &metadata, TextBuffer &out) override;
+	virtual void print_match(const HspContext& r, const Search::Config &metadata, TextBuffer &out) override;
 	virtual ~Clustering_format()
 	{ }
 	virtual Output_format* clone() const override
@@ -272,7 +272,7 @@ struct Binary_format : public Output_format
 	Binary_format() :
 		Output_format(bin1, Output::NONE)
 	{}
-	virtual void print_match(const Hsp_context& r, const Search::Config & metadata, TextBuffer& out) override;
+	virtual void print_match(const HspContext& r, const Search::Config & metadata, TextBuffer& out) override;
 	virtual ~Binary_format()
 	{ }
 	virtual Output_format* clone() const override
@@ -284,4 +284,4 @@ struct Binary_format : public Output_format
 Output_format* get_output_format();
 void init_output();
 void print_hsp(Hsp &hsp, const TranslatedSequence &query);
-void print_cigar(const Hsp_context &r, TextBuffer &buf);
+void print_cigar(const HspContext&r, TextBuffer &buf);

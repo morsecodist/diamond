@@ -35,7 +35,7 @@ unique_ptr<Output_format> output_format;
 
 void IntermediateRecord::read(BinaryBuffer::Iterator& f)
 {
-	f.read(subject_oid);
+	f.read(target_dict_id);
 	if (config.global_ranking_targets > 0) {
 		uint16_t s;
 		f.read(s);
@@ -85,10 +85,10 @@ void IntermediateRecord::finish_query(TextBuffer& buf, size_t seek_pos)
 	*(uint32_t*)(&buf[seek_pos + sizeof(uint32_t)]) = safe_cast<uint32_t>(buf.size() - seek_pos - sizeof(uint32_t) * 2);
 }
 
-void IntermediateRecord::write(TextBuffer& buf, const Hsp& match, unsigned query_id, size_t subject_id, const Search::Config& cfg)
+void IntermediateRecord::write(TextBuffer& buf, const Hsp& match, unsigned query_id, size_t target_dict_id, const Search::Config& cfg)
 {
 	const interval oriented_range(match.oriented_range());
-	buf.write((uint32_t)subject_id);
+	buf.write((uint32_t)target_dict_id);
 	buf.write(get_segment_flag(match));
 	buf.write_packed(match.score);
 	buf.write(match.evalue);
@@ -225,14 +225,14 @@ void Bin1_format::print_query_intro(size_t query_num, const char *query_name, un
 	out.write((uint32_t)query_num);
 }
 
-void Bin1_format::print_match(const Hsp_context& r, const Search::Config &metadata, TextBuffer &out) {
+void Bin1_format::print_match(const HspContext& r, const Search::Config &metadata, TextBuffer &out) {
 	if (r.query_id < r.subject_oid) {
 		out.write((uint32_t)r.subject_oid);
 		out.write(r.bit_score() / std::max((unsigned)r.query.source().length(), r.subject_len));
 	}
 }
 
-void Binary_format::print_match(const Hsp_context& r, const Search::Config& metadata, TextBuffer& out)
+void Binary_format::print_match(const HspContext& r, const Search::Config& metadata, TextBuffer& out)
 {
 	out.write((uint32_t)metadata.query->block_id2oid(r.query_id));
 	out.write((uint32_t)r.subject_oid);

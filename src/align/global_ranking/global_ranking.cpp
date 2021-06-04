@@ -71,10 +71,10 @@ size_t write_merged_query_list_intro(uint32_t query_id, TextBuffer& buf) {
 }
 
 void write_merged_query_list(const IntermediateRecord& r, TextBuffer& out, BitVector& ranking_db_filter, Statistics& stat) {
-	out.write(r.subject_oid);
+	/*out.write(r.subject_oid);
 	out.write(uint16_t(r.score));
 	ranking_db_filter.set(r.subject_oid);
-	stat.inc(Statistics::TARGET_HITS1);
+	stat.inc(Statistics::TARGET_HITS1);*/
 }
 
 void finish_merged_query_list(TextBuffer& buf, size_t seek_pos) {
