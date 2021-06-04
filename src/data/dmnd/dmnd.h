@@ -150,8 +150,15 @@ struct DatabaseFile : public SequenceFile, public InputFile
 	static const char* FILE_EXTENSION;
 
 private:
+
+	virtual void write_dict_entry(size_t block, size_t oid, size_t len, const char* id) override;
+	virtual void load_dict_entry(InputFile& f) override;
+	virtual void reserve_dict() override;
+
 	void init(Flags flags = Flags::NONE);
 
 	std::unique_ptr<TaxonList> taxon_list_;
+	std::vector<uint32_t> dict_len_;
+	StringSet dict_title_;
 
 };

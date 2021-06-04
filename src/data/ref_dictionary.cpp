@@ -29,23 +29,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "ref_dictionary.h"
 #include "../util/util.h"
 #include "../util/parallel/multiprocessing.h"
+#include "../util/sequence/sequence.h"
 
 using std::pair;
 
 ReferenceDictionary ReferenceDictionary::instance_;
 std::unordered_map<size_t,ReferenceDictionary> ReferenceDictionary::block_instances_;
-
-string* get_allseqids(const char *s)
-{
-	string *r = new string;
-	const vector<string> t(tokenize(s, "\1"));
-	for (vector<string>::const_iterator i = t.begin(); i != t.end(); ++i) {
-		if (i != t.begin())
-			r->append("\1");
-		r->append(i->substr(0, find_first_of(i->c_str(), Const::id_delimiters)));
-	}
-	return r;
-}
 
 void ReferenceDictionary::clear()
 {
@@ -92,12 +81,12 @@ uint32_t ReferenceDictionary::get(unsigned block, size_t block_id, const Search:
 			len_.push_back((uint32_t)cfg.target->seqs().length(block_id));
 			database_id_.push_back((*block_to_database_id_)[block_id]);
 			const char *title = cfg.target->ids()[block_id];
-			if (config.salltitles)
+			/*if (config.salltitles)
 				name_.push_back(new string(title));
 			else if (config.sallseqid)
 				name_.push_back(get_allseqids(title));
 			else
-				name_.push_back(get_str(title, Const::id_delimiters));
+				name_.push_back(Util::Seq::seqid(title));*/
 		}
 		mtx_.unlock();
 	}

@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <sstream>
 #include "output_format.h"
+#include "../util/sequence/sequence.h"
 
 using namespace std;
 
@@ -80,14 +81,14 @@ void print_cigar(const Hsp_context &r, TextBuffer &buf)
 void Sam_format::print_query_intro(size_t query_num, const char *query_name, unsigned query_len, TextBuffer &out, bool unaligned, const Search::Config& cfg) const
 {
 	if (unaligned) {
-		out.write_until(query_name, Const::id_delimiters);
+		out.write_until(query_name, Util::Seq::id_delimiters);
 		out << "\t4\t*\t0\t255\t*\t*\t0\t0\t*\t*\n";
 	}
 }
 
 void Sam_format::print_match(const Hsp_context& r, const Search::Config&metadata, TextBuffer &out)
 {
-	out.write_until(r.query_name, Const::id_delimiters);
+	out.write_until(r.query_name, Util::Seq::id_delimiters);
 	out << '\t' << '0' << '\t';
 
 	const bool lt = (config.salltitles || (config.command == Config::view)) ? true : false;

@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <set>
 #include "output_format.h"
 #include "../data/taxonomy.h"
+#include "../util/sequence/sequence.h"
 
 using std::set;
 using std::endl;
@@ -43,7 +44,7 @@ void Taxon_format::print_match(const Hsp_context &r, const Search::Config& cfg, 
 
 void Taxon_format::print_query_epilog(TextBuffer &out, const char *query_title, bool unaligned, const Search::Config &params) const
 {
-	out.write_until(query_title, Const::id_delimiters);
+	out.write_until(query_title, Util::Seq::id_delimiters);
 	out << '\t' << taxid << '\t';
 	if (taxid != 0)
 		out.print_e(evalue);

@@ -30,7 +30,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 const char* Const::version_string = "2.0.9";
 const char* Const::program_name = "diamond";
-const char* Const::id_delimiters = " \a\b\f\n\r\t\v\1";
 
 Align_mode::Align_mode(unsigned mode) :
 	mode(mode)

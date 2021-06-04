@@ -104,6 +104,31 @@ void DatabaseFile::putback_seqinfo() {
 	pos_array_offset -= SeqInfo::SIZE;
 }
 
+void DatabaseFile::write_dict_entry(size_t block, size_t oid, size_t len, const char* id)
+{
+	OutputFile& f = *dict_file_;
+	f << (uint32_t)oid;
+	f << (uint32_t)len;
+	f << id;
+	dict_alloc_size_ += strlen(id);
+}
+
+void DatabaseFile::load_dict_entry(InputFile& f)
+{
+	uint32_t oid, len;
+	string title;
+	f >> oid >> len >> title;
+	dict_oid_.push_back(oid);
+	dict_len_.push_back(len);
+	dict_title_.push_back(title.begin(), title.end());
+}
+
+void DatabaseFile::reserve_dict()
+{
+	dict_len_.reserve(next_dict_id_);
+	dict_title_.reserve(next_dict_id_, dict_alloc_size_);
+}
+
 void DatabaseFile::init(Flags flags)
 {
 	read_header(*this, ref_header);
@@ -607,10 +632,16 @@ size_t DatabaseFile::seq_length(size_t oid) const
 
 void DatabaseFile::init_random_access()
 {
+	load_dictionary();
 }
 
 void DatabaseFile::end_random_access()
 {
+	free_dictionary();
+	dict_len_.clear();
+	dict_len_.shrink_to_fit();
+	dict_title_.clear();
+	dict_title_.shrink_to_fit();
 }
 
 std::vector<string>* DatabaseFile::taxon_scientific_names() {

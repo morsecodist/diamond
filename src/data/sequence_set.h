@@ -32,7 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../util/ptr_vector.h"
 #include "../basic/value.h"
 
-struct SequenceSet : public String_set<Letter, Sequence::DELIMITER, 1>
+struct SequenceSet : public StringSetBase<Letter, Sequence::DELIMITER, 1>
 {
 
 	SequenceSet(Alphabet alphabet = Alphabet::STD);
@@ -74,5 +74,5 @@ private:
 
 };
 
-size_t max_id_len(const String_set<char, 0>& ids);
+size_t max_id_len(const StringSet& ids);
 std::vector<std::string> seq_titles(const char* title);

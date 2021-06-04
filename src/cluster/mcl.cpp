@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "mcl.h"
 #include "sparse_matrix_stream.h"
 #include "../util/util.h"
+#include "../util/sequence/sequence.h"
 
 #define MASK_INVERSE        0xC000000000000000
 #define MASK_NORMAL_NODE    0x4000000000000000
@@ -761,7 +762,7 @@ void MCL::run(){
 		db->read_seq(seq, id);
 		const uint64_t cid = (~MASK_INVERSE) & clustering_result[i];
 		const uint64_t lab = MASK_INVERSE & clustering_result[i];
-		(*out) << blast_id(id) << '\t' ;
+		(*out) << Util::Seq::seqid(id.c_str()) << '\t' ;
 		switch(lab){
 			case MASK_SINGLE_NODE:
 				(*out) << cid << '\t'<< 's';

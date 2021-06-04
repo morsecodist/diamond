@@ -111,6 +111,8 @@ void update_table(Search::Config& cfg) {
 		threads.emplace_back(worker, p[i], p[i + 1]);
 	for (thread& t : threads)
 		t.join();
+	timer.go("Deallocating seed hit list");
+	cfg.global_ranking_buffer.reset();
 	timer.finish();
 	log_stream << "Merged targets = " << merged_count << endl;
 }

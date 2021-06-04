@@ -37,6 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../data/reference.h"
 #include "../data/dmnd/dmnd.h"
 #include "../util/util.h"
+#include "../util/sequence/sequence.h"
 
 using namespace std;
 using std::chrono::high_resolution_clock;
@@ -232,7 +233,7 @@ void pairwise_worker(TextInputFile *in, std::mutex *input_lock, std::mutex *outp
 			return;
 		}
 		input_lock->unlock();
-		const string ir = blast_id(id_r), iq = blast_id(id_q);
+		const string ir = Util::Seq::seqid(id_r.c_str()), iq = Util::Seq::seqid(id_q.c_str());
 		Hsp hsp;
 		smith_waterman(Sequence(query), Sequence(ref), hsp);
 		Hsp_context context(hsp, 0, TranslatedSequence(query), "", 0, 0, 0, 0, Sequence());
@@ -268,7 +269,7 @@ void pairwise()
 
 void fasta_skip_to(string &id, vector<Letter> &seq, string &blast_id, TextInputFile &f)
 {
-	while (::blast_id(id) != blast_id) {
+	while (Util::Seq::seqid(id.c_str()) != blast_id) {
 		if (!FASTA_format().get_seq(id, seq, f, value_traits))
 			throw runtime_error("Sequence not found in FASTA file.");
 	}

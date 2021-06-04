@@ -345,7 +345,7 @@ void BlastDB::init_random_access()
 		db_->FindVolumePaths(paths);
 	else
 		CSeqDB::FindVolumePaths(file_name_, CSeqDB::eProtein, paths);
-	acc_ = String_set<char, '\0'>();
+	acc_.clear();
 	string acc;
 	for (const string& path : paths) {
 		TextInputFile f(path + ".acc");
@@ -355,11 +355,15 @@ void BlastDB::init_random_access()
 		}
 		f.close();
 	}
+	timer.go("Loading dictionary");
+	load_dictionary();
 }
 
 void BlastDB::end_random_access()
 {
-	acc_ = String_set<char, '\0'>();
+	acc_.clear();
+	acc_.shrink_to_fit();
+	free_dictionary();
 }
 
 const BitVector* BlastDB::builtin_filter() {
@@ -377,6 +381,22 @@ const BitVector* BlastDB::builtin_filter() {
 }
 
 BlastDB::~BlastDB()
+{
+}
+
+void BlastDB::write_dict_entry(size_t block, size_t oid, size_t len, const char* id)
+{
+	*dict_file_ << (uint32_t)oid;
+}
+
+void BlastDB::load_dict_entry(InputFile& f)
+{
+	uint32_t oid;
+	f >> oid;
+	dict_oid_.push_back(oid);
+}
+
+void BlastDB::reserve_dict()
 {
 }
 

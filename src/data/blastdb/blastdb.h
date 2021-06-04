@@ -50,13 +50,17 @@ struct BlastDB : public SequenceFile {
 	
 private:
 
+	virtual void write_dict_entry(size_t block, size_t oid, size_t len, const char* id) override;
+	virtual void load_dict_entry(InputFile& f) override;
+	virtual void reserve_dict() override;
+
 	const std::string file_name_;
 	std::unique_ptr<ncbi::CSeqDBExpert> db_;
 	int oid_;
 	const bool long_seqids_;
 	const Flags flags_;
 	BitVector oid_filter_;
-	String_set<char, '\0'> acc_;
+	StringSet acc_;
 
 	friend void load_blast_seqid();
 	friend void load_blast_seqid_lin();

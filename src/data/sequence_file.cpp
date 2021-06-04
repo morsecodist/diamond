@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../util/system/system.h"
 #include "../util/util.h"
 #include "../util/algo/partition.h"
+#include "../util/sequence/sequence.h"
 #ifdef WITH_BLASTDB
 #include "blastdb/blastdb.h"
 #endif
@@ -188,7 +189,7 @@ void SequenceFile::get_seq()
 	OutputFile out(config.output_file);
 	for (size_t n = 0; n < sequence_count(); ++n) {
 		read_seq(seq, id);
-		std::map<string, string>::const_iterator mapped_title = seq_titles.find(blast_id(id));
+		std::map<string, string>::const_iterator mapped_title = seq_titles.find(Util::Seq::seqid(id.c_str()));
 		if (all || seqs.find(n) != seqs.end() || mapped_title != seq_titles.end()) {
 			buf << '>' << (mapped_title != seq_titles.end() ? mapped_title->second : id) << '\n';
 			if (config.reverse) {
@@ -246,9 +247,70 @@ SequenceFile* SequenceFile::auto_create(Flags flags, Metadata metadata) {
 	throw std::runtime_error("Database does not have a supported format.");
 }
 
+void SequenceFile::load_dictionary()
+{
+	if (config.multiprocessing) {
+
+	}
+	else if (!dict_file_)
+		return;
+	else {
+		TempFile* t = dynamic_cast<TempFile*>(dict_file_.get());
+		if (!t)
+			throw std::runtime_error("Failed to load dictionary file.");
+		dict_oid_.reserve(next_dict_id_);
+		reserve_dict();
+		InputFile f(*t);
+		for (uint32_t i = 0; i < next_dict_id_; ++i) {
+			load_dict_entry(f);
+		}
+		f.close_and_delete();
+		dict_file_.reset();
+	}
+}
+
+void SequenceFile::free_dictionary()
+{
+	dict_oid_.clear();
+	dict_oid_.shrink_to_fit();
+}
+
 size_t SequenceFile::total_blocks() const {
 	const size_t c = config.chunk_size * 1e9;
 	return (this->letters() + c - 1) / c;
+}
+
+void SequenceFile::init_dict()
+{
+	dict_file_.reset(new TempFile());
+	next_dict_id_ = 0;
+	dict_alloc_size_ = 0;
+}
+
+void SequenceFile::init_dict_block(size_t block, size_t seq_count)
+{
+	if(config.multiprocessing)
+		next_dict_id_ = 0;
+	block_to_dict_id_.clear();
+	block_to_dict_id_.insert(block_to_dict_id_.begin(), seq_count, DICT_EMPTY);
+}
+
+uint32_t SequenceFile::dict_id(size_t block, size_t block_id, size_t oid, size_t len, const char* id)
+{
+	if (block_id >= block_to_dict_id_.size())
+		throw std::runtime_error("Dictionary not initialized.");
+	uint32_t n = block_to_dict_id_[block_id];
+	if (n != DICT_EMPTY)
+		return n;
+	{
+		std::lock_guard<std::mutex> lock(dict_mtx_);
+		n = block_to_dict_id_[block_id];
+		if (n != DICT_EMPTY)
+			return n;
+		n = next_dict_id_++;
+		block_to_dict_id_[block_id] = n;
+		write_dict_entry(block, oid, len, id);
+	}
 }
 
 SequenceFile::SequenceFile(Type type, Alphabet alphabet):

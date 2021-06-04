@@ -43,7 +43,7 @@ void split() {
 			out = new OutputFile(std::to_string(++f) + ".faa.gz", true);
 			n = 0;
 		}
-		string blast_id = ::blast_id(id);
+		string blast_id = Util::Seq::seqid(id.c_str());
 		Util::Seq::format(Sequence(seq), blast_id.c_str(), nullptr, *out, "fasta", amino_acid_traits);
 		n += seq.size();
 	}

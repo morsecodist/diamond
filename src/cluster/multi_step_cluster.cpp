@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <unordered_map>
 #include "multi_step_cluster.h"
 #include "../util/util.h"
+#include "../util/sequence/sequence.h"
 
 using namespace std;
 
@@ -261,8 +262,8 @@ void MultiStep::run() {
 	for (int i = 0; i < (int)db->sequence_count(); ++i) {
 		db->read_seq(seq, id);
 		const unsigned r = rep_block_id[previous_centroids[i]];
-		(*out) << blast_id(id) << '\t'
-			<< blast_id(block->ids()[r]) << '\n';
+		(*out) << Util::Seq::seqid(id.c_str()) << '\t'
+			<< Util::Seq::seqid(block->ids()[r]) << '\n';
 		/*if ((int)i == centroid2[i])
 			(*out) << "100\t100\t100\t0" << endl;
 		else {

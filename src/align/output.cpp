@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../output/output_format.h"
 #include "../data/ref_dictionary.h"
 #include "../output/daa_write.h"
+#include "../util/sequence/sequence.h"
 
 using std::vector;
 
@@ -93,14 +94,27 @@ TextBuffer* generate_intermediate_output(const vector<Match> &targets, size_t qu
 		return out;
 	size_t seek_pos = 0;
 	seek_pos = IntermediateRecord::write_query_intro(*out, query_block_id);
+	const Block& target = *cfg.target;
 	
 	for (size_t i = 0; i < targets.size(); ++i) {
 
-		const size_t subject_id = targets[i].target_block_id;
+		const size_t block_id = targets[i].target_block_id;
+		string t;
+		if (target.has_ids()) {
+			const char* title = target.ids()[block_id];
+			if (config.salltitles)
+				t = title;
+			else if (config.sallseqid)
+				t = Util::Seq::all_seqids(title);
+			else
+				t = Util::Seq::seqid(title);
+		}
+		const size_t dict_id = cfg.db->dict_id(current_ref_block, block_id, target.block_id2oid(block_id), target.seqs().length(block_id), t.c_str());
+
 		for (const Hsp &hsp : targets[i].hsp)
-			IntermediateRecord::write(*out, hsp, query_block_id, subject_id, cfg);
-		if (config.global_ranking_targets > 0)
-			IntermediateRecord::write(*out, subject_id, targets[i].ungapped_score, cfg);
+			IntermediateRecord::write(*out, hsp, query_block_id, dict_id, cfg);
+		/*if (config.global_ranking_targets > 0)
+			IntermediateRecord::write(*out, subject_id, targets[i].ungapped_score, cfg);*/
 	}
 
 	IntermediateRecord::finish_query(*out, seek_pos);

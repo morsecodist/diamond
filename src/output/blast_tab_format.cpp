@@ -31,6 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../data/queries.h"
 #include "../util/util.h"
 #include "../run/config.h"
+#include "../util/sequence/sequence.h"
 
 using namespace Output;
 using std::endl;
@@ -176,11 +177,11 @@ void print_taxon_names(_it begin, _it end, const Search::Config& cfg, TextBuffer
 
 void Blast_tab_format::print_match(const Hsp_context& r, const Search::Config& cfg, TextBuffer &out)
 {
-	const Block::IdSet& query_qual = cfg.query->qual();
+	const StringSet& query_qual = cfg.query->qual();
 	for (vector<unsigned>::const_iterator i = fields.begin(); i != fields.end(); ++i) {
 		switch (*i) {
 		case 0:
-			out.write_until(r.query_name, Const::id_delimiters);
+			out.write_until(r.query_name, Util::Seq::id_delimiters);
 			break;
 		case 4:
 			out << r.query.source().length();
@@ -446,12 +447,12 @@ void Blast_tab_format::print_match(const Hsp_context& r, const Search::Config& c
 
 void Blast_tab_format::print_query_intro(size_t query_num, const char *query_name, unsigned query_len, TextBuffer &out, bool unaligned, const Search::Config& cfg) const
 {
-	const Block::IdSet& qual = cfg.query->qual();
+	const StringSet& qual = cfg.query->qual();
 	if (unaligned && config.report_unaligned == 1) {
 		for (vector<unsigned>::const_iterator i = fields.begin(); i != fields.end(); ++i) {
 			switch (*i) {
 			case 0:
-				out.write_until(query_name, Const::id_delimiters);
+				out.write_until(query_name, Util::Seq::id_delimiters);
 				break;
 			case 4:
 				out << query_len;

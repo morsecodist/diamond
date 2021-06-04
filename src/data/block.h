@@ -28,8 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 struct Block {
 
-	typedef String_set<char, '\0'> IdSet;
-
 	Block(Alphabet alphabet);
 	Block(std::list<TextInputFile>::iterator file_begin,
 		std::list<TextInputFile>::iterator file_end,
@@ -50,7 +48,7 @@ struct Block {
 	const SequenceSet& seqs() const {
 		return seqs_;
 	}
-	const IdSet& ids() const {
+	const StringSet& ids() const {
 		if (ids_.empty())
 			throw std::runtime_error("Block::ids()");
 		return ids_;
@@ -64,7 +62,7 @@ struct Block {
 	const SequenceSet& unmasked_seqs() const {
 		return unmasked_seqs_;
 	}
-	const IdSet& qual() const {
+	const StringSet& qual() const {
 		return qual_;
 	}
 	Partitioned_histogram& hst() {
@@ -76,14 +74,17 @@ struct Block {
 	Alphabet alphabet() const {
 		return seqs_.alphabet();
 	}
+	const bool has_ids() const {
+		return !ids_.empty();
+	}
 	bool fetch_seq_if_unmasked(size_t block_id, std::vector<Letter>& seq);
 	void write_masked_seq(size_t block_id, const std::vector<Letter>& seq);
 
 private:
 
 	SequenceSet seqs_, source_seqs_, unmasked_seqs_;
-	IdSet ids_;
-	IdSet qual_;
+	StringSet ids_;
+	StringSet qual_;
 	Partitioned_histogram hst_;
 	std::vector<uint32_t> block2oid_;
 	std::vector<bool> masked_;

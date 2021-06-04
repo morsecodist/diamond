@@ -109,7 +109,7 @@ void get_medoids_from_tree() {
 	size_t n = db->sequence_count();
 
 	SequenceSet *seqs;
-	String_set<char, '\0'> *ids;
+	StringSet *ids;
 	db->load_seqs(SIZE_MAX, true);
 
 	map<int, int> parent;

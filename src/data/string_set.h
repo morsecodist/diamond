@@ -1,6 +1,6 @@
 /****
 DIAMOND protein aligner
-Copyright (C) 2013-2020 Max Planck Society for the Advancement of Science e.V.
+Copyright (C) 2013-2021 Max Planck Society for the Advancement of Science e.V.
                         Benjamin Buchfink
                         Eberhard Karls Universitaet Tuebingen
 						
@@ -27,29 +27,43 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../basic/sequence.h"
 #include "../util/algo/binary_search.h"
 
-template<typename _t, char _pchar = '\xff', size_t _padding = 1lu>
-struct String_set
+template<typename _t, char _pchar, size_t _padding = 1lu>
+struct StringSetBase
 {
 
 	enum { PERIMETER_PADDING = 256 };
 	static const char DELIMITER = _pchar;
 
-	String_set():
-		data_ (PERIMETER_PADDING)
-	{ limits_.push_back(PERIMETER_PADDING); }
+	StringSetBase():
+		data_ (PERIMETER_PADDING, _pchar)
+	{
+		limits_.push_back(PERIMETER_PADDING);
+	}
 
 	void finish_reserve()
 	{
 		data_.resize(raw_len() + PERIMETER_PADDING);
-		for(unsigned i=0;i<PERIMETER_PADDING;++i) {
-			data_[i] = _pchar;
-			data_[raw_len()+i] = _pchar;
-		}
+		std::fill(data_.begin() + raw_len(), data_.end(), _pchar);
 	}
 
 	void reserve(size_t n)
 	{
 		limits_.push_back(raw_len() + n + _padding);
+	}
+
+	void reserve(size_t entries, size_t length) {
+		limits_.reserve(entries + 1);
+		data_.reserve(length + 2 * PERIMETER_PADDING + entries * _padding);
+	}
+
+	void clear() {
+		limits_.resize(1);
+		data_.resize(PERIMETER_PADDING);
+	}
+
+	void shrink_to_fit() {
+		limits_.shrink_to_fit();
+		data_.shrink_to_fit();
 	}
 
 	template<typename _it>
@@ -139,3 +153,5 @@ private:
 	std::vector<size_t> limits_;
 
 };
+
+using StringSet = StringSetBase<char, '\0'>;

@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../basic/packed_loc.h"
 
 #pragma pack(1)
-#define KEEP_TARGET_ID
+// #define KEEP_TARGET_ID
 
 struct SeedArray
 {
@@ -62,7 +62,11 @@ struct SeedArray
 		{ }
 		Entry(unsigned key, _pos pos, uint32_t block_id):
 			key(key),
+#ifdef KEEP_TARGET_ID
 			value(pos, block_id)
+#else
+			value(pos)
+#endif
 		{}
 		uint32_t key;
 		

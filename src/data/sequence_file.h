@@ -123,15 +123,36 @@ struct SequenceFile {
 		const Chunk& chunk = Chunk());
 	void get_seq();
 	size_t total_blocks() const;
+	void init_dict();
+	void init_dict_block(size_t block, size_t seq_count);
+	uint32_t dict_id(size_t block, size_t block_id, size_t oid, size_t len, const char* id);
 
 	static SequenceFile* auto_create(Flags flags = Flags::NONE, Metadata metadata = Metadata());
 
+protected:
+
+	void load_dictionary();
+	void free_dictionary();
+
+	std::unique_ptr<OutputFile> dict_file_;
+	uint32_t next_dict_id_;
+	size_t dict_alloc_size_;
+	std::vector<uint32_t> dict_oid_;
+
 private:
 
+	static const uint32_t DICT_EMPTY = UINT32_MAX;
+
+	virtual void write_dict_entry(size_t block, size_t oid, size_t len, const char* id) = 0;
+	virtual void load_dict_entry(InputFile& f) = 0;
+	virtual void reserve_dict() = 0;
 	void load_block(size_t block_id_begin, size_t block_id_end, size_t pos, bool use_filter, const vector<uint64_t>* filtered_pos, bool load_ids, Block* block);
 
 	const Type type_;
 	const Alphabet alphabet_;
+
+	std::vector<uint32_t> block_to_dict_id_;
+	std::mutex dict_mtx_;
 
 };
 

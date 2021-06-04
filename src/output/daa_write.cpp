@@ -1,5 +1,6 @@
 #include "daa_write.h"
 #include "../util/util.h"
+#include "../util/sequence/sequence.h"
 
 void init_daa(OutputFile& f)
 {
@@ -15,7 +16,7 @@ size_t write_daa_query_record(TextBuffer& buf, const char* query_name, const Seq
 	buf.write((uint32_t)0);
 	uint32_t l = (uint32_t)query.length();
 	buf.write(l);
-	buf.write_c_str(query_name, find_first_of(query_name, Const::id_delimiters));
+	buf.write_c_str(query_name, find_first_of(query_name, Util::Seq::id_delimiters));
 	Packed_sequence s(query, align_mode.input_sequence_type);
 	uint8_t flags = s.has_n() ? 1 : 0;
 	buf.write(flags);

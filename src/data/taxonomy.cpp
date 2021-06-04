@@ -31,6 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../util/string/string.h"
 #include "../util/string/tokenizer.h"
 #include "../util/util.h"
+#include "../util/sequence/sequence.h"
 
 using std::string;
 using std::map;
@@ -137,7 +138,7 @@ vector<string> accession_from_title(const char *title)
 {
 	vector<string> t(seq_titles(title));
 	for (vector<string>::iterator i = t.begin(); i < t.end(); ++i)
-		*i = get_accession(blast_id(*i));
+		*i = get_accession(Util::Seq::seqid(i->c_str()));
 	return t;
 }
 

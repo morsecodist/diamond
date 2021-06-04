@@ -38,7 +38,6 @@ struct Const
 
 	static const char* version_string;
 	static const char* program_name;
-	static const char* id_delimiters;
 
 };
 

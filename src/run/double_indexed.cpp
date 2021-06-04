@@ -114,6 +114,13 @@ void run_ref_chunk(SequenceFile &db_file,
 		log_stream << "Masked letters: " << n << endl;
 	}
 
+	if(blocked_processing && !config.global_ranking_targets) {
+		timer.go("Initializing dictionary");
+		if (current_ref_block == 0)
+			db_file.init_dict();
+		db_file.init_dict_block(current_ref_block, ref_seqs.size());
+	}	
+
 	timer.go("Initializing temporary storage");
 	if (config.global_ranking_targets)
 		;// cfg.global_ranking_buffer.reset(new Config::RankingBuffer());
@@ -145,10 +152,8 @@ void run_ref_chunk(SequenceFile &db_file,
 			if(config.global_ranking_targets)
 				cfg.global_ranking_buffer.reset(new Config::RankingBuffer());
 			search_shape(i, query_chunk, query_buffer, ref_buffer, cfg, target_seeds);
-			if (config.global_ranking_targets) {
+			if (config.global_ranking_targets)
 				Extension::GlobalRanking::update_table(cfg);
-				cfg.global_ranking_buffer.reset();
-			}
 		}
 
 		timer.go("Deallocating buffers");

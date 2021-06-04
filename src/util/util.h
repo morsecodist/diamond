@@ -83,21 +83,6 @@ struct Pair
 	_t2 second;
 };
 
-inline std::string blast_id(const std::string &title)
-{
-	return title.substr(0, find_first_of(title.c_str(), Const::id_delimiters));
-}
-
-inline void get_title_def(const std::string &s, std::string &title, std::string &def)
-{
-	const size_t i = find_first_of(s.c_str(), Const::id_delimiters);
-	title = s.substr(0, i);
-	if (i >= s.length())
-		def.clear();
-	else
-		def = s.substr(i + 1);
-}
-
 inline size_t print_str(char* buf, const char *s, size_t n)
 {
 	memcpy(buf, s, n);
@@ -107,11 +92,6 @@ inline size_t print_str(char* buf, const char *s, size_t n)
 
 inline size_t print_str(char *buf, const char *s, const char *delimiters)
 { return print_str(buf, s, find_first_of(s, delimiters)); }
-
-inline std::string* get_str(const char *s, const char *delimiters)
-{
-	return new std::string (s, find_first_of(s, delimiters));
-}
 
 template<typename _t, unsigned d1, unsigned d2>
 struct Static_matrix

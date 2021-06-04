@@ -262,7 +262,7 @@ void join_worker(Task_queue<TextBuffer, JoinWriter> *queue, const Search::Config
 	size_t n;
 	TextBuffer *out;
 	Statistics stat;
-	const String_set<char, 0>& qids = cfg->query->ids();
+	const StringSet& qids = cfg->query->ids();
 	BitVector ranking_db_filter(config.global_ranking_targets > 0 ? cfg->db_seqs : 0);
 
 	while (queue->get(n, out, fetcher) && fetcher.query_id != IntermediateRecord::FINISHED) {
@@ -319,7 +319,7 @@ void join_blocks(unsigned ref_blocks, Consumer &master_out, const PtrVector<Temp
 		JoinFetcher::init(tmp_file);
 	}
 
-	const Block::IdSet& query_ids = cfg.query->ids();
+	const StringSet& query_ids = cfg.query->ids();
 
 	unique_ptr<TempFile> merged_query_list;
 	if (config.global_ranking_targets)

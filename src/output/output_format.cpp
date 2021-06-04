@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "output.h"
 #include "../util/util.h"
 #include "../run/config.h"
+#include "../util/sequence/sequence.h"
 
 using namespace std;
 
@@ -87,7 +88,7 @@ void IntermediateRecord::finish_query(TextBuffer& buf, size_t seek_pos)
 void IntermediateRecord::write(TextBuffer& buf, const Hsp& match, unsigned query_id, size_t subject_id, const Search::Config& cfg)
 {
 	const interval oriented_range(match.oriented_range());
-	buf.write((uint32_t)cfg.target->block_id2oid(subject_id));
+	buf.write((uint32_t)subject_id);
 	buf.write(get_segment_flag(match));
 	buf.write_packed(match.score);
 	buf.write(match.evalue);
@@ -127,11 +128,11 @@ void IntermediateRecord::finish_file(Consumer& f)
 void Output_format::print_title(TextBuffer &buf, const char *id, bool full_titles, bool all_titles, const char *separator, const EscapeSequences *esc)
 {
 	if (!all_titles) {
-		print_escaped_until(buf, id, full_titles ? "\1" : Const::id_delimiters, esc);
+		print_escaped_until(buf, id, full_titles ? "\1" : Util::Seq::id_delimiters, esc);
 		return;
 	}
 	if (strchr(id, '\1') == 0) {
-		print_escaped_until(buf, id, full_titles ? "\1" : Const::id_delimiters, esc);
+		print_escaped_until(buf, id, full_titles ? "\1" : Util::Seq::id_delimiters, esc);
 		return;
 	}
 	const vector<string> t(tokenize(id, "\1"));
@@ -142,14 +143,14 @@ void Output_format::print_title(TextBuffer &buf, const char *id, bool full_title
 			buf << separator;
 		}
 		else {
-			print_escaped_until(buf, i->c_str(), Const::id_delimiters, esc);
+			print_escaped_until(buf, i->c_str(), Util::Seq::id_delimiters, esc);
 			buf << ";";
 		}
 	}
 	if (full_titles)
 		print_escaped(buf, *i, esc);
 	else
-		print_escaped_until(buf, i->c_str(), Const::id_delimiters, esc);
+		print_escaped_until(buf, i->c_str(), Util::Seq::id_delimiters, esc);
 }
 
 void print_hsp(Hsp &hsp, const TranslatedSequence &query)
