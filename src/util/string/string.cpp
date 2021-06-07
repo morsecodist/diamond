@@ -24,7 +24,7 @@ namespace Util { namespace String {
 
 string replace(const std::string& s, char a, char b) {
 	string r = s;
-	size_t i = r.find_first_of(r);
+	size_t i = r.find_first_of(a);
 	while (i != string::npos) {
 		r[i++] = b;
 		i = r.find_first_of(a, i);
