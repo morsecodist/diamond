@@ -54,8 +54,9 @@ enum HspValues : uint64_t {
 
 enum class Flags : int {
 	NONE        = 0,
-	FULL_SEQIDS = 1,
-	TARGET_SEQS = 1 << 1
+	FULL_TITLES = 1,
+	ALL_SEQIDS  = 1 << 1,
+	TARGET_SEQS = 1 << 2
 };
 
 DEF_ENUM_FLAG_OPERATORS(Flags)
@@ -177,7 +178,7 @@ struct Sam_format : public Output_format
 struct XML_format : public Output_format
 {
 	XML_format():
-		Output_format(blast_xml, Output::TRANSCRIPT, Output::Flags::FULL_SEQIDS)
+		Output_format(blast_xml, Output::TRANSCRIPT, Output::Flags::FULL_TITLES)
 	{
 		config.salltitles = true;
 	} 
@@ -197,7 +198,7 @@ struct XML_format : public Output_format
 struct Pairwise_format : public Output_format
 {
 	Pairwise_format() :
-		Output_format(blast_pairwise, Output::TRANSCRIPT, Output::Flags::FULL_SEQIDS)
+		Output_format(blast_pairwise, Output::TRANSCRIPT, Output::Flags::FULL_TITLES)
 	{
 		config.salltitles = true;
 	}

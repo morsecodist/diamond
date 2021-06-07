@@ -1,4 +1,5 @@
 [2.0.10]
+- Using BLAST databases now requires a preprocessing step using the command `prepdb`.
 - Reduced the time for loading target sequences from BLAST databases.
 - Added support for using `--comp-based-stats (3,4)` in combination with `--ext full`.
 - Fixed a bug that could cause a `Traceback error` when using `--comp-based-stats (3,4)`

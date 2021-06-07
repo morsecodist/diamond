@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../util/io/text_input_file.h"
 #include "blastdb.h"
 #include "../../util/string/tokenizer.h"
+#include "../../util/system/system.h"
 
 using std::cout;
 using std::endl;
@@ -92,6 +93,11 @@ BlastDB::BlastDB(const std::string& file_name, Metadata metadata, Flags flags) :
 {
 	if (flag_any(metadata, Metadata::TAXON_NODES | Metadata::TAXON_MAPPING | Metadata::TAXON_SCIENTIFIC_NAMES | Metadata::TAXON_RANKS))
 		throw std::runtime_error("Taxonomy features are not supported for the BLAST database format.");
+	vector<string> paths;
+	CSeqDB::FindVolumePaths(file_name, CSeqDB::eProtein, paths);
+	for (const string& db : paths)
+		if(!exists(db + ".acc"))
+			throw std::runtime_error("Accession file not found. BLAST databases require preprocessing using the command line: diamond prepdp -d DATABASE_FILE");
 }
 
 void BlastDB::init_seqinfo_access()
@@ -130,7 +136,7 @@ void BlastDB::putback_seqinfo()
 
 size_t BlastDB::id_len(const SeqInfo& seq_info, const SeqInfo& seq_info_next)
 {
-	if(flag_any(flags_, Flags::FULL_SEQIDS))
+	if(flag_any(flags_, Flags::FULL_TITLES))
 		return full_id(*db_->GetBioseq(seq_info.pos), nullptr, long_seqids_, true).length();
 	else {
 		return best_id(db_->GetSeqIDs(seq_info.pos)).length();
@@ -173,10 +179,12 @@ void BlastDB::skip_id_data()
 
 std::string BlastDB::seqid(size_t oid)
 {
-	if (flag_any(flags_, Flags::FULL_SEQIDS)) {
+	if (flag_any(flags_, Flags::FULL_TITLES)) {
 		return full_id(*db_->GetBioseq(oid), nullptr, long_seqids_, true);
 	}
 	else {
+		if (oid >= acc_.size())
+			throw std::runtime_error("Accession array not correctly initialized.");
 		return acc_[oid];
 	}
 }
@@ -349,9 +357,11 @@ size_t BlastDB::seq_length(size_t oid) const
 	return db_->GetSeqLength(oid);
 }
 
+const char* BlastDB::ACCESSION_FIELD = "accession*";
+
 void BlastDB::init_random_access()
 {
-	if (flag_any(flags_, Flags::FULL_SEQIDS))
+	if (flag_any(flags_, Flags::FULL_TITLES))
 		return;
 	task_timer timer("Loading accessions");
 	vector<string> paths;
@@ -363,8 +373,14 @@ void BlastDB::init_random_access()
 	string acc;
 	for (const string& path : paths) {
 		TextInputFile f(path + ".acc");
+		f.getline();
+		if (f.line != ACCESSION_FIELD)
+			throw std::runtime_error("Accession file is missing the header field: " + path);
 		while (f.getline(), !f.eof() || !f.line.empty()) {
-			Util::String::Tokenizer(f.line, "\t") >> acc;
+			if (flag_any(flags_, Flags::ALL_SEQIDS))
+				acc = Util::String::replace(f.line, '\t', '\1');
+			else
+				Util::String::Tokenizer(f.line, "\t") >> acc;
 			acc_.push_back(acc.begin(), acc.end());
 		}
 		f.close();
@@ -428,6 +444,7 @@ void prep_blast_db() {
 		const int n = volume.GetNumOIDs();
 		message_stream << "Number of sequences: " << n << endl;
 		ofstream out(db + ".acc");
+		out << BlastDB::ACCESSION_FIELD << endl;
 		size_t id_count = 0;
 		for (int i = 0; i < n; ++i) {
 			list<CRef<CSeq_id>> ids = volume.GetSeqIDs(i);

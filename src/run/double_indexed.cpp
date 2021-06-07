@@ -610,7 +610,12 @@ void run(const shared_ptr<SequenceFile>& db, const shared_ptr<std::list<TextInpu
 
 	task_timer timer("Opening the database", 1);
 	Config cfg;
-	auto flags = flag_any(output_format->flags, Output::Flags::FULL_SEQIDS) ? SequenceFile::Flags::FULL_SEQIDS : SequenceFile::Flags::NONE;
+	SequenceFile::Flags flags(SequenceFile::Flags::NONE);
+	if (flag_any(output_format->flags, Output::Flags::ALL_SEQIDS))
+		flags |= SequenceFile::Flags::ALL_SEQIDS;
+	if (flag_any(output_format->flags, Output::Flags::FULL_TITLES)) {
+		flags |= SequenceFile::Flags::FULL_TITLES;
+	}
 	if (db) {
 		cfg.db = db;
 		if (!query)

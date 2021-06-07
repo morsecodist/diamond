@@ -68,7 +68,8 @@ struct SequenceFile {
 		NONE                   = 0,
 		NO_COMPATIBILITY_CHECK = 0x1,
 		NO_FASTA               = 0x2,
-		FULL_SEQIDS            = 0x4
+		ALL_SEQIDS             = 0x4,
+		FULL_TITLES            = 0x8
 	};
 
 	enum class LoadTitles {

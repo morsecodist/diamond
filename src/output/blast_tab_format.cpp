@@ -44,12 +44,12 @@ const vector<OutputField> Blast_tab_format::field_def = {
 { "qaccver", "qaccver", NONE, Flags::NONE },		// 3 means Query accesion.version
 { "qlen", "Query length", NONE, Flags::NONE },			// 4 means Query sequence length
 { "sseqid",	"Subject ID", NONE, Flags::NONE },	// 5 means Subject Seq - id
-{ "sallseqid", "Subject IDs", NONE, Flags::FULL_SEQIDS },	// 6 means All subject Seq - id(s), separated by a ';'
+{ "sallseqid", "Subject IDs", NONE, Flags::ALL_SEQIDS },	// 6 means All subject Seq - id(s), separated by a ';'
 { "sgi", "sgi", NONE, Flags::NONE },			// 7 means Subject GI
-{ "sallgi", "sallgi", NONE, Flags::FULL_SEQIDS },		// 8 means All subject GIs
+{ "sallgi", "sallgi", NONE, Flags::ALL_SEQIDS },		// 8 means All subject GIs
 { "sacc", "sacc", NONE, Flags::NONE },			// 9 means Subject accession
 { "saccver", "saccver", NONE, Flags::NONE },		// 10 means Subject accession.version
-{ "sallacc", "sallacc", NONE, Flags::FULL_SEQIDS },		// 11 means All subject accessions
+{ "sallacc", "sallacc", NONE, Flags::ALL_SEQIDS },		// 11 means All subject accessions
 { "slen", "Subject length", NONE, Flags::NONE },			// 12 means Subject sequence length
 { "qstart", "Start of alignment in query", QUERY_START, Flags::NONE },		// 13 means Start of alignment in query
 { "qend", "End of alignment in query", QUERY_END, Flags::NONE },			// 14 means End of alignment in query
@@ -77,8 +77,8 @@ const vector<OutputField> Blast_tab_format::field_def = {
 { "scomnames", "scomnames", NONE, Flags::NONE },	// 36 means unique Subject Common Name(s), separated by a ';'
 { "sblastnames", "sblastnames", NONE, Flags::NONE },	// 37 means unique Subject Blast Name(s), separated by a ';'	(in alphabetical order)
 { "sskingdoms",	"Subject super kingdoms", NONE, Flags::NONE }, // 38 means unique Subject Super Kingdom(s), separated by a ';'	(in alphabetical order)
-{ "stitle", "Subject title", NONE, Flags::FULL_SEQIDS },		// 39 means Subject Title
-{ "salltitles", "Subject titles", NONE, Flags::FULL_SEQIDS },	// 40 means All Subject Title(s), separated by a '<>'
+{ "stitle", "Subject title", NONE, Flags::FULL_TITLES },		// 39 means Subject Title
+{ "salltitles", "Subject titles", NONE, Flags::FULL_TITLES },	// 40 means All Subject Title(s), separated by a '<>'
 { "sstrand", "sstrand", NONE, Flags::NONE },		// 41 means Subject Strand
 { "qcovs", "qcovs", NONE, Flags::NONE },		// 42 means Query Coverage Per Subject
 { "qcovhsp", "Query coverage per HSP", QUERY_COORDS, Flags::NONE },		// 43 means Query Coverage Per HSP

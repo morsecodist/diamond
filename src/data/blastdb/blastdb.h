@@ -50,6 +50,8 @@ struct BlastDB : public SequenceFile {
 	virtual void end_random_access() override;
 	virtual LoadTitles load_titles() override;
 	virtual ~BlastDB();
+
+	static const char* ACCESSION_FIELD;
 	
 private:
 
