@@ -1,6 +1,6 @@
 /****
 DIAMOND protein aligner
-Copyright (C) 2013-2020 Max Planck Society for the Advancement of Science e.V.
+Copyright (C) 2013-2021 Max Planck Society for the Advancement of Science e.V.
                         Benjamin Buchfink
                         Eberhard Karls Universitaet Tuebingen
 
@@ -503,7 +503,7 @@ void DatabaseFile::seek_chunk(const Chunk& chunk) {
 
 std::string DatabaseFile::seqid(size_t oid)
 {
-	throw std::runtime_error("Operation not supported.");
+	throw std::runtime_error("Operation not supported (seqid).");
 }
 std::string DatabaseFile::dict_title(size_t dict_id)
 {
@@ -655,6 +655,11 @@ void DatabaseFile::end_random_access()
 	dict_len_.shrink_to_fit();
 	dict_title_.clear();
 	dict_title_.shrink_to_fit();
+}
+
+SequenceFile::LoadTitles DatabaseFile::load_titles()
+{
+	return LoadTitles::SINGLE_PASS;
 }
 
 std::vector<string>* DatabaseFile::taxon_scientific_names() {

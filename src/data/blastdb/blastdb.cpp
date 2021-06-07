@@ -380,6 +380,11 @@ void BlastDB::end_random_access()
 	free_dictionary();
 }
 
+SequenceFile::LoadTitles BlastDB::load_titles()
+{
+	return LoadTitles::LAZY;
+}
+
 const BitVector* BlastDB::builtin_filter() {
 	if (sequence_count() == sparse_sequence_count())
 		return nullptr;

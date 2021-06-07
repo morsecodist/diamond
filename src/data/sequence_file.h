@@ -71,6 +71,10 @@ struct SequenceFile {
 		FULL_SEQIDS            = 0x4
 	};
 
+	enum class LoadTitles {
+		SINGLE_PASS, LAZY
+	};
+
 	SequenceFile(Type type, Alphabet alphabet);
 
 	virtual void init_seqinfo_access() = 0;
@@ -113,6 +117,7 @@ struct SequenceFile {
 	virtual size_t seq_length(size_t oid) const = 0;
 	virtual void init_random_access() = 0;
 	virtual void end_random_access() = 0;
+	virtual LoadTitles load_titles() = 0;
 	virtual ~SequenceFile();
 
 	Type type() const { return type_; }

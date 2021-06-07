@@ -255,6 +255,7 @@ void SequenceFile::load_dictionary()
 	else if (!dict_file_)
 		return;
 	else {
+		task_timer timer("Loading dictionary", 3);
 		TempFile* t = dynamic_cast<TempFile*>(dict_file_.get());
 		if (!t)
 			throw std::runtime_error("Failed to load dictionary file.");
@@ -310,6 +311,7 @@ uint32_t SequenceFile::dict_id(size_t block, size_t block_id, size_t oid, size_t
 		n = next_dict_id_++;
 		block_to_dict_id_[block_id] = n;
 		write_dict_entry(block, oid, len, id);
+		return n;
 	}
 }
 

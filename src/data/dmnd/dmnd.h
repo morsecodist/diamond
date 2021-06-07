@@ -148,6 +148,7 @@ struct DatabaseFile : public SequenceFile, public InputFile
 	virtual size_t seq_length(size_t oid) const override;
 	virtual void init_random_access() override;
 	virtual void end_random_access() override;
+	virtual LoadTitles load_titles() override;
 
 	static const char* FILE_EXTENSION;
 

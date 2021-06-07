@@ -290,7 +290,7 @@ void run_query_chunk(unsigned query_chunk,
 
 			P->log("SEARCH BEGIN "+std::to_string(query_chunk)+" "+std::to_string(chunk.i));
 
-			options.target.reset(db_file.load_seqs((size_t)(0), false, options.db_filter.get(), true, lazy_masking, chunk));
+			options.target.reset(db_file.load_seqs((size_t)(0), db_file.load_titles() == SequenceFile::LoadTitles::SINGLE_PASS, options.db_filter.get(), true, lazy_masking, chunk));
 			run_ref_chunk(db_file, query_chunk, query_len_bounds, query_buffer, master_out, tmp_file, options);
 
 			tmp_file.back().close();
@@ -312,7 +312,7 @@ void run_query_chunk(unsigned query_chunk,
 		P->delete_stack(stack_align_done);
 	} else {
 		for (current_ref_block = 0; ; ++current_ref_block) {
-			options.target.reset(db_file.load_seqs((size_t)(config.chunk_size * 1e9), false, options.db_filter.get(), true, lazy_masking));
+			options.target.reset(db_file.load_seqs((size_t)(config.chunk_size * 1e9), db_file.load_titles() == SequenceFile::LoadTitles::SINGLE_PASS, options.db_filter.get(), true, lazy_masking));
 			if (options.target->empty()) break;
 			run_ref_chunk(db_file, query_chunk, query_len_bounds, query_buffer, master_out, tmp_file, options);
 		}
