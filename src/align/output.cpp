@@ -51,8 +51,8 @@ TextBuffer* generate_output(vector<Match> &targets, size_t query_block_id, Stati
 	for (size_t i = 0; i < targets.size(); ++i) {
 
 		const size_t subject_id = targets[i].target_block_id;
-		const string target_title = cfg.target->has_ids() ? cfg.target->ids()[subject_id] : cfg.db->seqid(subject_id);
 		const unsigned database_id = cfg.target->block_id2oid(subject_id);
+		const string target_title = cfg.target->has_ids() ? cfg.target->ids()[subject_id] : cfg.db->seqid(database_id);
 		const unsigned subject_len = (unsigned)ref_seqs[subject_id].length();
 
 		hit_hsps = 0;
