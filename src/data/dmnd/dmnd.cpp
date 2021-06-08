@@ -104,12 +104,14 @@ void DatabaseFile::putback_seqinfo() {
 	pos_array_offset -= SeqInfo::SIZE;
 }
 
-void DatabaseFile::write_dict_entry(size_t block, size_t oid, size_t len, const char* id)
+void DatabaseFile::write_dict_entry(size_t block, size_t oid, size_t len, const char* id, const Letter* seq)
 {
 	OutputFile& f = *dict_file_;
 	f << (uint32_t)oid;
 	f << (uint32_t)len;
 	f << id;
+	if (flag_any(flags_, Flags::TARGET_SEQS))
+		f.write(seq, len);
 	dict_alloc_size_ += strlen(id);
 }
 
@@ -121,12 +123,19 @@ void DatabaseFile::load_dict_entry(InputFile& f)
 	dict_oid_.push_back(oid);
 	dict_len_.push_back(len);
 	dict_title_.push_back(title.begin(), title.end());
+	if (flag_any(flags_, Flags::TARGET_SEQS)) {
+		vector<Letter> v(len);
+		f.read(v.data(), len);
+		dict_seq_.push_back(v.begin(), v.end());
+	}
 }
 
 void DatabaseFile::reserve_dict()
 {
 	dict_len_.reserve(next_dict_id_);
 	dict_title_.reserve(next_dict_id_, dict_alloc_size_);
+	if (flag_any(flags_, Flags::TARGET_SEQS))
+		dict_seq_.reserve(next_dict_id_, 0);
 }
 
 void DatabaseFile::init(Flags flags)
@@ -145,7 +154,7 @@ void DatabaseFile::init(Flags flags)
 }
 
 DatabaseFile::DatabaseFile(const string &input_file, Metadata metadata, Flags flags):
-	SequenceFile(SequenceFile::Type::DMND, Alphabet::STD),
+	SequenceFile(SequenceFile::Type::DMND, Alphabet::STD, flags),
 	InputFile(auto_append_extension_if_exists(input_file, FILE_EXTENSION), InputFile::BUFFERED),
 	temporary(false)
 {
@@ -169,7 +178,7 @@ DatabaseFile::DatabaseFile(const string &input_file, Metadata metadata, Flags fl
 }
 
 DatabaseFile::DatabaseFile(TempFile &tmp_file):
-	SequenceFile(SequenceFile::Type::DMND, Alphabet::STD),
+	SequenceFile(SequenceFile::Type::DMND, Alphabet::STD, Flags::NONE),
 	InputFile(tmp_file, 0),
 	temporary(true)
 {
@@ -517,6 +526,15 @@ size_t DatabaseFile::dict_len(size_t dict_id)
 		throw std::runtime_error("Dictionary not loaded.");
 	return dict_len_[dict_id];
 }
+
+std::vector<Letter> DatabaseFile::dict_seq(size_t dict_id)
+{
+	if (dict_id >= dict_seq_.size())
+		throw std::runtime_error("Dictionary not loaded.");
+	Sequence s = dict_seq_[dict_id];
+	return vector<Letter>(s.data(), s.end());
+}
+
 size_t DatabaseFile::id_len(const SeqInfo& seq_info, const SeqInfo& seq_info_next) {
 	return seq_info_next.pos - seq_info.pos - seq_info.seq_len - 3;
 }
@@ -655,6 +673,8 @@ void DatabaseFile::end_random_access()
 	dict_len_.shrink_to_fit();
 	dict_title_.clear();
 	dict_title_.shrink_to_fit();
+	dict_seq_.clear();
+	dict_seq_.shrink_to_fit();
 }
 
 SequenceFile::LoadTitles DatabaseFile::load_titles()

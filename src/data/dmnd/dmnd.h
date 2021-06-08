@@ -126,6 +126,7 @@ struct DatabaseFile : public SequenceFile, public InputFile
 	virtual std::string seqid(size_t oid) override;
 	virtual std::string dict_title(size_t dict_id) override;
 	virtual size_t dict_len(size_t dict_id) override;
+	virtual std::vector<Letter> dict_seq(size_t dict_id) override;
 	virtual size_t sequence_count() const override;
 	virtual void read_seq(std::vector<Letter>& seq, std::string& id) override;
 	virtual size_t letters() const override;
@@ -154,7 +155,7 @@ struct DatabaseFile : public SequenceFile, public InputFile
 
 private:
 
-	virtual void write_dict_entry(size_t block, size_t oid, size_t len, const char* id) override;
+	virtual void write_dict_entry(size_t block, size_t oid, size_t len, const char* id, const Letter* seq) override;
 	virtual void load_dict_entry(InputFile& f) override;
 	virtual void reserve_dict() override;
 
@@ -163,5 +164,6 @@ private:
 	std::unique_ptr<TaxonList> taxon_list_;
 	std::vector<uint32_t> dict_len_;
 	StringSet dict_title_;
+	SequenceSet dict_seq_;
 
 };

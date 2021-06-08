@@ -84,7 +84,7 @@ string best_id(const list<CRef<CSeq_id>>& ids) {
 }
 
 BlastDB::BlastDB(const std::string& file_name, Metadata metadata, Flags flags) :
-	SequenceFile(Type::BLAST, Alphabet::NCBI),
+	SequenceFile(Type::BLAST, Alphabet::NCBI, flags),
 	file_name_(file_name),	
 	db_(new CSeqDBExpert(file_name, CSeqDB::eProtein)),
 	oid_(0),
@@ -97,7 +97,7 @@ BlastDB::BlastDB(const std::string& file_name, Metadata metadata, Flags flags) :
 	CSeqDB::FindVolumePaths(file_name, CSeqDB::eProtein, paths);
 	for (const string& db : paths)
 		if(!exists(db + ".acc"))
-			throw std::runtime_error("Accession file not found. BLAST databases require preprocessing using the command line: diamond prepdp -d DATABASE_FILE");
+			throw std::runtime_error("Accession file not found. BLAST databases require preprocessing using this command line: diamond prepdp -d DATABASE_FILE");
 }
 
 void BlastDB::init_seqinfo_access()
@@ -201,6 +201,17 @@ size_t BlastDB::dict_len(size_t dict_id)
 	if (dict_id >= dict_oid_.size())
 		throw std::runtime_error("Dictionary not loaded.");
 	return db_->GetSeqLength(dict_oid_[dict_id]);
+}
+
+std::vector<Letter> BlastDB::dict_seq(size_t dict_id)
+{
+	if (dict_id >= dict_oid_.size())
+		throw std::runtime_error("Dictionary not loaded.");
+	vector<Letter> v;
+	seq_data(dict_oid_[dict_id], v);
+	for (Letter& l : v)
+		l = NCBI_TO_STD[(int)l];
+	return v;
 }
 
 size_t BlastDB::sequence_count() const
@@ -361,6 +372,7 @@ const char* BlastDB::ACCESSION_FIELD = "accession*";
 
 void BlastDB::init_random_access()
 {
+	load_dictionary();
 	if (flag_any(flags_, Flags::FULL_TITLES))
 		return;
 	task_timer timer("Loading accessions");
@@ -385,8 +397,6 @@ void BlastDB::init_random_access()
 		}
 		f.close();
 	}
-	timer.go("Loading dictionary");
-	load_dictionary();
 }
 
 void BlastDB::end_random_access()
@@ -419,7 +429,7 @@ BlastDB::~BlastDB()
 {
 }
 
-void BlastDB::write_dict_entry(size_t block, size_t oid, size_t len, const char* id)
+void BlastDB::write_dict_entry(size_t block, size_t oid, size_t len, const char* id, const Letter* seq)
 {
 	*dict_file_ << (uint32_t)oid;
 }

@@ -69,7 +69,7 @@ TextBuffer* generate_output(vector<Match> &targets, size_t query_block_id, Stati
 					target_title.c_str(),
 					i,
 					hit_hsps,
-					ref_seqs[subject_id],
+					cfg.target->unmasked_seqs().empty() ? Sequence() : cfg.target->unmasked_seqs()[subject_id],
 					targets[i].ungapped_score), cfg, *out);
 			
 			++n_hsp;
@@ -111,7 +111,8 @@ TextBuffer* generate_intermediate_output(const vector<Match> &targets, size_t qu
 			else
 				t = Util::Seq::seqid(title);
 		}
-		const size_t dict_id = cfg.db->dict_id(current_ref_block, block_id, target.block_id2oid(block_id), target.seqs().length(block_id), t.c_str());
+		const Letter* seq = target.unmasked_seqs().empty() ? nullptr : target.unmasked_seqs()[block_id].data();
+		const size_t dict_id = cfg.db->dict_id(current_ref_block, block_id, target.block_id2oid(block_id), target.seqs().length(block_id), t.c_str(), seq);
 
 		for (const Hsp &hsp : targets[i].hsp)
 			IntermediateRecord::write(*out, hsp, query_block_id, dict_id, cfg);

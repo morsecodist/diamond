@@ -103,7 +103,7 @@ void run_ref_chunk(SequenceFile &db_file,
 	auto& ref_seqs = cfg.target->seqs();
 	auto& query_seqs = cfg.query->seqs();
 
-	if (config.comp_based_stats == Stats::CBS::COMP_BASED_STATS_AND_MATRIX_ADJUST)
+	if (config.comp_based_stats == Stats::CBS::COMP_BASED_STATS_AND_MATRIX_ADJUST || flag_any(output_format->flags, Output::Flags::TARGET_SEQS))
 		cfg.target->unmasked_seqs() = ref_seqs;
 
 	task_timer timer;
@@ -613,9 +613,10 @@ void run(const shared_ptr<SequenceFile>& db, const shared_ptr<std::list<TextInpu
 	SequenceFile::Flags flags(SequenceFile::Flags::NONE);
 	if (flag_any(output_format->flags, Output::Flags::ALL_SEQIDS))
 		flags |= SequenceFile::Flags::ALL_SEQIDS;
-	if (flag_any(output_format->flags, Output::Flags::FULL_TITLES)) {
+	if (flag_any(output_format->flags, Output::Flags::FULL_TITLES))
 		flags |= SequenceFile::Flags::FULL_TITLES;
-	}
+	if (flag_any(output_format->flags, Output::Flags::TARGET_SEQS))
+		flags |= SequenceFile::Flags::TARGET_SEQS;
 	if (db) {
 		cfg.db = db;
 		if (!query)

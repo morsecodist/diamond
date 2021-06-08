@@ -22,6 +22,7 @@ struct BlastDB : public SequenceFile {
 	virtual std::string seqid(size_t oid) override;
 	virtual std::string dict_title(size_t dict_id) override;
 	virtual size_t dict_len(size_t dict_id) override;
+	virtual std::vector<Letter> dict_seq(size_t dict_id) override;
 	virtual size_t sequence_count() const override;
 	virtual size_t sparse_sequence_count() const override;
 	virtual size_t letters() const override;
@@ -55,7 +56,7 @@ struct BlastDB : public SequenceFile {
 	
 private:
 
-	virtual void write_dict_entry(size_t block, size_t oid, size_t len, const char* id) override;
+	virtual void write_dict_entry(size_t block, size_t oid, size_t len, const char* id, const Letter* seq) override;
 	virtual void load_dict_entry(InputFile& f) override;
 	virtual void reserve_dict() override;
 

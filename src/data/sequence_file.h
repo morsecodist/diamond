@@ -69,14 +69,15 @@ struct SequenceFile {
 		NO_COMPATIBILITY_CHECK = 0x1,
 		NO_FASTA               = 0x2,
 		ALL_SEQIDS             = 0x4,
-		FULL_TITLES            = 0x8
+		FULL_TITLES            = 0x8,
+		TARGET_SEQS            = 0x10
 	};
 
 	enum class LoadTitles {
 		SINGLE_PASS, LAZY
 	};
 
-	SequenceFile(Type type, Alphabet alphabet);
+	SequenceFile(Type type, Alphabet alphabet, Flags flags);
 
 	virtual void init_seqinfo_access() = 0;
 	virtual void init_seq_access() = 0;
@@ -92,6 +93,7 @@ struct SequenceFile {
 	virtual std::string seqid(size_t oid) = 0;
 	virtual std::string dict_title(size_t dict_id) = 0;
 	virtual size_t dict_len(size_t dict_id) = 0;
+	virtual std::vector<Letter> dict_seq(size_t dict_id) = 0;
 	virtual size_t sequence_count() const = 0;
 	virtual size_t sparse_sequence_count() const = 0;
 	virtual size_t letters() const = 0;
@@ -133,7 +135,7 @@ struct SequenceFile {
 	size_t total_blocks() const;
 	void init_dict();
 	void init_dict_block(size_t block, size_t seq_count);
-	uint32_t dict_id(size_t block, size_t block_id, size_t oid, size_t len, const char* id);
+	uint32_t dict_id(size_t block, size_t block_id, size_t oid, size_t len, const char* id, const Letter* seq);
 	size_t oid(uint32_t dict_id) const;
 
 	static SequenceFile* auto_create(Flags flags = Flags::NONE, Metadata metadata = Metadata());
@@ -143,6 +145,7 @@ protected:
 	void load_dictionary();
 	void free_dictionary();
 
+	const Flags flags_;
 	std::unique_ptr<OutputFile> dict_file_;
 	uint32_t next_dict_id_;
 	size_t dict_alloc_size_;
@@ -152,7 +155,7 @@ private:
 
 	static const uint32_t DICT_EMPTY = UINT32_MAX;
 
-	virtual void write_dict_entry(size_t block, size_t oid, size_t len, const char* id) = 0;
+	virtual void write_dict_entry(size_t block, size_t oid, size_t len, const char* id, const Letter* seq) = 0;
 	virtual void load_dict_entry(InputFile& f) = 0;
 	virtual void reserve_dict() = 0;
 	void load_block(size_t block_id_begin, size_t block_id_end, size_t pos, bool use_filter, const vector<uint64_t>* filtered_pos, bool load_ids, Block* block);

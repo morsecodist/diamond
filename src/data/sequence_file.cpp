@@ -66,7 +66,7 @@ void SequenceFile::load_block(size_t block_id_begin, size_t block_id_end, size_t
 	}
 }
 
-Block* SequenceFile::load_seqs(const size_t max_letters, bool load_ids, const BitVector* filter, const bool fetch_seqs, bool lazy_masking, const Chunk& chunk)
+Block* SequenceFile::load_seqs(const size_t max_letters, bool load_ids, const BitVector* filter, bool fetch_seqs, bool lazy_masking, const Chunk& chunk)
 {
 	task_timer timer("Loading reference sequences");
 	reopen();
@@ -296,7 +296,7 @@ void SequenceFile::init_dict_block(size_t block, size_t seq_count)
 	block_to_dict_id_.insert(block_to_dict_id_.begin(), seq_count, DICT_EMPTY);
 }
 
-uint32_t SequenceFile::dict_id(size_t block, size_t block_id, size_t oid, size_t len, const char* id)
+uint32_t SequenceFile::dict_id(size_t block, size_t block_id, size_t oid, size_t len, const char* id, const Letter* seq)
 {
 	if (block_id >= block_to_dict_id_.size())
 		throw std::runtime_error("Dictionary not initialized.");
@@ -310,7 +310,7 @@ uint32_t SequenceFile::dict_id(size_t block, size_t block_id, size_t oid, size_t
 			return n;
 		n = next_dict_id_++;
 		block_to_dict_id_[block_id] = n;
-		write_dict_entry(block, oid, len, id);
+		write_dict_entry(block, oid, len, id, seq);
 		return n;
 	}
 }
@@ -322,9 +322,10 @@ size_t SequenceFile::oid(uint32_t dict_id) const
 	return dict_oid_[dict_id];
 }
 
-SequenceFile::SequenceFile(Type type, Alphabet alphabet):
+SequenceFile::SequenceFile(Type type, Alphabet alphabet, Flags flags):
 	type_(type),
-	alphabet_(alphabet)
+	alphabet_(alphabet),
+	flags_(flags)
 {}
 
 void db_info() {

@@ -234,9 +234,6 @@ void join_query(
 				Extension::GlobalRanking::write_merged_query_list(*i, out, ranking_db_filter, statistics);
 			else {
 				Hsp hsp(*i, query_source_len);
-				vector<Letter> subject_seq;
-				if (flag_any(f.flags, Output::Flags::TARGET_SEQS))
-					cfg.db->seq_data(target_oid, subject_seq);
 				f.print_match(HspContext(hsp,
 					query,
 					query_seq,
@@ -246,7 +243,7 @@ void join_query(
 					cfg.db->dict_title(dict_id).c_str(),
 					n_target_seq,
 					hsp_num,
-					Sequence(subject_seq)
+					flag_any(f.flags, Output::Flags::TARGET_SEQS) ? Sequence(cfg.db->dict_seq(dict_id)) : Sequence()
 					).parse(), cfg, out);
 			}
 		}
@@ -262,53 +259,58 @@ void join_query(
 
 void join_worker(Task_queue<TextBuffer, JoinWriter> *queue, const Search::Config* cfg, BitVector* ranking_db_filter_out)
 {
-	static std::mutex mtx;
-	JoinFetcher fetcher;
-	size_t n;
-	TextBuffer *out;
-	Statistics stat;
-	const StringSet& qids = cfg->query->ids();
-	BitVector ranking_db_filter(config.global_ranking_targets > 0 ? cfg->db_seqs : 0);
+	try {
+		static std::mutex mtx;
+		JoinFetcher fetcher;
+		size_t n;
+		TextBuffer* out;
+		Statistics stat;
+		const StringSet& qids = cfg->query->ids();
+		BitVector ranking_db_filter(config.global_ranking_targets > 0 ? cfg->db_seqs : 0);
 
-	while (queue->get(n, out, fetcher) && fetcher.query_id != IntermediateRecord::FINISHED) {
-		if(!config.global_ranking_targets) stat.inc(Statistics::ALIGNED);
-		size_t seek_pos;
+		while (queue->get(n, out, fetcher) && fetcher.query_id != IntermediateRecord::FINISHED) {
+			if (!config.global_ranking_targets) stat.inc(Statistics::ALIGNED);
+			size_t seek_pos;
 
-		const char * query_name = qids[qids.check_idx(fetcher.query_id)];
+			const char* query_name = qids[qids.check_idx(fetcher.query_id)];
 
-		const Sequence query_seq = align_mode.query_translated ? cfg->query->source_seqs()[fetcher.query_id] : cfg->query->seqs()[fetcher.query_id];
+			const Sequence query_seq = align_mode.query_translated ? cfg->query->source_seqs()[fetcher.query_id] : cfg->query->seqs()[fetcher.query_id];
 
-		if (*output_format != Output_format::daa && config.report_unaligned != 0) {
-			for (unsigned i = fetcher.unaligned_from; i < fetcher.query_id; ++i) {
-				output_format->print_query_intro(i, qids[i], cfg->query->source_len(i), *out, true, *cfg);
-				output_format->print_query_epilog(*out, qids[i], true, *cfg);
+			if (*output_format != Output_format::daa && config.report_unaligned != 0) {
+				for (unsigned i = fetcher.unaligned_from; i < fetcher.query_id; ++i) {
+					output_format->print_query_intro(i, qids[i], cfg->query->source_len(i), *out, true, *cfg);
+					output_format->print_query_epilog(*out, qids[i], true, *cfg);
+				}
 			}
+
+			unique_ptr<Output_format> f(output_format->clone());
+
+			if (*f == Output_format::daa)
+				seek_pos = write_daa_query_record(*out, query_name, query_seq);
+			else if (config.global_ranking_targets)
+				seek_pos = Extension::GlobalRanking::write_merged_query_list_intro(fetcher.query_id, *out);
+			else
+				f->print_query_intro(fetcher.query_id, query_name, (unsigned)query_seq.length(), *out, false, *cfg);
+
+			join_query(fetcher.buf, *out, stat, fetcher.query_id, query_name, (unsigned)query_seq.length(), *f, *cfg, ranking_db_filter);
+
+			if (*f == Output_format::daa)
+				finish_daa_query_record(*out, seek_pos);
+			else if (config.global_ranking_targets)
+				Extension::GlobalRanking::finish_merged_query_list(*out, seek_pos);
+			else
+				f->print_query_epilog(*out, query_name, false, *cfg);
+			queue->push(n);
 		}
 
-		unique_ptr<Output_format> f(output_format->clone());
-
-		if (*f == Output_format::daa)
-			seek_pos = write_daa_query_record(*out, query_name, query_seq);
-		else if (config.global_ranking_targets)
-			seek_pos = Extension::GlobalRanking::write_merged_query_list_intro(fetcher.query_id, *out);
-		else
-			f->print_query_intro(fetcher.query_id, query_name, (unsigned)query_seq.length(), *out, false, *cfg);
-
-		join_query(fetcher.buf, *out, stat, fetcher.query_id, query_name, (unsigned)query_seq.length(), *f, *cfg, ranking_db_filter);
-
-		if (*f == Output_format::daa)
-			finish_daa_query_record(*out, seek_pos);
-		else if (config.global_ranking_targets)
-			Extension::GlobalRanking::finish_merged_query_list(*out, seek_pos);
-		else
-			f->print_query_epilog(*out, query_name, false, *cfg);
-		queue->push(n);
+		statistics += stat;
+		if (config.global_ranking_targets) {
+			std::lock_guard<std::mutex> lock(mtx);
+			(*ranking_db_filter_out) |= ranking_db_filter;
+		}
 	}
-
-	statistics += stat;
-	if (config.global_ranking_targets) {
-		std::lock_guard<std::mutex> lock(mtx);
-		(*ranking_db_filter_out) |= ranking_db_filter;
+	catch (std::exception& e) {
+		exit_with_error(e);
 	}
 }
 

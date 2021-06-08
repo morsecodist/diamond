@@ -4,6 +4,7 @@
 - Added support for using `--comp-based-stats (3,4)` in combination with `--ext full`.
 - Fixed a bug that could cause a `Traceback error` when using `--comp-based-stats (3,4)`
   in rare cases.
+- Changed the `full_sseq` output field to always contain unmasked sequences.
 
 [2.0.9]
 - Reduced the memory use of database building with taxonomy mapping.
