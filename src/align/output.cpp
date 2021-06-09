@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../data/queries.h"
 #include "../output/output_format.h"
 #include "../data/ref_dictionary.h"
-#include "../output/daa_write.h"
+#include "../output/daa/daa_write.h"
 #include "../util/sequence/sequence.h"
 
 using std::vector;
@@ -58,7 +58,7 @@ TextBuffer* generate_output(vector<Match> &targets, size_t query_block_id, Stati
 		hit_hsps = 0;
 		for (Hsp &hsp : targets[i].hsp) {
 			if (*f == Output_format::daa)
-				write_daa_record(*out, hsp, subject_id, cfg);
+				write_daa_record(*out, hsp, cfg.target->dict_id(current_ref_block, subject_id, *cfg.db));
 			else
 				f->print_match(HspContext(hsp,
 					query_block_id,
@@ -101,18 +101,7 @@ TextBuffer* generate_intermediate_output(const vector<Match> &targets, size_t qu
 	for (size_t i = 0; i < targets.size(); ++i) {
 
 		const size_t block_id = targets[i].target_block_id;
-		string t;
-		if (target.has_ids()) {
-			const char* title = target.ids()[block_id];
-			if (config.salltitles)
-				t = title;
-			else if (config.sallseqid)
-				t = Util::Seq::all_seqids(title);
-			else
-				t = Util::Seq::seqid(title);
-		}
-		const Letter* seq = target.unmasked_seqs().empty() ? nullptr : target.unmasked_seqs()[block_id].data();
-		const size_t dict_id = cfg.db->dict_id(current_ref_block, block_id, target.block_id2oid(block_id), target.seqs().length(block_id), t.c_str(), seq);
+		const size_t dict_id = target.dict_id(current_ref_block, block_id, *cfg.db);
 
 		for (const Hsp &hsp : targets[i].hsp)
 			IntermediateRecord::write(*out, hsp, query_block_id, dict_id, cfg);

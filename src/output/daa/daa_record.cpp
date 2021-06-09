@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "../basic/config.h"
 #include "daa_record.h"
-#include "output.h"
+#include "../output.h"
 
 DAA_format::DAA_format() :
 	Output_format(daa, Output::TRANSCRIPT, config.salltitles ? Output::Flags::FULL_TITLES : (config.sallseqid ? Output::Flags::ALL_SEQIDS : Output::Flags::NONE))

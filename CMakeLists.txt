@@ -139,7 +139,7 @@ set(OBJECTS
   src/data/queries.cpp
   src/data/reference.cpp
   src/data/seed_histogram.cpp
-  src/output/daa_record.cpp
+  src/output/daa/daa_record.cpp
   src/util/command_line_parser.cpp
   src/util/seq_file_format.cpp
   src/util/util.cpp
@@ -268,7 +268,7 @@ set(OBJECTS
   src/run/config.cpp
   src/data/sequence_set.cpp
   src/align/global_ranking/table.cpp
-  src/output/daa_write.cpp
+  src/output/daa/daa_write.cpp
 )
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")

@@ -25,6 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../basic/translate.h"
 #include "../util/seq_file_format.h"
 #include "block.h"
+#include "../util/sequence/sequence.h"
+#include "sequence_file.h"
 
 using std::mutex;
 using std::lock_guard;
@@ -159,4 +161,20 @@ void Block::write_masked_seq(size_t block_id, const std::vector<Letter>& seq) {
 		return;
 	std::copy(seq.begin(), seq.end(), seqs_.ptr(block_id));
 	masked_[block_id] = true;
+}
+
+uint32_t Block::dict_id(size_t block, size_t block_id, SequenceFile& db) const
+{
+	string t;
+	if (has_ids()) {
+		const char* title = ids()[block_id];
+		if (config.salltitles)
+			t = title;
+		else if (config.sallseqid)
+			t = Util::Seq::all_seqids(title);
+		else
+			t = Util::Seq::seqid(title);
+	}
+	const Letter* seq = unmasked_seqs().empty() ? nullptr : unmasked_seqs()[block_id].data();
+	return db.dict_id(block, block_id, block_id2oid(block_id), seqs().length(block_id), t.c_str(), seq);
 }

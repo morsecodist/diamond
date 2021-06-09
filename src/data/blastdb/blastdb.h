@@ -19,10 +19,10 @@ struct BlastDB : public SequenceFile {
 	virtual void read_seq_data(Letter* dst, size_t len, size_t& pos, bool seek) override;
 	virtual void read_id_data(char* dst, size_t len) override;
 	virtual void skip_id_data() override;
-	virtual std::string seqid(size_t oid) override;
-	virtual std::string dict_title(size_t dict_id) override;
-	virtual size_t dict_len(size_t dict_id) override;
-	virtual std::vector<Letter> dict_seq(size_t dict_id) override;
+	virtual std::string seqid(size_t oid) const override;
+	virtual std::string dict_title(size_t dict_id) const override;
+	virtual size_t dict_len(size_t dict_id) const override;
+	virtual std::vector<Letter> dict_seq(size_t dict_id) const override;
 	virtual size_t sequence_count() const override;
 	virtual size_t sparse_sequence_count() const override;
 	virtual size_t letters() const override;
@@ -47,8 +47,8 @@ struct BlastDB : public SequenceFile {
 	virtual std::vector<unsigned> taxids(size_t oid) const override;
 	virtual void seq_data(size_t oid, std::vector<Letter>& dst) const override;
 	virtual size_t seq_length(size_t oid) const override;
-	virtual void init_random_access() override;
-	virtual void end_random_access() override;
+	virtual void init_random_access(bool dictionary = true) override;
+	virtual void end_random_access(bool dictionary = true) override;
 	virtual LoadTitles load_titles() override;
 	virtual ~BlastDB();
 

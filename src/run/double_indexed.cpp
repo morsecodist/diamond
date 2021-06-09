@@ -36,7 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../data/load_seqs.h"
 #include "../output/output_format.h"
 #include "../data/frequent_seeds.h"
-#include "../output/daa_write.h"
+#include "../output/daa/daa_write.h"
 #include "../data/taxonomy.h"
 #include "../basic/masking.h"
 #include "../data/ref_dictionary.h"
@@ -114,11 +114,12 @@ void run_ref_chunk(SequenceFile &db_file,
 		log_stream << "Masked letters: " << n << endl;
 	}
 
-	if(blocked_processing && !config.global_ranking_targets) {
+	const bool daa = *output_format == Output_format::daa;
+	if((blocked_processing || daa) && !config.global_ranking_targets) {
 		timer.go("Initializing dictionary");
-		if (current_ref_block == 0)
+		if (current_ref_block == 0 && (!daa || query_chunk == 0))
 			db_file.init_dict();
-		db_file.init_dict_block(current_ref_block, ref_seqs.size());
+		db_file.init_dict_block(current_ref_block, ref_seqs.size(), daa);
 	}	
 
 	timer.go("Initializing temporary storage");
@@ -561,8 +562,11 @@ void master_thread(task_timer &total_timer, Config &options)
 	}
 
 	timer.go("Closing the output file");
-	if (*output_format == Output_format::daa)
+	if (*output_format == Output_format::daa) {
+		db_file->init_random_access();
 		finish_daa(*static_cast<OutputFile*>(options.out.get()), *db_file);
+		db_file->end_random_access();
+	}
 	else
 		output_format->print_footer(*options.out);
 	options.out->finalize();

@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "output.h"
 #include "../util/io/temp_file.h"
 #include "../data/queries.h"
-#include "../output/daa_write.h"
+#include "../output/daa/daa_write.h"
 #include "output_format.h"
 #include "../align/legacy/query_mapper.h"
 #include "target_culling.h"
@@ -140,7 +140,8 @@ struct Join_record
 	{
 		info_.read(it);
 		same_subject_ = info_.target_dict_id == subject;
-		target_oid = db.oid(info_.target_dict_id);
+		if (*output_format != Output_format::daa)
+			target_oid = db.oid(info_.target_dict_id);
 	}
 
 	static bool push_next(unsigned block, unsigned subject, BinaryBuffer::Iterator &it, vector<Join_record> &v, const SequenceFile& db)
@@ -317,7 +318,8 @@ void join_worker(Task_queue<TextBuffer, JoinWriter> *queue, const Search::Config
 void join_blocks(unsigned ref_blocks, Consumer &master_out, const PtrVector<TempFile> &tmp_file, Search::Config& cfg, SequenceFile &db_file,
 	const vector<string> tmp_file_names)
 {
-	cfg.db->init_random_access();
+	if (*output_format != Output_format::daa)
+		cfg.db->init_random_access();
 	task_timer timer("Joining output blocks");
 
 	if (tmp_file_names.size() > 0) {
@@ -351,5 +353,6 @@ void join_blocks(unsigned ref_blocks, Consumer &master_out, const PtrVector<Temp
 
 	if (config.global_ranking_targets)
 		Extension::GlobalRanking::extend(db_file, *merged_query_list, ranking_db_filter, cfg, master_out);
-	cfg.db->end_random_access();
+	if (*output_format != Output_format::daa)
+		cfg.db->end_random_access();
 }

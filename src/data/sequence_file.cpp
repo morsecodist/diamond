@@ -288,28 +288,32 @@ void SequenceFile::init_dict()
 	dict_alloc_size_ = 0;
 }
 
-void SequenceFile::init_dict_block(size_t block, size_t seq_count)
+void SequenceFile::init_dict_block(size_t block, size_t seq_count, bool persist)
 {
 	if(config.multiprocessing)
 		next_dict_id_ = 0;
-	block_to_dict_id_.clear();
-	block_to_dict_id_.insert(block_to_dict_id_.begin(), seq_count, DICT_EMPTY);
+	if(!persist)
+		block_to_dict_id_.clear();
+	if(block_to_dict_id_.find(block) == block_to_dict_id_.end())
+		block_to_dict_id_[block] = vector<uint32_t>(seq_count, DICT_EMPTY);
 }
 
 uint32_t SequenceFile::dict_id(size_t block, size_t block_id, size_t oid, size_t len, const char* id, const Letter* seq)
 {
-	if (block_id >= block_to_dict_id_.size())
+	auto it = block_to_dict_id_.find(block);
+	if (it == block_to_dict_id_.end() || block_id >= it->second.size())
 		throw std::runtime_error("Dictionary not initialized.");
-	uint32_t n = block_to_dict_id_[block_id];
+	vector<uint32_t>& v = it->second;
+	uint32_t n = v[block_id];
 	if (n != DICT_EMPTY)
 		return n;
 	{
 		std::lock_guard<std::mutex> lock(dict_mtx_);
-		n = block_to_dict_id_[block_id];
+		n = v[block_id];
 		if (n != DICT_EMPTY)
 			return n;
 		n = next_dict_id_++;
-		block_to_dict_id_[block_id] = n;
+		v[block_id] = n;
 		write_dict_entry(block, oid, len, id, seq);
 		return n;
 	}

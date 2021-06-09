@@ -163,7 +163,7 @@ void align_queries(Consumer* output_file, const Search::Config& cfg)
 	task_timer timer(nullptr, 3);
 
 	if (!blocked_processing)
-		cfg.db->init_random_access();
+		cfg.db->init_random_access(false);
 	
 	cfg.seed_hit_buf->load(max_size);
 
@@ -210,5 +210,5 @@ void align_queries(Consumer* output_file, const Search::Config& cfg)
 	statistics.inc(Statistics::MATRIX_ADJUST_COUNT, Extension::target_matrix_count);
 
 	if (!blocked_processing)
-		cfg.db->end_random_access();
+		cfg.db->end_random_access(false);
 }

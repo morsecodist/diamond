@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ****/
 
 #pragma once
-#include "output.h"
+#include "../output.h"
 #include "daa_file.h"
 #include "../data/sequence_file.h"
 
@@ -33,7 +33,7 @@ void finish_daa_query_record(TextBuffer& buf, size_t seek_pos);
 
 void write_daa_record(TextBuffer& buf, const IntermediateRecord& r);
 
-void write_daa_record(TextBuffer& buf, const Hsp& match, size_t subject_id, const Search::Config& cfg);
+void write_daa_record(TextBuffer& buf, const Hsp& match, uint32_t subject_id);
 
 void finish_daa(OutputFile& f, const SequenceFile& db);
 

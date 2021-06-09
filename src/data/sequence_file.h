@@ -90,10 +90,10 @@ struct SequenceFile {
 	virtual void read_seq_data(Letter* dst, size_t len, size_t& pos, bool seek) = 0;
 	virtual void read_id_data(char* dst, size_t len) = 0;
 	virtual void skip_id_data() = 0;
-	virtual std::string seqid(size_t oid) = 0;
-	virtual std::string dict_title(size_t dict_id) = 0;
-	virtual size_t dict_len(size_t dict_id) = 0;
-	virtual std::vector<Letter> dict_seq(size_t dict_id) = 0;
+	virtual std::string seqid(size_t oid) const = 0;
+	virtual std::string dict_title(size_t dict_id) const = 0;
+	virtual size_t dict_len(size_t dict_id) const = 0;
+	virtual std::vector<Letter> dict_seq(size_t dict_id) const = 0;
 	virtual size_t sequence_count() const = 0;
 	virtual size_t sparse_sequence_count() const = 0;
 	virtual size_t letters() const = 0;
@@ -118,8 +118,8 @@ struct SequenceFile {
 	virtual std::string file_name() = 0;
 	virtual void seq_data(size_t oid, std::vector<Letter>& dst) const = 0;
 	virtual size_t seq_length(size_t oid) const = 0;
-	virtual void init_random_access() = 0;
-	virtual void end_random_access() = 0;
+	virtual void init_random_access(bool dictionary = true) = 0;
+	virtual void end_random_access(bool dictionary = true) = 0;
 	virtual LoadTitles load_titles() = 0;
 	virtual ~SequenceFile();
 
@@ -134,9 +134,12 @@ struct SequenceFile {
 	void get_seq();
 	size_t total_blocks() const;
 	void init_dict();
-	void init_dict_block(size_t block, size_t seq_count);
+	void init_dict_block(size_t block, size_t seq_count, bool persist);
 	uint32_t dict_id(size_t block, size_t block_id, size_t oid, size_t len, const char* id, const Letter* seq);
 	size_t oid(uint32_t dict_id) const;
+	size_t dict_size() const {
+		return next_dict_id_;
+	}
 
 	static SequenceFile* auto_create(Flags flags = Flags::NONE, Metadata metadata = Metadata());
 
@@ -163,7 +166,7 @@ private:
 	const Type type_;
 	const Alphabet alphabet_;
 
-	std::vector<uint32_t> block_to_dict_id_;
+	std::map<size_t, std::vector<uint32_t>> block_to_dict_id_;
 	std::mutex dict_mtx_;
 
 };

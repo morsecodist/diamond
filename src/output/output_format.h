@@ -25,8 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <exception>
 #include <memory>
 #include "../basic/match.h"
-#include "../output/daa_file.h"
-#include "../output/daa_record.h"
+#include "../output/daa/daa_file.h"
+#include "../output/daa/daa_record.h"
 #include "../util/io/output_file.h"
 #include "../stats/score_matrix.h"
 #include "../util/escape_sequences.h"

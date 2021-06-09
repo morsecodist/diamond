@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../../dp/ungapped.h"
 #include "../../output/output.h"
 #include "../../output/output_format.h"
-#include "../../output/daa_write.h"
+#include "../../output/daa/daa_write.h"
 #include "../../output/target_culling.h"
 
 using namespace std;
@@ -250,7 +250,7 @@ bool QueryMapper::generate_output(TextBuffer &buffer, Statistics &stat)
 						f->print_query_intro(query_id, query_title, source_query_len, buffer, false, metadata);
 				}
 				if (*f == Output_format::daa)
-					write_daa_record(buffer, *j, subject_id, metadata);
+					write_daa_record(buffer, *j, subject_id);
 				else
 					f->print_match(HspContext(*j,
 						query_id,

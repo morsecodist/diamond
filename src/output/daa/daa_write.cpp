@@ -1,6 +1,7 @@
 #include "daa_write.h"
 #include "../util/util.h"
 #include "../util/sequence/sequence.h"
+#include "../../basic/statistics.h"
 
 void init_daa(OutputFile& f)
 {
@@ -31,16 +32,16 @@ void finish_daa_query_record(TextBuffer& buf, size_t seek_pos)
 
 void write_daa_record(TextBuffer& buf, const IntermediateRecord& r)
 {
-	//buf.write(r.subject_dict_id).write(r.flag);
+	buf.write(r.target_dict_id).write(r.flag);
 	buf.write_packed(r.score);
 	buf.write_packed(r.query_begin);
 	buf.write_packed(r.subject_begin);
 	buf << r.transcript.data();
 }
 
-void write_daa_record(TextBuffer& buf, const Hsp& match, size_t subject_id, const Search::Config& cfg)
+void write_daa_record(TextBuffer& buf, const Hsp& match, uint32_t subject_id)
 {
-	//buf.write(config.command == Config::view ? (uint32_t)subject_id : ReferenceDictionary::get().get(current_ref_block, subject_id, cfg));
+	buf.write(subject_id);
 	buf.write(get_segment_flag(match));
 	buf.write_packed(match.score);
 	buf.write_packed(match.oriented_range().begin_);
@@ -66,24 +67,24 @@ void finish_daa(OutputFile& f, const SequenceFile& db)
 	h2_.block_type[1] = DAA_header2::ref_names;
 	h2_.block_type[2] = DAA_header2::ref_lengths;
 
-	/*const ReferenceDictionary &dict = ReferenceDictionary::get();
-
 	uint32_t size = 0;
 	f.write(&size, 1);
 	h2_.block_size[0] = f.tell() - sizeof(DAA_header1) - sizeof(DAA_header2);
-	h2_.db_seqs_used = dict.seqs();
+	const size_t n = db.dict_size();
+	h2_.db_seqs_used = n;
 	h2_.query_records = statistics.get(Statistics::ALIGNED);
 
 	size_t s = 0;
-	for (PtrVector<string>::const_iterator i = dict.name_.begin(); i != dict.name_.end(); ++i) {
-	//std::cout << **i << endl;
-	f << **i;
-	s += (*i)->length() + 1;
+	for (size_t i = 0; i < n; ++i) {
+		const string title = db.dict_title(i);
+		f << title;
+		s += title.length() + 1;
 	}
 	h2_.block_size[1] = s;
 
-	f.write(dict.len_.data(), dict.len_.size());
-	h2_.block_size[2] = dict.len_.size() * sizeof(uint32_t);*/
+	for (size_t i = 0; i < n; ++i)
+		f << (uint32_t)db.dict_len(i);
+	h2_.block_size[2] = n * sizeof(uint32_t);
 
 	f.seek(sizeof(DAA_header1));
 	f.write(&h2_, 1);

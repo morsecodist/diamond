@@ -24,13 +24,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../basic/config.h"
 #include "../util/io/output_file.h"
 #include "../util/text_buffer.h"
-#include "daa_file.h"
+#include "daa/daa_file.h"
 #include "../util/binary_buffer.h"
 #include "output_format.h"
 #include "../util/task_queue.h"
 #include "../stats/score_matrix.h"
 #include "../data/taxonomy.h"
-#include "daa_write.h"
+#include "daa/daa_write.h"
 #include "../run/config.h"
 
 using namespace std;
@@ -95,7 +95,7 @@ void view_query(DAA_query_record &r, TextBuffer &out, Output_format &format, con
 		if (!config.output_range(i->hit_num, i->score, top_score))
 			break;
 		if (format == Output_format::daa)
-			write_daa_record(out, *i, i->subject_id, cfg);
+			write_daa_record(out, *i, i->subject_id);
 		else
 			f->print_match(i->context(), cfg, out);
 	}

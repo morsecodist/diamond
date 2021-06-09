@@ -177,7 +177,7 @@ void BlastDB::skip_id_data()
 	//++oid_seqdata_;
 }
 
-std::string BlastDB::seqid(size_t oid)
+std::string BlastDB::seqid(size_t oid) const
 {
 	if (flag_any(flags_, Flags::FULL_TITLES)) {
 		return full_id(*db_->GetBioseq(oid), nullptr, long_seqids_, true);
@@ -189,21 +189,21 @@ std::string BlastDB::seqid(size_t oid)
 	}
 }
 
-std::string BlastDB::dict_title(size_t dict_id)
+std::string BlastDB::dict_title(size_t dict_id) const
 {
 	if (dict_id >= dict_oid_.size())
 		throw std::runtime_error("Dictionary not loaded.");
 	return seqid(dict_oid_[dict_id]);
 }
 
-size_t BlastDB::dict_len(size_t dict_id)
+size_t BlastDB::dict_len(size_t dict_id) const
 {
 	if (dict_id >= dict_oid_.size())
 		throw std::runtime_error("Dictionary not loaded.");
 	return db_->GetSeqLength(dict_oid_[dict_id]);
 }
 
-std::vector<Letter> BlastDB::dict_seq(size_t dict_id)
+std::vector<Letter> BlastDB::dict_seq(size_t dict_id) const
 {
 	if (dict_id >= dict_oid_.size())
 		throw std::runtime_error("Dictionary not loaded.");
@@ -370,9 +370,10 @@ size_t BlastDB::seq_length(size_t oid) const
 
 const char* BlastDB::ACCESSION_FIELD = "accession*";
 
-void BlastDB::init_random_access()
+void BlastDB::init_random_access(bool dictionary)
 {
-	load_dictionary();
+	if(dictionary)
+		load_dictionary();
 	if (flag_any(flags_, Flags::FULL_TITLES))
 		return;
 	task_timer timer("Loading accessions");
@@ -399,11 +400,12 @@ void BlastDB::init_random_access()
 	}
 }
 
-void BlastDB::end_random_access()
+void BlastDB::end_random_access(bool dictionary)
 {
 	acc_.clear();
 	acc_.shrink_to_fit();
-	free_dictionary();
+	if(dictionary)
+		free_dictionary();
 }
 
 SequenceFile::LoadTitles BlastDB::load_titles()
