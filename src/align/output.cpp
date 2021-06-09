@@ -104,7 +104,7 @@ TextBuffer* generate_intermediate_output(const vector<Match> &targets, size_t qu
 		const size_t dict_id = target.dict_id(current_ref_block, block_id, *cfg.db);
 
 		for (const Hsp &hsp : targets[i].hsp)
-			IntermediateRecord::write(*out, hsp, query_block_id, dict_id, cfg);
+			IntermediateRecord::write(*out, hsp, query_block_id, dict_id);
 		/*if (config.global_ranking_targets > 0)
 			IntermediateRecord::write(*out, subject_id, targets[i].ungapped_score, cfg);*/
 	}

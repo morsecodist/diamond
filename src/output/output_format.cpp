@@ -85,7 +85,7 @@ void IntermediateRecord::finish_query(TextBuffer& buf, size_t seek_pos)
 	*(uint32_t*)(&buf[seek_pos + sizeof(uint32_t)]) = safe_cast<uint32_t>(buf.size() - seek_pos - sizeof(uint32_t) * 2);
 }
 
-void IntermediateRecord::write(TextBuffer& buf, const Hsp& match, unsigned query_id, size_t target_dict_id, const Search::Config& cfg)
+void IntermediateRecord::write(TextBuffer& buf, const Hsp& match, unsigned query_id, size_t target_dict_id)
 {
 	const interval oriented_range(match.oriented_range());
 	buf.write((uint32_t)target_dict_id);

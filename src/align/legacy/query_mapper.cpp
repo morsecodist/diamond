@@ -215,10 +215,13 @@ bool QueryMapper::generate_output(TextBuffer &buffer, Statistics &stat)
 	for (size_t i = 0; i < targets.size(); ++i) {
 
 		const size_t subject_id = targets[i].subject_block_id;
-		string target_title;
-		if (!blocked_processing)
-			target_title = metadata.target->has_ids() ? metadata.target->ids()[subject_id] : metadata.db->seqid(subject_id);
 		const unsigned database_id = metadata.target->block_id2oid(subject_id);
+		string target_title;
+		size_t dict_id;
+		if (!blocked_processing)
+			target_title = metadata.target->has_ids() ? metadata.target->ids()[subject_id] : metadata.db->seqid(database_id);
+		else
+			dict_id = metadata.target->dict_id(current_ref_block, subject_id, *metadata.db);
 		const unsigned subject_len = (unsigned)metadata.target->seqs()[subject_id].length();
 		targets[i].apply_filters(source_query_len, subject_len, query_title);
 		if (targets[i].hsps.size() == 0)
@@ -240,7 +243,7 @@ bool QueryMapper::generate_output(TextBuffer &buffer, Statistics &stat)
 			if (blocked_processing) {
 				if (n_hsp == 0)
 					seek_pos = IntermediateRecord::write_query_intro(buffer, query_id);
-				IntermediateRecord::write(buffer, *j, query_id, subject_id, metadata);
+				IntermediateRecord::write(buffer, *j, query_id, dict_id);
 			}
 			else {
 				if (n_hsp == 0) {
@@ -250,7 +253,7 @@ bool QueryMapper::generate_output(TextBuffer &buffer, Statistics &stat)
 						f->print_query_intro(query_id, query_title, source_query_len, buffer, false, metadata);
 				}
 				if (*f == Output_format::daa)
-					write_daa_record(buffer, *j, subject_id);
+					write_daa_record(buffer, *j, metadata.target->dict_id(current_ref_block, subject_id, *metadata.db));
 				else
 					f->print_match(HspContext(*j,
 						query_id,
