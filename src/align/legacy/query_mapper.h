@@ -170,7 +170,7 @@ struct QueryMapper
 	}
 	Sequence query_seq(unsigned frame) const
 	{
-		return metadata.query->seqs()[query_id*align_mode.query_contexts + frame];
+		return metadata.query->seqs()[(size_t)query_id*(size_t)align_mode.query_contexts + frame];
 	}
 	void fill_source_ranges()
 	{
