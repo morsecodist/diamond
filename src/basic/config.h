@@ -260,6 +260,7 @@ struct Config
 	size_t max_swipe_dp;
 	std::string seqidlist;
 	bool skip_missing_seqids;
+	string_vector iterate;
 
 	Sensitivity sensitivity;
 

@@ -30,6 +30,7 @@ struct Consumer;
 struct TextInputFile;
 struct Block;
 struct TaxonomyNodes;
+enum class Sensitivity;
 template<typename T> struct AsyncBuffer;
 
 struct Async;
@@ -53,6 +54,9 @@ struct Config {
 	~Config();
 
 	bool                                       self;
+	std::vector<Sensitivity>                   sensitivity;
+	bool                                       track_aligned_queries;
+
 	std::shared_ptr<SequenceFile>              db;
 	std::shared_ptr<std::list<TextInputFile>>  query_file;
 	std::shared_ptr<Consumer>                  out;
@@ -68,6 +72,10 @@ struct Config {
 	uint64_t db_seqs, db_letters, ref_blocks;
 	Util::Scores::CutoffTable cutoff_gapped1, cutoff_gapped2;
 	Util::Scores::CutoffTable2D cutoff_gapped1_new, cutoff_gapped2_new;
+
+	bool iterated() const {
+		return sensitivity.size() > 1;
+	}
 
 };
 

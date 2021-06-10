@@ -81,7 +81,7 @@ void search_worker(atomic<unsigned> *seedp, const SeedPartitionRange *seedp_rang
 	statistics += work_set->stats;
 }
 
-void search_shape(unsigned sid, unsigned query_block, char *query_buffer, char *ref_buffer, Search::Config& cfg, const HashedSeedSet* target_seeds)
+void search_shape(unsigned sid, unsigned query_block, unsigned query_iteration, char *query_buffer, char *ref_buffer, Search::Config& cfg, const HashedSeedSet* target_seeds)
 {
 	Partition<unsigned> p(Const::seedp, config.lowmem);
 	DoubleArray<SeedArray::Entry::Value> query_seed_hits[Const::seedp], ref_seed_hits[Const::seedp];
@@ -90,8 +90,10 @@ void search_shape(unsigned sid, unsigned query_block, char *query_buffer, char *
 	const Partitioned_histogram& ref_hst = cfg.target->hst(), query_hst = cfg.query->hst();
 
 	for (unsigned chunk = 0; chunk < p.parts; ++chunk) {
-		message_stream << "Processing query block " << query_block + 1
-			<< ", reference block " << (current_ref_block + 1) << "/" << cfg.ref_blocks
+		message_stream << "Processing query block " << query_block + 1;
+		if (cfg.iterated())
+			message_stream << ", query iteration " << query_iteration;
+		message_stream << ", reference block " << (current_ref_block + 1) << "/" << cfg.ref_blocks
 			<< ", shape " << (sid + 1) << "/" << shapes.count();
 		if (config.lowmem > 1)
 			message_stream << ", index chunk " << chunk + 1 << "/" << config.lowmem;

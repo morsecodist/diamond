@@ -50,11 +50,11 @@ using namespace std;
 const EMap<Sensitivity> EnumTraits<Sensitivity>::to_string = {
 	{ Sensitivity::FAST, "fast" },
 	{ Sensitivity::DEFAULT, "default" },
-	{ Sensitivity::SENSITIVE, "sensitive" },
-	{ Sensitivity::MID_SENSITIVE, "mid-sensitive" },
-	{ Sensitivity::MORE_SENSITIVE, "more-sensitive" },
-	{ Sensitivity::VERY_SENSITIVE, "very-sensitive" },
-	{ Sensitivity::ULTRA_SENSITIVE, "ultra-sensitive" }
+	{ Sensitivity::SENSITIVE, "sens" },
+	{ Sensitivity::MID_SENSITIVE, "msens" },
+	{ Sensitivity::MORE_SENSITIVE, "moresens" },
+	{ Sensitivity::VERY_SENSITIVE, "vsens" },
+	{ Sensitivity::ULTRA_SENSITIVE, "usens" }
 };
 
 const EMap<Config::Algo> EnumTraits<Config::Algo>::to_string = { { Config::Algo::DOUBLE_INDEXED, "0" }, { Config::Algo::QUERY_INDEXED, "1"} };
@@ -280,6 +280,7 @@ Config::Config(int argc, const char **argv, bool check_io)
 		("more-sensitive", 0, "enable more sensitive mode (default: fast)", mode_more_sensitive)
 		("very-sensitive", 0, "enable very sensitive mode (default: fast)", mode_very_sensitive)
 		("ultra-sensitive", 0, "enable ultra sensitive mode (default: fast)", mode_ultra_sensitive)
+		("iterate", 0, "iterated search with multiple sensitivity modes", iterate)
 		("block-size", 'b', "sequence block size in billions of letters (default=2.0)", chunk_size)
 		("index-chunks", 'c', "number of chunks for index processing (default=4)", lowmem)
 		("tmpdir", 't', "directory for temporary files", tmpdir)

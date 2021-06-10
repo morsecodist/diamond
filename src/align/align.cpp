@@ -103,7 +103,7 @@ TextBuffer* legacy_pipeline(Align_fetcher &hits, const Search::Config& cfg, Stat
 	if (*output_format != Output_format::null) {
 		buf = new TextBuffer;
 		const bool aligned = mapper->generate_output(*buf, stat);
-		if (aligned && (!config.unaligned.empty() || !config.aligned_file.empty())) {
+		if (aligned && cfg.track_aligned_queries) {
 			query_aligned_mtx.lock();
 			query_aligned[hits.query] = true;
 			query_aligned_mtx.unlock();
@@ -130,7 +130,7 @@ void align_worker(size_t thread_id, const Search::Config* cfg)
 			task_timer timer;
 			vector<Extension::Match> matches = Extension::extend(hits.query, hits.begin, hits.end, *cfg, stat, hits.target_parallel || parallel ? DP::PARALLEL : 0);
 			TextBuffer* buf = blocked_processing ? Extension::generate_intermediate_output(matches, hits.query, *cfg) : Extension::generate_output(matches, hits.query, stat, *cfg);
-			if (!matches.empty() && (!config.unaligned.empty() || !config.aligned_file.empty())) {
+			if (!matches.empty() && cfg->track_aligned_queries) {
 				std::lock_guard<std::mutex> lock(query_aligned_mtx);
 				query_aligned[hits.query] = true;
 			}

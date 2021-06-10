@@ -59,6 +59,8 @@ TextBuffer* generate_output(vector<Match> &targets, size_t query_block_id, Stati
 		for (Hsp &hsp : targets[i].hsp) {
 			if (*f == Output_format::daa)
 				write_daa_record(*out, hsp, cfg.target->dict_id(current_ref_block, subject_id, *cfg.db));
+			else if(cfg.iterated())
+				IntermediateRecord::write(*out, hsp, query_block_id, cfg.target->dict_id(current_ref_block, subject_id, *cfg.db));
 			else
 				f->print_match(HspContext(hsp,
 					query_block_id,
