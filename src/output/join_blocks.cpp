@@ -69,6 +69,9 @@ struct JoinFetcher
 	{
 		return *std::min_element(query_ids.begin(), query_ids.end());
 	}
+	static size_t block_count() {
+		return files.size();
+	}
 	void fetch(unsigned b)
 	{
 		uint32_t size;
@@ -78,8 +81,8 @@ struct JoinFetcher
 		files[b].read(buf[b].data(), size);
 		files[b].read(&query_ids[b], 1);
 	}
-	JoinFetcher():
-		buf(current_ref_block)
+	JoinFetcher(size_t blocks):
+		buf(blocks)
 	{}
 	bool operator()()
 	{
@@ -132,7 +135,7 @@ struct Join_record
 
 	bool db_precedence(const Join_record &rhs) const
 	{
-		return block_ < rhs.block_ || (block_ == rhs.block_ && target_oid < rhs.target_oid);
+		return target_oid < rhs.target_oid;
 	}
 
 	Join_record(unsigned ref_block, unsigned subject, BinaryBuffer::Iterator &it, const SequenceFile& db):
@@ -165,7 +168,7 @@ struct BlockJoiner
 {
 	BlockJoiner(vector<BinaryBuffer> &buf, const SequenceFile& db)
 	{
-		for (unsigned i = 0; i < current_ref_block; ++i) {
+		for (size_t i = 0; i < buf.size(); ++i) {
 			it.push_back(buf[i].begin());
 			Join_record::push_next(i, std::numeric_limits<unsigned>::max(), it.back(), records, db);
 		}
@@ -262,7 +265,7 @@ void join_worker(Task_queue<TextBuffer, JoinWriter> *queue, const Search::Config
 {
 	try {
 		static std::mutex mtx;
-		JoinFetcher fetcher;
+		JoinFetcher fetcher(JoinFetcher::block_count());
 		size_t n;
 		TextBuffer* out;
 		Statistics stat;

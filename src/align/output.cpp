@@ -43,16 +43,19 @@ TextBuffer* generate_output(vector<Match> &targets, size_t query_block_id, Stati
 	const char *query_title = cfg.query->ids()[query_block_id];
 	const bool aligned = !targets.empty();
 
-	if (*f == Output_format::daa) {
+	if (cfg.iterated()) {
+		if (aligned) seek_pos = IntermediateRecord::write_query_intro(*out, query_block_id);
+	}
+	else if (*f == Output_format::daa) {
 		if (aligned) seek_pos = write_daa_query_record(*out, query_title, query.source());
-	} else if(aligned || config.report_unaligned)
+	}
+	else if (aligned || config.report_unaligned)
 		f->print_query_intro(query_block_id, query_title, query.source().length(), *out, !aligned, cfg);
 			
 	for (size_t i = 0; i < targets.size(); ++i) {
 
 		const size_t subject_id = targets[i].target_block_id;
 		const unsigned database_id = cfg.target->block_id2oid(subject_id);
-		const string target_title = cfg.target->has_ids() ? cfg.target->ids()[subject_id] : cfg.db->seqid(database_id);
 		const unsigned subject_len = (unsigned)ref_seqs[subject_id].length();
 
 		hit_hsps = 0;
@@ -68,7 +71,7 @@ TextBuffer* generate_output(vector<Match> &targets, size_t query_block_id, Stati
 					query_title,
 					database_id,
 					subject_len,
-					target_title.c_str(),
+					(cfg.target->has_ids() ? cfg.target->ids()[subject_id] : cfg.db->seqid(database_id)).c_str(),
 					i,
 					hit_hsps,
 					cfg.target->unmasked_seqs().empty() ? Sequence() : cfg.target->unmasked_seqs()[subject_id],
@@ -79,15 +82,21 @@ TextBuffer* generate_output(vector<Match> &targets, size_t query_block_id, Stati
 		}
 	}
 
-	if (*f == Output_format::daa) {
-		if(aligned) finish_daa_query_record(*out, seek_pos);
-	} else if(aligned || config.report_unaligned)
-		f->print_query_epilog(*out, query_title, targets.empty(), cfg);
-	
-	stat.inc(Statistics::MATCHES, n_hsp);
-	stat.inc(Statistics::PAIRWISE, targets.size());
-	if (aligned)
-		stat.inc(Statistics::ALIGNED);
+	if (cfg.iterated()) {
+		if (aligned) IntermediateRecord::finish_query(*out, seek_pos);
+	}
+	else {
+		stat.inc(Statistics::MATCHES, n_hsp);
+		stat.inc(Statistics::PAIRWISE, targets.size());
+		if (aligned)
+			stat.inc(Statistics::ALIGNED);
+		if (*f == Output_format::daa) {
+			if (aligned) finish_daa_query_record(*out, seek_pos);
+		}
+		else if (aligned || config.report_unaligned)
+			f->print_query_epilog(*out, query_title, targets.empty(), cfg);
+	}
+
 	return out;
 }
 

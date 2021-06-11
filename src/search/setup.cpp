@@ -189,9 +189,8 @@ bool use_single_indexed(double coverage, size_t query_letters, size_t ref_letter
 		return query_letters < 3000000llu && query_letters * 2000llu < ref_letters;
 }
 
-void setup_search()
+void setup_search(Sensitivity sens)
 {
-	const Sensitivity sens = config.sensitivity;
 	const SensitivityTraits& traits = sensitivity_traits.at(sens);
 	Config::set_option(config.freq_sd, traits.freq_sd);
 	Config::set_option(config.min_identities, traits.min_identities);
@@ -209,14 +208,8 @@ void setup_search()
 	
 	::shapes = ShapeConfig(config.shape_mask.empty() ? shape_codes.at(sens) : config.shape_mask, config.shapes);
 
-	print_warnings();
-
 	if (config.command != Config::blastp && config.command != Config::blastx)
 		return;
 
-	SeedComplexity::init(Reduction::reduction);
 	config.gapped_filter_diag_score = score_matrix.rawscore(config.gapped_filter_diag_bit_score);
-
-	verbose_stream << "Seed frequency SD: " << config.freq_sd << endl;
-	verbose_stream << "Shape configuration: " << ::shapes << endl;
 }

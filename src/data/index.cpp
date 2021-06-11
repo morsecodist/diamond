@@ -13,13 +13,13 @@ void makeindex() {
 	if (db.ref_header.letters > MAX_LETTERS)
 		throw std::runtime_error("Indexing is only supported for databases of < 100000000 letters.");
 
-	setup_search();
+	setup_search(config.sensitivity);
 	config.algo = Config::Algo::DOUBLE_INDEXED;
 
 	Block* block = db.load_seqs(MAX_LETTERS, false);
 
 	task_timer timer("Building index");
-	HashedSeedSet index(block->seqs());
+	HashedSeedSet index(block->seqs(), nullptr);
 
 	timer.go("Writing to disk");
 	OutputFile out(db.file_name() + ".seed_idx");

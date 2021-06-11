@@ -89,7 +89,7 @@ struct HashedSeedSet;
 
 void search_shape(unsigned sid, unsigned query_block, unsigned query_iteration, char *query_buffer, char *ref_buffer, Search::Config& cfg, const HashedSeedSet* target_seeds);
 bool use_single_indexed(double coverage, size_t query_letters, size_t ref_letters);
-void setup_search();
+void setup_search(Sensitivity sens);
 
 namespace Search {
 

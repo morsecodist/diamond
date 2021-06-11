@@ -44,7 +44,7 @@ private:
 	OutputFile* const f_;
 };
 
-void align_queries(Consumer* output_file, const Search::Config &cfg);
+void align_queries(Consumer* output_file, Search::Config &cfg);
 
 namespace ExtensionPipeline {
 	namespace Swipe {

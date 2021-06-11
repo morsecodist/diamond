@@ -92,7 +92,7 @@ void search_shape(unsigned sid, unsigned query_block, unsigned query_iteration, 
 	for (unsigned chunk = 0; chunk < p.parts; ++chunk) {
 		message_stream << "Processing query block " << query_block + 1;
 		if (cfg.iterated())
-			message_stream << ", query iteration " << query_iteration;
+			message_stream << ", query iteration " << query_iteration + 1;
 		message_stream << ", reference block " << (current_ref_block + 1) << "/" << cfg.ref_blocks
 			<< ", shape " << (sid + 1) << "/" << shapes.count();
 		if (config.lowmem > 1)
@@ -104,17 +104,18 @@ void search_shape(unsigned sid, unsigned query_block, unsigned query_iteration, 
 		task_timer timer("Building reference seed array", true);
 		SeedArray *ref_idx;
 		if (query_seeds_hashed.get())
-			ref_idx = new SeedArray(ref_seqs, sid, ref_hst.get(sid), range, ref_hst.partition(), ref_buffer, query_seeds_hashed.get(), true);
+			ref_idx = new SeedArray(ref_seqs, sid, ref_hst.get(sid), range, ref_hst.partition(), ref_buffer, query_seeds_hashed.get(), true, nullptr);
 			//ref_idx = new SeedArray(ref_seqs, sid, range, query_seeds_hashed.get(), true);
 		else
-			ref_idx = new SeedArray(ref_seqs, sid, ref_hst.get(sid), range, ref_hst.partition(), ref_buffer, &no_filter, target_seeds);
+			ref_idx = new SeedArray(ref_seqs, sid, ref_hst.get(sid), range, ref_hst.partition(), ref_buffer, &no_filter, target_seeds, nullptr);
 
 		timer.go("Building query seed array");
 		SeedArray* query_idx;
+		const vector<bool>* skip = query_iteration > 0 ? &query_aligned : nullptr;
 		if (target_seeds)
-			query_idx = new SeedArray(query_seqs, sid, range, target_seeds, true);
+			query_idx = new SeedArray(query_seqs, sid, range, target_seeds, true, skip);
 		else
-			query_idx = new SeedArray(query_seqs, sid, query_hst.get(sid), range, query_hst.partition(), query_buffer, &no_filter, query_seeds_hashed.get());
+			query_idx = new SeedArray(query_seqs, sid, query_hst.get(sid), range, query_hst.partition(), query_buffer, &no_filter, query_seeds_hashed.get(), skip);
 		timer.finish();
 
 		log_stream << "Indexed query seeds = " << query_idx->size() << '/' << query_seqs.letters() << ", reference seeds = " << ref_idx->size() << '/' << ref_seqs.letters() << endl;

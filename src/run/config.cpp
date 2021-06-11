@@ -20,7 +20,8 @@ Config::Config() :
 	out(nullptr),
 	query_file(nullptr),
 	taxon_nodes(nullptr),
-	taxonomy_scientific_names(nullptr)
+	taxonomy_scientific_names(nullptr),
+	iteration_query_aligned(0)
 {
 	if (!config.iterate.empty()) {
 		if (config.multiprocessing)

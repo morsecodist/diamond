@@ -5,6 +5,8 @@
 - Fixed a bug that could cause a `Traceback error` when using `--comp-based-stats (3,4)`
   in rare cases.
 - Changed the `full_sseq` output field to always contain unmasked sequences.
+- Fixed an issue that could cause target output order to be nondeterministic in case
+  of identically scoring hits.
 
 [2.0.9]
 - Reduced the memory use of database building with taxonomy mapping.

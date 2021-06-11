@@ -115,11 +115,11 @@ void run_ref_chunk(SequenceFile &db_file,
 	}
 
 	const bool daa = *output_format == Output_format::daa;
-	if((blocked_processing || daa) && !config.global_ranking_targets) {
+	if((blocked_processing || daa || cfg.iterated()) && !config.global_ranking_targets) {
 		timer.go("Initializing dictionary");
-		if (current_ref_block == 0 && (!daa || query_chunk == 0))
+		if (current_ref_block == 0 && (!daa || query_chunk == 0) && query_iteration == 0)
 			db_file.init_dict();
-		db_file.init_dict_block(current_ref_block, ref_seqs.size(), daa);
+		db_file.init_dict_block(current_ref_block, ref_seqs.size(), daa || cfg.iterated());
 	}	
 
 	timer.go("Initializing temporary storage");
@@ -134,9 +134,9 @@ void run_ref_chunk(SequenceFile &db_file,
 	if (!config.swipe_all) {
 		timer.go("Building reference histograms");
 		if (query_seeds_hashed.get())
-			cfg.target->hst() = Partitioned_histogram(ref_seqs, true, query_seeds_hashed.get(), true);
+			cfg.target->hst() = Partitioned_histogram(ref_seqs, true, query_seeds_hashed.get(), true, nullptr);
 		else
-			cfg.target->hst() = Partitioned_histogram(ref_seqs, false, &no_filter, config.target_indexed);
+			cfg.target->hst() = Partitioned_histogram(ref_seqs, false, &no_filter, config.target_indexed, nullptr);
 
 		timer.go("Allocating buffers");
 		char *ref_buffer = SeedArray::alloc_buffer(cfg.target->hst());
@@ -216,6 +216,7 @@ void run_query_iteration(unsigned query_chunk,
 	auto& query_seqs = options.query->seqs();
 	auto& query_ids = options.query->ids();
 	auto& db_file = *options.db;
+	const vector<bool>* query_skip = query_iteration > 0 ? &query_aligned : nullptr;
 
 	if (config.algo == ::Config::Algo::AUTO &&
 		(!sensitivity_traits.at(config.sensitivity).support_query_indexed
@@ -224,7 +225,7 @@ void run_query_iteration(unsigned query_chunk,
 		config.algo = ::Config::Algo::DOUBLE_INDEXED;
 	if (config.algo == ::Config::Algo::AUTO || config.algo == ::Config::Algo::QUERY_INDEXED) {
 		timer.go("Building query seed set");
-		query_seeds_hashed.reset(new HashedSeedSet(query_seqs));
+		query_seeds_hashed.reset(new HashedSeedSet(query_seqs, query_skip));
 		if (config.algo == ::Config::Algo::AUTO && query_seeds_hashed->max_table_size() > MAX_HASH_SET_SIZE) {
 			config.algo = ::Config::Algo::DOUBLE_INDEXED;
 			query_seeds_hashed.reset();
@@ -233,13 +234,22 @@ void run_query_iteration(unsigned query_chunk,
 			config.algo = ::Config::Algo::QUERY_INDEXED;
 		timer.finish();
 	}
-	if (current_query_chunk == 0 && query_iteration == 0)
+
+	options.cutoff_gapped1 = { config.gapped_filter_evalue1 };
+	options.cutoff_gapped2 = { config.gapped_filter_evalue };
+	options.cutoff_gapped1_new = { config.gapped_filter_evalue1 };
+	options.cutoff_gapped2_new = { config.gapped_filter_evalue };
+
+	if (current_query_chunk == 0 && query_iteration == 0) {
 		message_stream << "Algorithm: " << (config.algo == ::Config::Algo::DOUBLE_INDEXED ? "Double-indexed" : "Query-indexed") << endl;
+		verbose_stream << "Seed frequency SD: " << config.freq_sd << endl;
+		verbose_stream << "Shape configuration: " << ::shapes << endl;
+	}	
 
 	char* query_buffer = nullptr;
 	if (!config.swipe_all && !config.target_indexed) {
 		timer.go("Building query histograms");
-		options.query->hst() = Partitioned_histogram(query_seqs, false, &no_filter, query_seeds_hashed.get());
+		options.query->hst() = Partitioned_histogram(query_seqs, false, &no_filter, query_seeds_hashed.get(), query_skip);
 
 		timer.go("Allocating buffers");
 		query_buffer = SeedArray::alloc_buffer(options.query->hst());
@@ -321,11 +331,7 @@ void run_query_chunk(unsigned query_chunk,
 	options.db_seqs = db_file.sequence_count();
 	options.db_letters = db_file.letters();
 	options.ref_blocks = db_file.total_blocks();
-	options.cutoff_gapped1 = { config.gapped_filter_evalue1 };
-	options.cutoff_gapped2 = { config.gapped_filter_evalue };
-	options.cutoff_gapped1_new = { config.gapped_filter_evalue1 };
-	options.cutoff_gapped2_new = { config.gapped_filter_evalue };
-
+	
 	if (config.global_ranking_targets) {
 		timer.go("Allocating global ranking table");
 		options.ranking_table.reset(new Search::Config::RankingTable(query_seqs.size() * config.global_ranking_targets));
@@ -341,12 +347,21 @@ void run_query_chunk(unsigned query_chunk,
 
 	log_rss();
 
-	for (unsigned query_iteration = 0; query_iteration < options.sensitivity.size(); ++query_iteration)
+	size_t aligned = 0;
+	for (unsigned query_iteration = 0; query_iteration < options.sensitivity.size(); ++query_iteration) {
+		setup_search(options.sensitivity[query_iteration]);
 		run_query_iteration(query_chunk, query_iteration, master_out, unaligned_file, aligned_file, tmp_file, options);
+		if (options.iterated()) {
+			aligned += options.iteration_query_aligned;
+			message_stream << "Aligned " << options.iteration_query_aligned << '/' << query_ids.size() << " queries in this iteration, "
+				<< aligned << '/' << query_ids.size() << " total." << endl;
+			options.iteration_query_aligned = 0;
+		}
+	}
 
 	log_rss();
 
-	if (blocked_processing || config.multiprocessing) {
+	if (blocked_processing || config.multiprocessing || options.iterated()) {
 		if(!config.global_ranking_targets) timer.go("Joining output blocks");
 
 		if (config.multiprocessing) {
@@ -474,8 +489,6 @@ void master_thread(task_timer &total_timer, Config &options)
 		P->init(config.parallel_tmpdir);
 		db_file->create_partition_balanced((size_t)(config.chunk_size*1e9));
 	}
-
-	setup_search();
 
 	task_timer timer("Opening the input file", true);
 	const Sequence_file_format *format_n = nullptr;

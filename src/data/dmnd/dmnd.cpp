@@ -132,10 +132,14 @@ void DatabaseFile::load_dict_entry(InputFile& f)
 
 void DatabaseFile::reserve_dict()
 {
+	dict_len_.clear();
 	dict_len_.reserve(next_dict_id_);
+	dict_title_.clear();
 	dict_title_.reserve(next_dict_id_, dict_alloc_size_);
-	if (flag_any(flags_, Flags::TARGET_SEQS))
+	if (flag_any(flags_, Flags::TARGET_SEQS)) {
+		dict_seq_.clear();
 		dict_seq_.reserve(next_dict_id_, 0);
+	}
 }
 
 void DatabaseFile::init(Flags flags)

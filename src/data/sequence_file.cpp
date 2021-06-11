@@ -259,6 +259,7 @@ void SequenceFile::load_dictionary()
 		TempFile* t = dynamic_cast<TempFile*>(dict_file_.get());
 		if (!t)
 			throw std::runtime_error("Failed to load dictionary file.");
+		dict_oid_.clear();
 		dict_oid_.reserve(next_dict_id_);
 		reserve_dict();
 		InputFile f(*t);
@@ -286,6 +287,7 @@ void SequenceFile::init_dict()
 	dict_file_.reset(new TempFile());
 	next_dict_id_ = 0;
 	dict_alloc_size_ = 0;
+	block_to_dict_id_.clear();
 }
 
 void SequenceFile::init_dict_block(size_t block, size_t seq_count, bool persist)

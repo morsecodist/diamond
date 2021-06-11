@@ -73,6 +73,8 @@ struct Config {
 	Util::Scores::CutoffTable cutoff_gapped1, cutoff_gapped2;
 	Util::Scores::CutoffTable2D cutoff_gapped1_new, cutoff_gapped2_new;
 
+	size_t                                     iteration_query_aligned;
+
 	bool iterated() const {
 		return sensitivity.size() > 1;
 	}

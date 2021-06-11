@@ -79,7 +79,7 @@ unique_ptr<Queue> Align_fetcher::queue_;
 Search::Hit* Align_fetcher::it_;
 Search::Hit* Align_fetcher::end_;
 
-TextBuffer* legacy_pipeline(Align_fetcher &hits, const Search::Config& cfg, Statistics &stat) {
+TextBuffer* legacy_pipeline(Align_fetcher &hits, Search::Config& cfg, Statistics &stat) {
 	if (hits.end == hits.begin) {
 		TextBuffer *buf = nullptr;
 		if (!blocked_processing && *output_format != Output_format::daa && config.report_unaligned != 0) {
@@ -106,6 +106,7 @@ TextBuffer* legacy_pipeline(Align_fetcher &hits, const Search::Config& cfg, Stat
 		if (aligned && cfg.track_aligned_queries) {
 			query_aligned_mtx.lock();
 			query_aligned[hits.query] = true;
+			++cfg.iteration_query_aligned;
 			query_aligned_mtx.unlock();
 		}
 	}
@@ -113,7 +114,7 @@ TextBuffer* legacy_pipeline(Align_fetcher &hits, const Search::Config& cfg, Stat
 	return buf;
 }
 
-void align_worker(size_t thread_id, const Search::Config* cfg)
+void align_worker(size_t thread_id, Search::Config* cfg)
 {
 	try {
 		Align_fetcher hits;
@@ -133,6 +134,7 @@ void align_worker(size_t thread_id, const Search::Config* cfg)
 			if (!matches.empty() && cfg->track_aligned_queries) {
 				std::lock_guard<std::mutex> lock(query_aligned_mtx);
 				query_aligned[hits.query] = true;
+				++cfg->iteration_query_aligned;
 			}
 			OutputSink::get().push(hits.query, buf);
 			if (hits.target_parallel)
@@ -149,7 +151,7 @@ void align_worker(size_t thread_id, const Search::Config* cfg)
 	}
 }
 
-void align_queries(Consumer* output_file, const Search::Config& cfg)
+void align_queries(Consumer* output_file, Search::Config& cfg)
 {
 	size_t max_size = std::min(size_t(config.chunk_size*1e9 * 10 * 2) / config.lowmem / 3, config.trace_pt_fetch_size);
 	if (config.memory_limit != 0.0)
@@ -162,7 +164,7 @@ void align_queries(Consumer* output_file, const Search::Config& cfg)
 
 	task_timer timer(nullptr, 3);
 
-	if (!blocked_processing)
+	if (!blocked_processing && !cfg.iterated())
 		cfg.db->init_random_access(false);
 	
 	cfg.seed_hit_buf->load(max_size);
@@ -209,6 +211,6 @@ void align_queries(Consumer* output_file, const Search::Config& cfg)
 	Extension::target_matrices.clear();
 	statistics.inc(Statistics::MATRIX_ADJUST_COUNT, Extension::target_matrix_count);
 
-	if (!blocked_processing)
+	if (!blocked_processing && !cfg.iterated())
 		cfg.db->end_random_access(false);
 }
