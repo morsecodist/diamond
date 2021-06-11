@@ -53,9 +53,9 @@ struct Config
 	int		padding;
 	unsigned	output_threads;
 	unsigned compression;
-	unsigned		lowmem;
+	unsigned		lowmem_;
 	double	chunk_size;
-	unsigned min_identities;
+	unsigned min_identities_;
 	unsigned min_identities2;
 	double ungapped_xdrop;
 	int		raw_ungapped_xdrop;
@@ -101,7 +101,7 @@ struct Config
 	double rank_ratio;
 	bool ht_mode;
 	bool old_freq;
-	double freq_sd;
+	double freq_sd_;
 	unsigned target_fetch_size;
 	bool mode_more_sensitive;
 	string matrix_file;
@@ -121,7 +121,7 @@ struct Config
 	bool no_self_hits;
 	unsigned id_left, id_right, id_n;
 	int bmatch, bmismatch, bcutoff;
-	unsigned query_bins;
+	unsigned query_bins_;
 	uint64_t n_ants;
 	double rho;
 	double p_best;
@@ -199,10 +199,10 @@ struct Config
 	int ungapped_window;
 	int gapped_filter_diag_score;
 	double gapped_filter_diag_bit_score;
-	double gapped_filter_evalue;
+	double gapped_filter_evalue_;
 	int gapped_filter_window;
 	bool output_hits;
-	double ungapped_evalue;
+	double ungapped_evalue_;
 	bool no_logfile;
 	bool no_heartbeat;
 	int band_bin;
@@ -256,7 +256,7 @@ struct Config
 	size_t deque_bucket_size;
 	bool mode_fast;
 	double log_evalue_scale;
-	double ungapped_evalue_short;
+	double ungapped_evalue_short_;
 	size_t max_swipe_dp;
 	std::string seqidlist;
 	bool skip_missing_seqids;
@@ -330,6 +330,8 @@ struct Config
 
   	template<typename _t>
 	static void set_option(_t& option, _t value, _t def = 0) { if (option == def) option = value; }
+	template<typename _t>
+	static void set_option(_t& option, _t value, _t def, _t alt) { if (value != def) option = value; else option = alt; }
 };
 
 void print_warnings();

@@ -47,7 +47,7 @@ vector<int> MultiStep::cluster(shared_ptr<SequenceFile>& db, const shared_ptr<Bi
 	config.query_cover = 80;
 	config.subject_cover = 80;
 	config.algo = Config::Algo::DOUBLE_INDEXED;
-	config.freq_sd = 0;
+	//config.freq_sd = 0;
 	config.max_alignments = numeric_limits<size_t>::max();
 
 	shared_ptr<Neighbors> nb(new Neighbors(db->sequence_count()));

@@ -83,7 +83,7 @@ void search_worker(atomic<unsigned> *seedp, const SeedPartitionRange *seedp_rang
 
 void search_shape(unsigned sid, unsigned query_block, unsigned query_iteration, char *query_buffer, char *ref_buffer, Search::Config& cfg, const HashedSeedSet* target_seeds)
 {
-	Partition<unsigned> p(Const::seedp, config.lowmem);
+	Partition<unsigned> p(Const::seedp, cfg.index_chunks);
 	DoubleArray<SeedArray::Entry::Value> query_seed_hits[Const::seedp], ref_seed_hits[Const::seedp];
 	log_rss();
 	SequenceSet& ref_seqs = cfg.target->seqs(), query_seqs = cfg.query->seqs();
@@ -95,8 +95,8 @@ void search_shape(unsigned sid, unsigned query_block, unsigned query_iteration, 
 			message_stream << ", query iteration " << query_iteration + 1;
 		message_stream << ", reference block " << (current_ref_block + 1) << "/" << cfg.ref_blocks
 			<< ", shape " << (sid + 1) << "/" << shapes.count();
-		if (config.lowmem > 1)
-			message_stream << ", index chunk " << chunk + 1 << "/" << config.lowmem;
+		if (cfg.index_chunks > 1)
+			message_stream << ", index chunk " << chunk + 1 << "/" << cfg.index_chunks;
 		message_stream << '.' << endl;
 		const SeedPartitionRange range(p.begin(chunk), p.end(chunk));
 		current_range = range;
@@ -135,8 +135,8 @@ void search_shape(unsigned sid, unsigned query_block, unsigned query_iteration, 
 		const vector<uint32_t> patterns = shapes.patterns(0, sid + 1);
 		context = new Search::Context{ {patterns.data(), patterns.data() + patterns.size() - 1 },
 			{patterns.data(), patterns.data() + patterns.size() },
-			config.ungapped_evalue,
-			config.ungapped_evalue_short,
+			cfg.ungapped_evalue,
+			cfg.ungapped_evalue_short,
 			score_matrix.rawscore(config.short_query_ungapped_bitscore)
 		};
 

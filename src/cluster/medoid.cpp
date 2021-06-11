@@ -66,7 +66,7 @@ size_t get_medoid(shared_ptr<SequenceFile>& db, const shared_ptr<BitVector> &fil
 	config.output_format = { "6", "qnum", "snum", "score" };
 	config.swipe_all = true;
 	config.max_evalue = 100.0;
-	config.freq_sd = 0;
+	//config.freq_sd = 0;
 	config.max_alignments = SIZE_MAX;
 	config.algo = Config::Algo::DOUBLE_INDEXED;
 	//config.ext = Config::swipe;

@@ -153,7 +153,7 @@ void align_worker(size_t thread_id, Search::Config* cfg)
 
 void align_queries(Consumer* output_file, Search::Config& cfg)
 {
-	size_t max_size = std::min(size_t(config.chunk_size*1e9 * 10 * 2) / config.lowmem / 3, config.trace_pt_fetch_size);
+	size_t max_size = std::min(size_t(config.chunk_size*1e9 * 10 * 2) / cfg.index_chunks / 3, config.trace_pt_fetch_size);
 	if (config.memory_limit != 0.0)
 		max_size = std::max(max_size, size_t(config.memory_limit * 1e9));
 	pair<size_t, size_t> query_range;

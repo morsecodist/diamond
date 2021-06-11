@@ -72,7 +72,7 @@ void print_warnings() {
 	if (config.sensitivity >= Sensitivity::SENSITIVE) {
 		if (ram >= 63) {
 			c = 1;
-			if(c < config.lowmem)
+			if(c < config.lowmem_)
 				msg << "use this parameter for better performance: -c1";
 		}
 	}
@@ -95,7 +95,7 @@ void print_warnings() {
 		else if (ram >= 31) {
 			b = 4;
 		}
-		if ((b > 2 && b > config.chunk_size) || c < config.lowmem) {
+		if ((b > 2 && b > config.chunk_size) || c < config.lowmem_) {
 			msg << "increase the block size for better performance using these parameters : -b" << b;
 			if (c != 4)
 				msg << " -c" << c;
@@ -282,7 +282,7 @@ Config::Config(int argc, const char **argv, bool check_io)
 		("ultra-sensitive", 0, "enable ultra sensitive mode (default: fast)", mode_ultra_sensitive)
 		("iterate", 0, "iterated search with multiple sensitivity modes", iterate)
 		("block-size", 'b', "sequence block size in billions of letters (default=2.0)", chunk_size)
-		("index-chunks", 'c', "number of chunks for index processing (default=4)", lowmem)
+		("index-chunks", 'c', "number of chunks for index processing (default=4)", lowmem_)
 		("tmpdir", 't', "directory for temporary files", tmpdir)
 		("parallel-tmpdir", 0, "directory for temporary files used by multiprocessing", parallel_tmpdir)
 		("gapopen", 0, "gap open penalty", gap_open, -1)
@@ -307,12 +307,12 @@ Config::Config(int argc, const char **argv, bool check_io)
 	Options_group advanced("Advanced options");
 	advanced.add()
 		("algo", 0, "Seed search algorithm (0=double-indexed/1=query-indexed)", algo_str)
-		("bin", 0, "number of query bins for seed search", query_bins)
+		("bin", 0, "number of query bins for seed search", query_bins_)
 		("min-orf", 'l', "ignore translated sequences without an open reading frame of at least this length", run_len)
-		("freq-sd", 0, "number of standard deviations for ignoring frequent seeds", freq_sd, 0.0)
-		("id2", 0, "minimum number of identities for stage 1 hit", min_identities)
+		("freq-sd", 0, "number of standard deviations for ignoring frequent seeds", freq_sd_, 0.0)
+		("id2", 0, "minimum number of identities for stage 1 hit", min_identities_)
 		("xdrop", 'x', "xdrop for ungapped alignment", ungapped_xdrop, 12.3)
-		("gapped-filter-evalue", 0, "E-value threshold for gapped filter (auto)", gapped_filter_evalue, -1.0)
+		("gapped-filter-evalue", 0, "E-value threshold for gapped filter (auto)", gapped_filter_evalue_, -1.0)
 		("band", 0, "band for dynamic programming computation", padding)
 		("shapes", 's', "number of seed shapes (default=all available)", shapes)
 		("shape-mask", 0, "seed shapes", shape_mask)
@@ -449,8 +449,8 @@ Config::Config(int argc, const char **argv, bool check_io)
 		("gapped-filter-diag-score", 0, "", gapped_filter_diag_bit_score, 12.0)
 		("gapped-filter-window", 0, "", gapped_filter_window, 200)
 		("output-hits", 0, "", output_hits)
-		("ungapped-evalue", 0, "", ungapped_evalue, -1.0)
-		("ungapped-evalue-short", 0, "", ungapped_evalue_short, -1.0)
+		("ungapped-evalue", 0, "", ungapped_evalue_, -1.0)
+		("ungapped-evalue-short", 0, "", ungapped_evalue_short_, -1.0)
 		("no-logfile", 0, "", no_logfile)
 		("no-heartbeat", 0, "", no_heartbeat)
 		("band-bin", 0, "", band_bin, 24)
@@ -759,7 +759,7 @@ Config::Config(int argc, const char **argv, bool check_io)
 	else if (query_file.size() > 1)
 		throw std::runtime_error("--query/-q has more than one argument.");
 
-	if (target_indexed && lowmem != 1)
+	if (target_indexed && lowmem_ != 1)
 		throw std::runtime_error("--target-indexed requires -c1.");
 
 	/*log_stream << "sizeof(hit)=" << sizeof(hit) << " sizeof(packed_uint40_t)=" << sizeof(packed_uint40_t)

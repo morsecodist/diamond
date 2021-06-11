@@ -30,9 +30,9 @@ using std::array;
 
 typedef vector<array<SeedArray::Entry*, Const::seedp>> PtrSet;
 
-char* SeedArray::alloc_buffer(const Partitioned_histogram &hst)
+char* SeedArray::alloc_buffer(const Partitioned_histogram &hst, size_t index_chunks)
 {
-	return new char[sizeof(Entry) * hst.max_chunk_size()];
+	return new char[sizeof(Entry) * hst.max_chunk_size(index_chunks)];
 }
 
 struct BufferedWriter

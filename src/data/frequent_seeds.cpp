@@ -98,7 +98,7 @@ void Frequent_seeds::build(unsigned sid, const SeedPartitionRange &range, Double
 		t.join();
 
 	Sd ref_sd(ref_sds), query_sd(query_sds);
-	const unsigned ref_max_n = (unsigned)(ref_sd.mean() + config.freq_sd*ref_sd.sd()), query_max_n = (unsigned)(query_sd.mean() + config.freq_sd*query_sd.sd());
+	const unsigned ref_max_n = (unsigned)(ref_sd.mean() + cfg.freq_sd*ref_sd.sd()), query_max_n = (unsigned)(query_sd.mean() + cfg.freq_sd*query_sd.sd());
 	log_stream << "Seed frequency mean (reference) = " << ref_sd.mean() << ", SD = " << ref_sd.sd() << endl;
 	log_stream << "Seed frequency mean (query) = " << query_sd.mean() << ", SD = " << query_sd.sd() << endl;
 	log_stream << "Seed frequency cap query: " << query_max_n << ", reference: " << ref_max_n << endl;

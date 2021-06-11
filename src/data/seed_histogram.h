@@ -109,7 +109,7 @@ struct Partitioned_histogram
 	const shape_histogram& get(unsigned sid) const
 	{ return data_[sid]; }
 
-	size_t max_chunk_size() const;
+	size_t max_chunk_size(size_t index_chunks) const;
 
 	const vector<size_t>& partition() const
 	{

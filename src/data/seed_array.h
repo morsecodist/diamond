@@ -122,7 +122,7 @@ struct SeedArray
 		}
 	}
 
-	static char *alloc_buffer(const Partitioned_histogram &hst);
+	static char *alloc_buffer(const Partitioned_histogram &hst, size_t index_chunks);
 
 	const size_t key_bits;
 

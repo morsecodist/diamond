@@ -96,7 +96,7 @@ vector<Target> extend(size_t query_id,
 
 	stat.inc(Statistics::MASKED_LAZY, lazy_masking(target_block_ids, *cfg.target));
 
-	if (config.gapped_filter_evalue > 0.0 && config.global_ranking_targets == 0 && (!align_mode.query_translated || query_seq[0].length() >= GAPPED_FILTER_MIN_QLEN)) {
+	if (cfg.gapped_filter_evalue > 0.0 && config.global_ranking_targets == 0 && (!align_mode.query_translated || query_seq[0].length() >= GAPPED_FILTER_MIN_QLEN)) {
 		timer.go("Computing gapped filter");
 		gapped_filter(query_seq, query_cb, seed_hits, target_block_ids, stat, flags, cfg);
 		if ((flags & DP::PARALLEL) == 0)

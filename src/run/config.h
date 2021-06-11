@@ -56,6 +56,13 @@ struct Config {
 	bool                                       self;
 	std::vector<Sensitivity>                   sensitivity;
 	bool                                       track_aligned_queries;
+	double                                     freq_sd;
+	unsigned                                   hamming_filter_id;
+	double                                     ungapped_evalue;
+	double                                     ungapped_evalue_short;
+	double                                     gapped_filter_evalue;
+	unsigned                                   index_chunks;
+	unsigned                                   query_bins;
 
 	std::shared_ptr<SequenceFile>              db;
 	std::shared_ptr<std::list<TextInputFile>>  query_file;

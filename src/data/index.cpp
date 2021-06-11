@@ -13,7 +13,7 @@ void makeindex() {
 	if (db.ref_header.letters > MAX_LETTERS)
 		throw std::runtime_error("Indexing is only supported for databases of < 100000000 letters.");
 
-	setup_search(config.sensitivity);
+	::shapes = ShapeConfig(config.shape_mask.empty() ? shape_codes.at(config.sensitivity) : config.shape_mask, config.shapes);
 	config.algo = Config::Algo::DOUBLE_INDEXED;
 
 	Block* block = db.load_seqs(MAX_LETTERS, false);

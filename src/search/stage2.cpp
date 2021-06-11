@@ -90,6 +90,8 @@ static void search_query_offset(const SeedArray::Entry::Value& q,
 	const Sequence query_clipped = Util::Seq::clip(query - window, window * 2, window);
 	const int window_left = int(query - query_clipped.data()), window_clipped = (int)query_clipped.length();
 	const unsigned sid = work_set.shape_id;
+	const bool chunked = work_set.cfg.index_chunks > 1;
+	const unsigned hamming_filter_id = work_set.cfg.hamming_filter_id;
 	size_t n = 0;
 
 	const int interval_mod = config.left_most_interval > 0 ? seed_offset % config.left_most_interval : window_left, interval_overhang = std::max(window_left - interval_mod, 0);
@@ -109,7 +111,7 @@ static void search_query_offset(const SeedArray::Entry::Value& q,
 					continue;
 #endif
 				work_set.stats.inc(Statistics::TENTATIVE_MATCHES2);
-				if (left_most_filter(query_clipped + interval_overhang, subjects[j] + interval_overhang, window_left - interval_overhang, shapes[sid].length_, work_set.context, sid == 0, sid, score_cutoff)) {
+				if (left_most_filter(query_clipped + interval_overhang, subjects[j] + interval_overhang, window_left - interval_overhang, shapes[sid].length_, work_set.context, sid == 0, sid, score_cutoff, chunked, hamming_filter_id)) {
 					work_set.stats.inc(Statistics::TENTATIVE_MATCHES3);
 #ifdef KEEP_TARGET_ID
 					if(config.global_ranking_targets)
@@ -146,12 +148,12 @@ static void FLATTEN search_tile(
 
 typedef vector<FingerPrint, Util::Memory::AlignmentAllocator<FingerPrint, 16>> Container;
 
-static void all_vs_all(const FingerPrint* a, uint32_t na, const FingerPrint* b, uint32_t nb, FlatArray<uint32_t>& out) {
+static void all_vs_all(const FingerPrint* a, uint32_t na, const FingerPrint* b, uint32_t nb, FlatArray<uint32_t>& out, unsigned hamming_filter_id) {
 	for (uint32_t i = 0; i < na; ++i) {
 		const FingerPrint e = a[i];
 		out.next();
 		for (uint32_t j = 0; j < nb; ++j)
-			if (e == b[j])
+			if (e.match(b[j]) >= hamming_filter_id)
 				out.push_back(j);
 	}
 }
@@ -180,7 +182,7 @@ void FLATTEN stage1(const SeedArray::Entry::Value* q, size_t nq, const SeedArray
 	for (size_t i = 0; i < vq.size(); i += tile_size) {
 		for (size_t j = 0; j < vs.size(); j += tile_size) {
 			work_set.hits.clear();
-			all_vs_all(vq.data() + i, (uint32_t)std::min(tile_size, vq.size() - i), vs.data() + j, (uint32_t)std::min(tile_size, vs.size() - j), work_set.hits);
+			all_vs_all(vq.data() + i, (uint32_t)std::min(tile_size, vq.size() - i), vs.data() + j, (uint32_t)std::min(tile_size, vs.size() - j), work_set.hits, work_set.cfg.hamming_filter_id);
 			search_tile(work_set.hits, i, j, q, s, work_set);
 		}
 	}

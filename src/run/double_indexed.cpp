@@ -128,7 +128,7 @@ void run_ref_chunk(SequenceFile &db_file,
 	else
 		cfg.seed_hit_buf.reset(new AsyncBuffer<Search::Hit>(query_seqs.size() / align_mode.query_contexts,
 			config.tmpdir,
-			config.query_bins,
+			cfg.query_bins,
 			{ cfg.target->long_offsets(), align_mode.query_contexts }));
 
 	if (!config.swipe_all) {
@@ -139,7 +139,7 @@ void run_ref_chunk(SequenceFile &db_file,
 			cfg.target->hst() = Partitioned_histogram(ref_seqs, false, &no_filter, config.target_indexed, nullptr);
 
 		timer.go("Allocating buffers");
-		char *ref_buffer = SeedArray::alloc_buffer(cfg.target->hst());
+		char *ref_buffer = SeedArray::alloc_buffer(cfg.target->hst(), cfg.index_chunks);
 		timer.finish();
 
 		HashedSeedSet* target_seeds = nullptr;
@@ -236,13 +236,13 @@ void run_query_iteration(unsigned query_chunk,
 	}
 
 	options.cutoff_gapped1 = { config.gapped_filter_evalue1 };
-	options.cutoff_gapped2 = { config.gapped_filter_evalue };
+	options.cutoff_gapped2 = { options.gapped_filter_evalue };
 	options.cutoff_gapped1_new = { config.gapped_filter_evalue1 };
-	options.cutoff_gapped2_new = { config.gapped_filter_evalue };
+	options.cutoff_gapped2_new = { options.gapped_filter_evalue };
 
 	if (current_query_chunk == 0 && query_iteration == 0) {
 		message_stream << "Algorithm: " << (config.algo == ::Config::Algo::DOUBLE_INDEXED ? "Double-indexed" : "Query-indexed") << endl;
-		verbose_stream << "Seed frequency SD: " << config.freq_sd << endl;
+		verbose_stream << "Seed frequency SD: " << options.freq_sd << endl;
 		verbose_stream << "Shape configuration: " << ::shapes << endl;
 	}	
 
@@ -252,7 +252,7 @@ void run_query_iteration(unsigned query_chunk,
 		options.query->hst() = Partitioned_histogram(query_seqs, false, &no_filter, query_seeds_hashed.get(), query_skip);
 
 		timer.go("Allocating buffers");
-		query_buffer = SeedArray::alloc_buffer(options.query->hst());
+		query_buffer = SeedArray::alloc_buffer(options.query->hst(), options.index_chunks);
 		timer.finish();
 	}
 
@@ -349,7 +349,7 @@ void run_query_chunk(unsigned query_chunk,
 
 	size_t aligned = 0;
 	for (unsigned query_iteration = 0; query_iteration < options.sensitivity.size(); ++query_iteration) {
-		setup_search(options.sensitivity[query_iteration]);
+		setup_search(options.sensitivity[query_iteration], options);
 		run_query_iteration(query_chunk, query_iteration, master_out, unaligned_file, aligned_file, tmp_file, options);
 		if (options.iterated()) {
 			aligned += options.iteration_query_aligned;
@@ -612,7 +612,7 @@ void master_thread(task_timer &total_timer, Config &options)
 	log_rss();
 	message_stream << "Total time = " << total_timer.get() << "s" << endl;
 	statistics.print();
-	print_warnings();
+	//print_warnings();
 }
 
 void run(const shared_ptr<SequenceFile>& db, const shared_ptr<std::list<TextInputFile>>& query, const shared_ptr<Consumer>& out, const shared_ptr<BitVector>& db_filter)
