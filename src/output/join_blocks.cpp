@@ -120,37 +120,37 @@ struct JoinWriter
 	Consumer &f_;
 };
 
-struct Join_record
+struct JoinRecord
 {
 
-	static bool cmp_evalue(const Join_record& lhs, const Join_record &rhs)
+	static bool cmp_evalue(const JoinRecord& lhs, const JoinRecord &rhs)
 	{
 		return rhs.same_subject_ || (!rhs.same_subject_ && (lhs.info_.evalue > rhs.info_.evalue || (lhs.info_.evalue == rhs.info_.evalue && cmp_score(lhs, rhs))));
 	}
 
-	static bool cmp_score(const Join_record& lhs, const Join_record& rhs)
+	static bool cmp_score(const JoinRecord& lhs, const JoinRecord& rhs)
 	{
 		return rhs.same_subject_ || (!rhs.same_subject_ && (lhs.info_.score < rhs.info_.score || (lhs.info_.score == rhs.info_.score && rhs.db_precedence(lhs))));
 	}
 
-	bool db_precedence(const Join_record &rhs) const
+	bool db_precedence(const JoinRecord &rhs) const
 	{
-		return target_oid < rhs.target_oid;
+		return info_.target_oid < rhs.info_.target_oid;
 	}
 
-	Join_record(unsigned ref_block, unsigned subject, BinaryBuffer::Iterator &it, const SequenceFile& db):
+	JoinRecord(unsigned ref_block, unsigned subject, BinaryBuffer::Iterator &it, const SequenceFile& db):
 		block_(ref_block)
 	{
 		info_.read(it);
 		same_subject_ = info_.target_dict_id == subject;
 		if (*output_format != Output_format::daa)
-			target_oid = db.oid(info_.target_dict_id);
+			info_.target_oid = db.oid(info_.target_dict_id);
 	}
 
-	static bool push_next(unsigned block, unsigned subject, BinaryBuffer::Iterator &it, vector<Join_record> &v, const SequenceFile& db)
+	static bool push_next(unsigned block, unsigned subject, BinaryBuffer::Iterator &it, vector<JoinRecord> &v, const SequenceFile& db)
 	{
 		if (it.good()) {
-			v.push_back(Join_record(block, subject, it, db));
+			v.push_back(JoinRecord(block, subject, it, db));
 			return true;
 		}
 		else
@@ -158,7 +158,6 @@ struct Join_record
 	}
 
 	unsigned block_;
-	size_t target_oid;
 	bool same_subject_;
 	IntermediateRecord info_;
 
@@ -170,34 +169,34 @@ struct BlockJoiner
 	{
 		for (size_t i = 0; i < buf.size(); ++i) {
 			it.push_back(buf[i].begin());
-			Join_record::push_next(i, std::numeric_limits<unsigned>::max(), it.back(), records, db);
+			JoinRecord::push_next(i, std::numeric_limits<unsigned>::max(), it.back(), records, db);
 		}
-		std::make_heap(records.begin(), records.end(), (config.toppercent == 100.0 && config.global_ranking_targets == 0) ? Join_record::cmp_evalue : Join_record::cmp_score);
+		std::make_heap(records.begin(), records.end(), (config.toppercent == 100.0 && config.global_ranking_targets == 0) ? JoinRecord::cmp_evalue : JoinRecord::cmp_score);
 	}
 	bool get(vector<IntermediateRecord> &target_hsp, unsigned & block_idx, size_t& target_oid, const SequenceFile& db)
 	{
 		if (records.empty())
 			return false;
-		const Join_record &first = records.front();
+		const JoinRecord &first = records.front();
 		const unsigned block = first.block_;
 		block_idx = block;
-		target_oid = first.target_oid;
+		target_oid = first.info_.target_oid;
 		const unsigned subject = first.info_.target_dict_id;
 		target_hsp.clear();
-		const auto pred = (config.toppercent == 100.0 && config.global_ranking_targets == 0) ? Join_record::cmp_evalue : Join_record::cmp_score;
+		const auto pred = (config.toppercent == 100.0 && config.global_ranking_targets == 0) ? JoinRecord::cmp_evalue : JoinRecord::cmp_score;
 		do {
-			const Join_record &next = records.front();
+			const JoinRecord &next = records.front();
 			if (next.block_ != block || next.info_.target_dict_id != subject)
 				return true;
 			target_hsp.push_back(next.info_);
 			std::pop_heap(records.begin(), records.end(), pred);
 			records.pop_back();
-			if (Join_record::push_next(block, subject, it[block], records, db))
+			if (JoinRecord::push_next(block, subject, it[block], records, db))
 				std::push_heap(records.begin(), records.end(), pred);
 		} while (!records.empty());
 		return true;
 	}
-	vector<Join_record> records;
+	vector<JoinRecord> records;
 	vector<BinaryBuffer::Iterator> it;
 };
 

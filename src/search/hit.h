@@ -51,6 +51,9 @@ struct Hit
 		seed_offset_(seed_offset),
 		score_(score)
 	{ }
+	bool operator==(const Hit& h) const {
+		return query_ == h.query_ && subject_ == h.subject_ && seed_offset_ == h.seed_offset_ && score_ == h.score_;
+	}
 	bool operator<(const Hit& rhs) const
 	{
 		return query_ < rhs.query_;
@@ -151,24 +154,27 @@ template<> struct SerializerTraits<Search::Hit> {
 		}
 		const uint32_t query_contexts;
 	} key;
+	static Search::Hit make_sentry(uint32_t query, uint32_t seed_offset) {
+		return { query, 0, seed_offset,0 };
+	}
+	static bool is_sentry(const Search::Hit& hit) {
+		return hit.score_ == 0;
+	}
 };
 
 template<> struct TypeSerializer<Search::Hit> {
 
 	TypeSerializer(TextBuffer& buf, const SerializerTraits<Search::Hit>& traits):
 		traits(traits),
-		buf_(&buf),
-		current_query_(UINT32_MAX),
-		current_seed_offset_(UINT32_MAX)
+		buf_(&buf)
 	{}
 
 	TypeSerializer& operator<<(const Search::Hit& hit) {
-		if (current_query_ != hit.query_ || current_seed_offset_ != hit.seed_offset_) {
+		if (SerializerTraits<Search::Hit>::is_sentry(hit)) {
 			buf_->write((uint16_t)0);
 			buf_->write_varint(hit.query_);
 			buf_->write_varint(hit.seed_offset_);
-			current_query_ = hit.query_;
-			current_seed_offset_ = hit.seed_offset_;
+			return *this;
 		}
 		buf_->write((uint16_t)hit.score_);
 		if (traits.long_subject_offsets)
@@ -183,7 +189,6 @@ template<> struct TypeSerializer<Search::Hit> {
 private:
 
 	TextBuffer* buf_;
-	uint32_t current_query_, current_seed_offset_;
 
 };
 

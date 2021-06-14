@@ -63,7 +63,7 @@ TextBuffer* generate_output(vector<Match> &targets, size_t query_block_id, Stati
 			if (*f == Output_format::daa)
 				write_daa_record(*out, hsp, cfg.target->dict_id(current_ref_block, subject_id, *cfg.db));
 			else if(cfg.iterated())
-				IntermediateRecord::write(*out, hsp, query_block_id, cfg.target->dict_id(current_ref_block, subject_id, *cfg.db));
+				IntermediateRecord::write(*out, hsp, query_block_id, cfg.target->dict_id(current_ref_block, subject_id, *cfg.db), database_id);
 			else
 				f->print_match(HspContext(hsp,
 					query_block_id,
@@ -115,7 +115,7 @@ TextBuffer* generate_intermediate_output(const vector<Match> &targets, size_t qu
 		const size_t dict_id = target.dict_id(current_ref_block, block_id, *cfg.db);
 
 		for (const Hsp &hsp : targets[i].hsp)
-			IntermediateRecord::write(*out, hsp, query_block_id, dict_id);
+			IntermediateRecord::write(*out, hsp, query_block_id, dict_id, target.block_id2oid(block_id));
 		/*if (config.global_ranking_targets > 0)
 			IntermediateRecord::write(*out, subject_id, targets[i].ungapped_score, cfg);*/
 	}

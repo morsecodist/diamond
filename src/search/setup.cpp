@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../basic/config.h"
 #include "seed_complexity.h"
 #include "search.h"
+#include "hit.h"
 
 using std::endl;
 using std::map;

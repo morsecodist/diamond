@@ -92,7 +92,7 @@ static void search_query_offset(const SeedArray::Entry::Value& q,
 	const unsigned sid = work_set.shape_id;
 	const bool chunked = work_set.cfg.index_chunks > 1;
 	const unsigned hamming_filter_id = work_set.cfg.hamming_filter_id;
-	size_t n = 0;
+	size_t n = 0, hit_count = 0;
 
 	const int interval_mod = config.left_most_interval > 0 ? seed_offset % config.left_most_interval : window_left, interval_overhang = std::max(window_left - interval_mod, 0);
 
@@ -113,6 +113,8 @@ static void search_query_offset(const SeedArray::Entry::Value& q,
 				work_set.stats.inc(Statistics::TENTATIVE_MATCHES2);
 				if (left_most_filter(query_clipped + interval_overhang, subjects[j] + interval_overhang, window_left - interval_overhang, shapes[sid].length_, work_set.context, sid == 0, sid, score_cutoff, chunked, hamming_filter_id)) {
 					work_set.stats.inc(Statistics::TENTATIVE_MATCHES3);
+					if (hit_count++ == 0)
+						*work_set.out = SerializerTraits<Hit>::make_sentry(query_id, seed_offset);
 #ifdef KEEP_TARGET_ID
 					if(config.global_ranking_targets)
 						*work_set.out = { query_id, (uint64_t)s[*(i + j)].block_id, seed_offset, (uint16_t)scores[j] };

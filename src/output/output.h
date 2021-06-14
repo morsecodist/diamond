@@ -73,11 +73,11 @@ struct IntermediateRecord
 	interval absolute_query_range() const;
 	static size_t write_query_intro(TextBuffer& buf, unsigned query_id);
 	static void finish_query(TextBuffer& buf, size_t seek_pos);
-	static void write(TextBuffer& buf, const Hsp& match, unsigned query_id, size_t target_dict_id);
+	static void write(TextBuffer& buf, const Hsp& match, unsigned query_id, size_t target_dict_id, size_t target_oid);
 	static void write(TextBuffer& buf, uint32_t target_block_id, int score, const Search::Config& cfg);
 	static void finish_file(Consumer& f);
 	static const uint32_t FINISHED = UINT32_MAX;
-	uint32_t score, query_id, target_dict_id, query_begin, subject_begin, query_end, subject_end, identities, mismatches, positives, gap_openings, gaps;
+	uint32_t score, query_id, target_dict_id, target_oid, query_begin, subject_begin, query_end, subject_end, identities, mismatches, positives, gap_openings, gaps;
 	double evalue;
 	uint8_t flag;
 	Packed_transcript transcript;

@@ -42,6 +42,8 @@ void IntermediateRecord::read(BinaryBuffer::Iterator& f)
 		score = s;
 		return;
 	}
+	if (*output_format == Output_format::daa)
+		f.read(target_oid);
 	f.read(flag);
 	f.read_packed(flag & 3, score);
 	f.read(evalue);
@@ -85,10 +87,12 @@ void IntermediateRecord::finish_query(TextBuffer& buf, size_t seek_pos)
 	*(uint32_t*)(&buf[seek_pos + sizeof(uint32_t)]) = safe_cast<uint32_t>(buf.size() - seek_pos - sizeof(uint32_t) * 2);
 }
 
-void IntermediateRecord::write(TextBuffer& buf, const Hsp& match, unsigned query_id, size_t target_dict_id)
+void IntermediateRecord::write(TextBuffer& buf, const Hsp& match, unsigned query_id, size_t target_dict_id, size_t target_oid)
 {
 	const interval oriented_range(match.oriented_range());
 	buf.write((uint32_t)target_dict_id);
+	if (*output_format == Output_format::daa)
+		buf.write((uint32_t)target_oid);
 	buf.write(get_segment_flag(match));
 	buf.write_packed(match.score);
 	buf.write(match.evalue);

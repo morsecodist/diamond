@@ -243,7 +243,7 @@ bool QueryMapper::generate_output(TextBuffer &buffer, Statistics &stat)
 			if (blocked_processing) {
 				if (n_hsp == 0)
 					seek_pos = IntermediateRecord::write_query_intro(buffer, query_id);
-				IntermediateRecord::write(buffer, *j, query_id, dict_id);
+				IntermediateRecord::write(buffer, *j, query_id, dict_id, database_id);
 			}
 			else {
 				if (n_hsp == 0) {

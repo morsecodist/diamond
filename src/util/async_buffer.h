@@ -90,11 +90,14 @@ struct AsyncBuffer
 		virtual Iterator& operator=(const T& x) override
 		{
 			const unsigned bin = ser_.front().traits.key(x) / parent_.bin_size_;
+			if (SerializerTraits<T>::is_sentry(x)) {
+				if (buffer_[bin].size() >= buffer_size)
+					flush(bin);
+			}
+			else
+				++count_[bin];
 			assert(bin < parent_.bins());
 			ser_[bin] << x;
-			++count_[bin];
-			if (buffer_[bin].size() >= buffer_size)
-				flush(bin);
 			return *this;
 		}
 		void flush(unsigned bin)
