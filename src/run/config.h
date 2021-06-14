@@ -72,6 +72,7 @@ struct Config {
 	std::vector<std::string>*                  taxonomy_scientific_names;
 
 	std::unique_ptr<Block>                     query, target;
+	std::unique_ptr<std::vector<bool>>         query_skip;
 	std::unique_ptr<AsyncBuffer<Hit>>          seed_hit_buf;
 	std::unique_ptr<RankingBuffer>             global_ranking_buffer;
 	std::unique_ptr<RankingTable>              ranking_table;

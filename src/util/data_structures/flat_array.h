@@ -38,7 +38,7 @@ struct FlatArray {
 
 	void push_back(ConstIterator begin, ConstIterator end) {
 		data_.insert(data_.end(), begin, end);
-		limits_.push_back(limits_.back() + end - begin);
+		limits_.push_back(limits_.back() + (end - begin));
 	}
 
 	void next() {

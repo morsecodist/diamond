@@ -91,8 +91,8 @@ string get_ref_block_tmpfile_name(size_t query, size_t block) {
 }
 
 void run_ref_chunk(SequenceFile &db_file,
-	unsigned query_chunk,
-	unsigned query_iteration,
+	const unsigned query_chunk,
+	const unsigned query_iteration,
 	char *query_buffer,
 	Consumer &master_out,
 	PtrVector<TempFile> &tmp_file,
@@ -120,7 +120,7 @@ void run_ref_chunk(SequenceFile &db_file,
 		if (current_ref_block == 0 && (!daa || query_chunk == 0) && query_iteration == 0)
 			db_file.init_dict();
 		db_file.init_dict_block(current_ref_block, ref_seqs.size(), daa || cfg.iterated());
-	}	
+	}
 
 	timer.go("Initializing temporary storage");
 	if (config.global_ranking_targets)
@@ -203,8 +203,8 @@ void run_ref_chunk(SequenceFile &db_file,
 	timer.finish();
 }
 
-void run_query_iteration(unsigned query_chunk,
-	unsigned query_iteration,
+void run_query_iteration(const unsigned query_chunk,
+	const unsigned query_iteration,
 	Consumer& master_out,
 	OutputFile* unaligned_file,
 	OutputFile* aligned_file,
@@ -216,7 +216,8 @@ void run_query_iteration(unsigned query_chunk,
 	auto& query_seqs = options.query->seqs();
 	auto& query_ids = options.query->ids();
 	auto& db_file = *options.db;
-	const vector<bool>* query_skip = query_iteration > 0 ? &query_aligned : nullptr;
+	if (query_iteration > 0)
+		options.query_skip = std::make_unique<vector<bool>>(query_aligned);
 
 	if (config.algo == ::Config::Algo::AUTO &&
 		(!sensitivity_traits.at(config.sensitivity).support_query_indexed
@@ -225,7 +226,7 @@ void run_query_iteration(unsigned query_chunk,
 		config.algo = ::Config::Algo::DOUBLE_INDEXED;
 	if (config.algo == ::Config::Algo::AUTO || config.algo == ::Config::Algo::QUERY_INDEXED) {
 		timer.go("Building query seed set");
-		query_seeds_hashed.reset(new HashedSeedSet(query_seqs, query_skip));
+		query_seeds_hashed.reset(new HashedSeedSet(query_seqs, options.query_skip.get()));
 		if (config.algo == ::Config::Algo::AUTO && query_seeds_hashed->max_table_size() > MAX_HASH_SET_SIZE) {
 			config.algo = ::Config::Algo::DOUBLE_INDEXED;
 			query_seeds_hashed.reset();
@@ -249,7 +250,7 @@ void run_query_iteration(unsigned query_chunk,
 	char* query_buffer = nullptr;
 	if (!config.swipe_all && !config.target_indexed) {
 		timer.go("Building query histograms");
-		options.query->hst() = Partitioned_histogram(query_seqs, false, &no_filter, query_seeds_hashed.get(), query_skip);
+		options.query->hst() = Partitioned_histogram(query_seqs, false, &no_filter, query_seeds_hashed.get(), options.query_skip.get());
 
 		timer.go("Allocating buffers");
 		query_buffer = SeedArray::alloc_buffer(options.query->hst(), options.index_chunks);
@@ -316,7 +317,7 @@ void run_query_iteration(unsigned query_chunk,
 	delete Extension::memory;
 }
 
-void run_query_chunk(unsigned query_chunk,
+void run_query_chunk(const unsigned query_chunk,
 	Consumer &master_out,
 	OutputFile *unaligned_file,
 	OutputFile *aligned_file,

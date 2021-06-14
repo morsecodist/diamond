@@ -111,11 +111,10 @@ void search_shape(unsigned sid, unsigned query_block, unsigned query_iteration, 
 
 		timer.go("Building query seed array");
 		SeedArray* query_idx;
-		const vector<bool>* skip = query_iteration > 0 ? &query_aligned : nullptr;
 		if (target_seeds)
-			query_idx = new SeedArray(query_seqs, sid, range, target_seeds, true, skip);
+			query_idx = new SeedArray(query_seqs, sid, range, target_seeds, true, nullptr);
 		else
-			query_idx = new SeedArray(query_seqs, sid, query_hst.get(sid), range, query_hst.partition(), query_buffer, &no_filter, query_seeds_hashed.get(), skip);
+			query_idx = new SeedArray(query_seqs, sid, query_hst.get(sid), range, query_hst.partition(), query_buffer, &no_filter, query_seeds_hashed.get(), cfg.query_skip.get());
 		timer.finish();
 
 		log_stream << "Indexed query seeds = " << query_idx->size() << '/' << query_seqs.letters() << ", reference seeds = " << ref_idx->size() << '/' << ref_seqs.letters() << endl;

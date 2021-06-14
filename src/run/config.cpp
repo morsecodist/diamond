@@ -26,6 +26,8 @@ Config::Config() :
 	if (!config.iterate.empty()) {
 		if (config.multiprocessing)
 			throw std::runtime_error("Iterated search is not compatible with --multiprocessing.");
+		if(config.target_indexed)
+			throw std::runtime_error("Iterated search is not compatible with --target-indexed.");
 		for (const string& s : config.iterate)
 			sensitivity.push_back(from_string<Sensitivity>(s));
 		message_stream << "Running iterated search mode with sensitivity steps:";
