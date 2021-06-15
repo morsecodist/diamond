@@ -67,7 +67,7 @@ static void load_seq_data(CBioseq& bioseq, CBioseq_Handle bioseq_handle, _it it)
 	}
 }
 
-string best_id(const list<CRef<CSeq_id>>& ids) {
+list<CRef<CSeq_id>>::const_iterator best_id(const list<CRef<CSeq_id>>& ids) {
 	if (ids.empty())
 		throw std::runtime_error("Unable to retrieve sequence id from BLAST database.");
 	auto min = ids.cbegin(), it = min;
@@ -80,7 +80,7 @@ string best_id(const list<CRef<CSeq_id>>& ids) {
 		}
 		++it;
 	}
-	return (*min)->GetSeqIdString();
+	return min;
 }
 
 BlastDB::BlastDB(const std::string& file_name, Metadata metadata, Flags flags) :
@@ -96,7 +96,7 @@ BlastDB::BlastDB(const std::string& file_name, Metadata metadata, Flags flags) :
 	vector<string> paths;
 	CSeqDB::FindVolumePaths(file_name, CSeqDB::eProtein, paths);
 	for (const string& db : paths)
-		if(!exists(db + ".acc"))
+		if(!exists(db + ".acc")
 			throw std::runtime_error("Accession file not found. BLAST databases require preprocessing using this command line: diamond prepdp -d DATABASE_FILE");
 }
 
@@ -139,7 +139,7 @@ size_t BlastDB::id_len(const SeqInfo& seq_info, const SeqInfo& seq_info_next)
 	if(flag_any(flags_, Flags::FULL_TITLES))
 		return full_id(*db_->GetBioseq(seq_info.pos), nullptr, long_seqids_, true).length();
 	else {
-		return best_id(db_->GetSeqIDs(seq_info.pos)).length();
+		return (*best_id(db_->GetSeqIDs(seq_info.pos)))->GetSeqIdString().length();
 	}
 }
 
@@ -368,7 +368,7 @@ size_t BlastDB::seq_length(size_t oid) const
 	return db_->GetSeqLength(oid);
 }
 
-const char* BlastDB::ACCESSION_FIELD = "accession*";
+const char* BlastDB::ACCESSION_FIELD = "#accession*";
 
 void BlastDB::init_random_access(bool dictionary)
 {
@@ -461,10 +461,14 @@ void prep_blast_db() {
 		for (int i = 0; i < n; ++i) {
 			list<CRef<CSeq_id>> ids = volume.GetSeqIDs(i);
 			if (!ids.empty()) {
+				auto best = best_id(ids);				
+				out << (*best)->GetSeqIdString();
 				auto it = ids.cbegin();
-				out << (*it)->GetSeqIdString();
-				while (++it != ids.cend())
-					out << '\t' << (*it)->GetSeqIdString();
+				while (it != ids.cend()) {
+					if (it != best)
+						out << '\t' << (*it)->GetSeqIdString();
+					++it;
+				}
 				id_count += ids.size();
 			}
 			out << endl;
