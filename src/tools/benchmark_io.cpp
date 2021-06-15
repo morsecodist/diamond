@@ -26,7 +26,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../util/log_stream.h"
 #include "../data/reference.h"
 #include "../util/io/input_stream_buffer.h"
+#ifdef WITH_BLASTDB
 #include "../data/blastdb/blastdb.h"
+#endif
 #include "../util/data_structures/deque.h"
 #define _REENTRANT
 #include "../lib/ips4o/ips4o.hpp"
@@ -174,6 +176,7 @@ static void load_mmap_mt() {
 	message_stream << "Throughput: " << (double)db->letters() / (1 << 20) / timer.milliseconds() * 1000 << " MB/s" << endl;
 }
 
+#ifdef WITH_BLASTDB
 void load_blast_seqid() {
 	const size_t N = 100000;
 	task_timer timer("Opening the database");
@@ -212,6 +215,8 @@ void load_blast_seqid_lin() {
 	message_stream << n << endl;
 }
 
+#endif
+
 static void sort() {
 	typedef uint64_t T;
 	typedef Deque<T, 28> Container;
@@ -239,10 +244,12 @@ void benchmark_io() {
 		load_mmap();
 	else if (config.type == "mmap_mt")
 		load_mmap_mt();
+#ifdef WITH_BLASTDB
 	else if (config.type == "blast_seqid")
 		load_blast_seqid();
 	else if (config.type == "blast_seqid_lin")
 		load_blast_seqid_lin();
+#endif
 	else if (config.type == "ips4o")
 		sort();
 }

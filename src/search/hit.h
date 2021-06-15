@@ -33,11 +33,12 @@ namespace Search {
 
 struct Hit
 {
-	typedef uint32_t SeedOffset;
+	using Key = uint32_t;
+	using SeedOffset = uint32_t;
 
 	uint32_t query_;
 	PackedLoc subject_;
-	SeedOffset	seed_offset_;
+	SeedOffset seed_offset_;
 	uint16_t score_;
 
 	Hit() :

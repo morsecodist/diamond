@@ -143,7 +143,9 @@ Config::Config(int argc, const char **argv, bool check_io)
 		.add_command("makeidx", "Make database index", makeidx)
 		.add_command("roc", "", roc)
 		.add_command("benchmark", "", benchmark)
+#ifdef WITH_BLASTDB
 		.add_command("prepdb", "", prep_blast_db)
+#endif
 #ifdef EXTRA
 		.add_command("random-seqs", "", random_seqs)
 		.add_command("sort", "", sort)

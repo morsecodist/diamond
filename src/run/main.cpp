@@ -184,9 +184,11 @@ int main(int ac, const char* av[])
 		case Config::find_shapes:
 			find_shapes();
 			break;
+#ifdef WITH_BLASTDB
 		case Config::prep_blast_db:
 			prep_blast_db();
 			break;
+#endif
 		case Config::composition:
 			composition();
 			break;
