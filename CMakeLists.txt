@@ -340,7 +340,7 @@ if(EIGEN_BLAS)
   target_link_libraries(diamond "${LAPACKE_LIBRARIES_DEP}")
 endif()
 
-if(WITH_ZSTD)
+if(WITH_ZSTD OR BLAST_INCLUDE_DIR)
   find_path(${ZSTD_INCLUDE_DIR} NAMES zstd.h PATHS ${ZSTD_INCLUDE_DIR})
   if(ZSTD_INCLUDE_DIR STREQUAL "ZSTD_INCLUDE_DIR-NOTFOUND")
     message(FATAL_ERROR "Unable to find ZSTD library")
