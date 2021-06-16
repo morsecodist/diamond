@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../util/util.h"
 #include "../util/algo/partition.h"
 #include "../util/sequence/sequence.h"
+#include "../util/parallel/multiprocessing.h"
 #ifdef WITH_BLASTDB
 #include "blastdb/blastdb.h"
 #endif
@@ -38,6 +39,11 @@ using std::endl;
 using std::setw;
 
 const EMap<SequenceFile::Type> EnumTraits<SequenceFile::Type>::to_string = { {SequenceFile::Type::DMND, "Diamond database" }, {SequenceFile::Type::BLAST, "BLAST database"} };
+
+static string dict_file_name(const size_t query_block, const size_t target_block) {
+	const string file_name = append_label("ref_dict_", query_block) + append_label("_", target_block);
+	return join_path(config.parallel_tmpdir, file_name);
+}
 
 void SequenceFile::load_block(size_t block_id_begin, size_t block_id_end, size_t pos, bool use_filter, const vector<uint64_t>* filtered_pos, bool load_ids, Block* block) {
 	static const size_t MAX_LOAD_SIZE = 2 * GIGABYTES;
@@ -282,9 +288,9 @@ size_t SequenceFile::total_blocks() const {
 	return (this->letters() + c - 1) / c;
 }
 
-void SequenceFile::init_dict()
+void SequenceFile::init_dict(const size_t query_block, const size_t target_block)
 {
-	dict_file_.reset(new TempFile());
+	dict_file_.reset(config.multiprocessing ? new OutputFile(dict_file_name(query_block, target_block)) : new TempFile());
 	next_dict_id_ = 0;
 	dict_alloc_size_ = 0;
 	block_to_dict_id_.clear();
@@ -292,8 +298,6 @@ void SequenceFile::init_dict()
 
 void SequenceFile::init_dict_block(size_t block, size_t seq_count, bool persist)
 {
-	if(config.multiprocessing)
-		next_dict_id_ = 0;
 	if(!persist)
 		block_to_dict_id_.clear();
 	if(block_to_dict_id_.find(block) == block_to_dict_id_.end())

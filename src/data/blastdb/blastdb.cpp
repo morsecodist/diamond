@@ -139,7 +139,7 @@ size_t BlastDB::id_len(const SeqInfo& seq_info, const SeqInfo& seq_info_next)
 	if(flag_any(flags_, Flags::FULL_TITLES))
 		return full_id(*db_->GetBioseq(seq_info.pos), nullptr, long_seqids_, true).length();
 	else {
-		return (*best_id(db_->GetSeqIDs(seq_info.pos)))->GetSeqIdString().length();
+		return (*best_id(db_->GetSeqIDs(seq_info.pos)))->GetSeqIdString(true).length();
 	}
 }
 
@@ -455,23 +455,26 @@ void prep_blast_db() {
 		CSeqDB volume(db, CSeqDB::eProtein);
 		const int n = volume.GetNumOIDs();
 		message_stream << "Number of sequences: " << n << endl;
-		ofstream out(db + ".acc");
-		out << BlastDB::ACCESSION_FIELD << endl;
+		OutputFile out(db + ".acc", Compressor::ZSTD);
+		TextBuffer buf;
+		buf << BlastDB::ACCESSION_FIELD << '\n';
 		size_t id_count = 0;
 		for (int i = 0; i < n; ++i) {
 			list<CRef<CSeq_id>> ids = volume.GetSeqIDs(i);
 			if (!ids.empty()) {
 				auto best = best_id(ids);				
-				out << (*best)->GetSeqIdString();
+				buf << (*best)->GetSeqIdString(true);
 				auto it = ids.cbegin();
 				while (it != ids.cend()) {
 					if (it != best)
-						out << '\t' << (*it)->GetSeqIdString();
+						buf << '\t' << (*it)->GetSeqIdString(true);
 					++it;
 				}
 				id_count += ids.size();
 			}
-			out << endl;
+			buf << '\n';
+			out.write(buf.data(), buf.size());
+			buf.clear();
 		}
 		message_stream << "Number of accessions: " << id_count << endl;
 		out.close();

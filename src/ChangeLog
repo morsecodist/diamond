@@ -7,6 +7,9 @@
 - Changed the `full_sseq` output field to always contain unmasked sequences.
 - Fixed an issue that could cause target output order to be nondeterministic in case
   of identically scoring hits.
+- Added support for reading zstd-compressed input files (auto-detected) and writing
+  zstd-compressed output files (option `--compress zstd`) (requires compilation
+  using `cmake -DWITH_ZSTD=ON`).
 
 [2.0.9]
 - Reduced the memory use of database building with taxonomy mapping.

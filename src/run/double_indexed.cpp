@@ -117,8 +117,8 @@ void run_ref_chunk(SequenceFile &db_file,
 	const bool daa = *output_format == Output_format::daa;
 	if((blocked_processing || daa || cfg.iterated()) && !config.global_ranking_targets) {
 		timer.go("Initializing dictionary");
-		if (current_ref_block == 0 && (!daa || query_chunk == 0) && query_iteration == 0)
-			db_file.init_dict();
+		if (config.multiprocessing || (current_ref_block == 0 && (!daa || query_chunk == 0) && query_iteration == 0))
+			db_file.init_dict(query_chunk, current_ref_block);
 		db_file.init_dict_block(current_ref_block, ref_seqs.size(), daa || cfg.iterated());
 	}
 

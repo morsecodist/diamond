@@ -133,7 +133,7 @@ struct SequenceFile {
 		const Chunk& chunk = Chunk());
 	void get_seq();
 	size_t total_blocks() const;
-	void init_dict();
+	void init_dict(const size_t query_block, const size_t target_block);
 	void init_dict_block(size_t block, size_t seq_count, bool persist);
 	uint32_t dict_id(size_t block, size_t block_id, size_t oid, size_t len, const char* id, const Letter* seq);
 	size_t oid(uint32_t dict_id) const;
