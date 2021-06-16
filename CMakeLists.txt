@@ -270,6 +270,7 @@ set(OBJECTS
   src/data/sequence_set.cpp
   src/align/global_ranking/table.cpp
   src/output/daa/daa_write.cpp
+  src/util/io/zstd_stream.cpp
 )
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")
@@ -340,12 +341,14 @@ if(EIGEN_BLAS)
 endif()
 
 if(WITH_ZSTD)
-  find_path(${ZSTD_INCLUDE_DIR} NAMES zstd.h REQUIRED)
+  find_path(${ZSTD_INCLUDE_DIR} NAMES zstd.h PATHS ${ZSTD_INCLUDE_DIR})
   if(ZSTD_INCLUDE_DIR STREQUAL "ZSTD_INCLUDE_DIR-NOTFOUND")
     message(FATAL_ERROR "Unable to find ZSTD library")
   endif()
-  find_library(ZSTD_LIBRARY NAMES libzstd.a libzstd_static PATHS ${ZSTD_LIBRARY_DIR})
+  find_library(ZSTD_LIBRARY NAMES libzstd.a libzstd_static)
   target_include_directories(diamond PRIVATE "${ZSTD_INCLUDE_DIR}")
+  target_link_libraries(diamond ${ZSTD_LIBRARY})
+  add_definitions(-DWITH_ZSTD)
 endif()
 
 target_link_libraries(diamond ${ZLIB_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})

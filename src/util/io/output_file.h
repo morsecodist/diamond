@@ -16,9 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ****/
 
-#ifndef OUTPUT_FILE_H_
-#define OUTPUT_FILE_H_
-
+#pragma once
 #include <map>
 #include <stdexcept>
 #include <string>
@@ -29,9 +27,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 using std::string;
 using std::pair;
 
+enum class Compressor { NONE, ZLIB, ZSTD };
+
 struct OutputFile : public Serializer
 {
-	OutputFile(const string &file_name, bool compressed = false, const char *mode = "wb");
+	OutputFile(const string &file_name, Compressor compressor = Compressor::NONE, const char *mode = "wb");
 #ifndef _MSC_VER
 	OutputFile(pair<string, int> fd, const char *mode);
 #endif
@@ -59,5 +59,3 @@ protected:
 	string file_name_;
 
 };
-
-#endif

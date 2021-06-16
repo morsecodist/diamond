@@ -392,7 +392,7 @@ void run_query_chunk(const unsigned query_chunk,
 				}
 
 				const string query_chunk_output_file = append_label(config.output_file + "_", current_query_chunk);
-				Consumer *query_chunk_out(new OutputFile(query_chunk_output_file, config.compression == 1));
+				Consumer *query_chunk_out(new OutputFile(query_chunk_output_file, config.compressor()));
 				// if (*output_format != Output_format::daa)
 				// 	output_format->print_header(*query_chunk_out, align_mode.mode, config.matrix.c_str(), score_matrix.gap_open(), score_matrix.gap_extend(), config.max_evalue, query_ids::get()[0],
 				// 		unsigned(align_mode.query_translated ? query_source_seqs::get()[0].length() : query_seqs::get()[0].length()));
@@ -542,7 +542,7 @@ void master_thread(task_timer &total_timer, Config &options)
 
 	timer.go("Opening the output file");
 	if (!options.out)
-		options.out.reset(new OutputFile(config.output_file, config.compression == 1));
+		options.out.reset(new OutputFile(config.output_file, config.compressor()));
 	if (*output_format == Output_format::daa)
 		init_daa(*static_cast<OutputFile*>(options.out.get()));
 	unique_ptr<OutputFile> unaligned_file, aligned_file;

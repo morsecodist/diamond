@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../util/enum.h"
 
 enum class Sensitivity { FAST = 0, DEFAULT = 1, MID_SENSITIVE = 2, SENSITIVE = 3, MORE_SENSITIVE = 4, VERY_SENSITIVE = 5, ULTRA_SENSITIVE = 6 };
+enum class Compressor;
 
 template<> struct EnumTraits<Sensitivity> {
 	static const EMap<Sensitivity> to_string;
@@ -52,7 +53,7 @@ struct Config
 	string	match_file2;
 	int		padding;
 	unsigned	output_threads;
-	unsigned compression;
+	string compression;
 	unsigned		lowmem_;
 	double	chunk_size;
 	unsigned min_identities_;
@@ -327,6 +328,7 @@ struct Config
 	std::string single_query_file() const;
 
 	bool mem_buffered() const { return tmpdir == "/dev/shm"; }
+	Compressor compressor() const;
 
   	template<typename _t>
 	static void set_option(_t& option, _t value, _t def = 0) { if (option == def) option = value; }

@@ -128,6 +128,18 @@ std::string Config::single_query_file() const {
 	return query_file.empty() ? string() : query_file.front();
 }
 
+Compressor Config::compressor() const
+{
+	if (compression.empty() || compression == "0")
+		return Compressor::NONE;
+	else if (compression == "1")
+		return Compressor::ZLIB;
+	else if (compression == "zstd")
+		return Compressor::ZSTD;
+	else
+		throw std::runtime_error("Invalid compression algorithm: " + compression);
+}
+
 Config::Config(int argc, const char **argv, bool check_io)
 {
 	Command_line_parser parser;
@@ -577,7 +589,7 @@ Config::Config(int argc, const char **argv, bool check_io)
 				output_file = daa_file;
 			}
 			if (daa_file.length() > 0 || (output_format.size() > 0 && (output_format[0] == "daa" || output_format[0] == "100"))) {
-				if (compression != 0)
+				if (!compression.empty())
 					throw std::runtime_error("Compression is not supported for DAA format.");
 				if (!no_auto_append)
 					auto_append_extension(output_file, ".daa");
@@ -635,8 +647,10 @@ Config::Config(int argc, const char **argv, bool check_io)
 			auto_append_extension(database, ".dmnd");
 		if (command == Config::view)
 			auto_append_extension(daa_file, ".daa");
-		if (compression == 1)
+		if (compression == "1")
 			auto_append_extension(output_file, ".gz");
+		if (compression == "zstd")
+			auto_append_extension(output_file, ".zst");
 	}
 
 	if (verbosity >= 1 || command == regression_test) {

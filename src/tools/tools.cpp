@@ -35,12 +35,12 @@ void split() {
 	string id;
 	vector<Letter> seq;
 	size_t n = 0, f = 0, b = (size_t)(config.chunk_size * 1e9);
-	OutputFile *out = new OutputFile(std::to_string(f) + ".faa.gz", true);
+	OutputFile *out = new OutputFile(std::to_string(f) + ".faa.gz", Compressor::ZLIB);
 	while (FASTA_format().get_seq(id, seq, in, value_traits)) {
 		if (n >= b) {
 			out->close();
 			delete out;
-			out = new OutputFile(std::to_string(++f) + ".faa.gz", true);
+			out = new OutputFile(std::to_string(++f) + ".faa.gz", Compressor::ZLIB);
 			n = 0;
 		}
 		string blast_id = Util::Seq::seqid(id.c_str());

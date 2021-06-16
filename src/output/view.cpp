@@ -40,7 +40,7 @@ const unsigned view_buf_size = 32;
 struct View_writer
 {
 	View_writer() :
-		f_(new OutputFile(config.output_file, config.compression == 1))
+		f_(new OutputFile(config.output_file, config.compressor()))
 	{ }
 	void operator()(TextBuffer &buf)
 	{
