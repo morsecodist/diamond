@@ -320,7 +320,7 @@ void join_blocks(unsigned ref_blocks, Consumer &master_out, const PtrVector<Temp
 	const vector<string> tmp_file_names)
 {
 	if (*output_format != Output_format::daa)
-		cfg.db->init_random_access(current_query_chunk, tmp_file.size());
+		cfg.db->init_random_access(current_query_chunk, config.multiprocessing ? tmp_file_names.size() : tmp_file.size());
 	task_timer timer("Joining output blocks");
 
 	if (tmp_file_names.size() > 0) {
