@@ -535,22 +535,25 @@ std::string DatabaseFile::seqid(size_t oid) const
 }
 std::string DatabaseFile::dict_title(size_t dict_id, const size_t ref_block) const
 {
-	if (dict_id >= dict_title_[dict_block(ref_block)].size())
+	const size_t b = dict_block(ref_block);
+	if (b >= dict_title_.size() || dict_id >= dict_title_[b].size())
 		throw std::runtime_error("Dictionary not loaded.");
-	return dict_title_[dict_block(ref_block)][dict_id];
+	return dict_title_[b][dict_id];
 }
 size_t DatabaseFile::dict_len(size_t dict_id, const size_t ref_block) const
 {
-	if (dict_id >= dict_len_[dict_block(ref_block)].size())
+	const size_t b = dict_block(ref_block);
+	if (b >= dict_len_.size() || dict_id >= dict_len_[b].size())
 		throw std::runtime_error("Dictionary not loaded.");
-	return dict_len_[dict_block(ref_block)][dict_id];
+	return dict_len_[b][dict_id];
 }
 
 std::vector<Letter> DatabaseFile::dict_seq(size_t dict_id, const size_t ref_block) const
 {
-	if (dict_id >= dict_seq_[dict_block(ref_block)].size())
+	const size_t b = dict_block(ref_block);
+	if (b >= dict_seq_.size() || dict_id >= dict_seq_[b].size())
 		throw std::runtime_error("Dictionary not loaded.");
-	Sequence s = dict_seq_[dict_block(ref_block)][dict_id];
+	Sequence s = dict_seq_[b][dict_id];
 	return vector<Letter>(s.data(), s.end());
 }
 

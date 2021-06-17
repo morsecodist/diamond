@@ -348,9 +348,10 @@ uint32_t SequenceFile::dict_id(size_t block, size_t block_id, size_t oid, size_t
 
 size_t SequenceFile::oid(uint32_t dict_id, const size_t ref_block) const
 {
-	if (dict_id >= dict_oid_[dict_block(ref_block)].size())
+	const size_t b = dict_block(ref_block);
+	if (b >= dict_oid_.size() || dict_id >= dict_oid_[b].size())
 		throw std::runtime_error("Dictionary not loaded.");
-	return dict_oid_[dict_block(ref_block)][dict_id];
+	return dict_oid_[b][dict_id];
 }
 
 SequenceFile::SequenceFile(Type type, Alphabet alphabet, Flags flags):
