@@ -470,13 +470,12 @@ void prep_blast_db() {
 		for (int i = 0; i < n; ++i) {
 			list<CRef<CSeq_id>> ids = volume.GetSeqIDs(i);
 			if (!ids.empty()) {
-				auto best = best_id(ids);				
-				buf << (*best)->GetSeqIdString(true);
+				//auto best = best_id(ids);
 				auto it = ids.cbegin();
-				while (it != ids.cend()) {
-					if (it != best)
+				buf << (*it)->GetSeqIdString(true);
+				while (++it != ids.cend()) {
+					//if (it != best)
 						buf << '\t' << (*it)->GetSeqIdString(true);
-					++it;
 				}
 				id_count += ids.size();
 			}
