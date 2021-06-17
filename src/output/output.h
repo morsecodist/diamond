@@ -30,7 +30,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../util/text_buffer.h"
 #include "../data/reference.h"
 #include "../basic/match.h"
-#include "../data/ref_dictionary.h"
 #include "../util/io/consumer.h"
 #include "output_format.h"
 #include "../run/config.h"

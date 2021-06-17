@@ -98,6 +98,8 @@ BlastDB::BlastDB(const std::string& file_name, Metadata metadata, Flags flags) :
 	for (const string& db : paths)
 		if(!exists(db + ".acc"))
 			throw std::runtime_error("Accession file not found. BLAST databases require preprocessing using this command line: diamond prepdp -d DATABASE_FILE");
+	if (config.multiprocessing)
+		throw std::runtime_error("Multiprocessing mode is not compatible with BLAST databases.");
 }
 
 void BlastDB::init_seqinfo_access()

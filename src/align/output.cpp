@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "target.h"
 #include "../data/queries.h"
 #include "../output/output_format.h"
-#include "../data/ref_dictionary.h"
 #include "../output/daa/daa_write.h"
 #include "../util/sequence/sequence.h"
 

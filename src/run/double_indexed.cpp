@@ -39,7 +39,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../output/daa/daa_write.h"
 #include "../data/taxonomy.h"
 #include "../basic/masking.h"
-#include "../data/ref_dictionary.h"
 #include "../data/block.h"
 #include "../search/search.h"
 #include "workflow.h"

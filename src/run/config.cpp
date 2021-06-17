@@ -40,6 +40,9 @@ Config::Config() :
 		sensitivity.push_back(config.sensitivity);
 	if (!config.unaligned.empty() || !config.aligned_file.empty())
 		track_aligned_queries = true;
+
+	if (config.multiprocessing && (!config.taxonlist.empty() || !config.taxon_exclude.empty()))
+		throw std::runtime_error("Multiprocessing mode is not compatible with database filtering.");
 }
 
 Config::~Config() {

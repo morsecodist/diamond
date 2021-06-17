@@ -28,7 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "output_format.h"
 #include "../align/legacy/query_mapper.h"
 #include "target_culling.h"
-#include "../data/ref_dictionary.h"
 #include "../util/log_stream.h"
 #include "../align/global_ranking/global_ranking.h"
 #include "../util/task_queue.h"

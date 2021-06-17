@@ -445,32 +445,31 @@ void DatabaseFile::create_partition(size_t max_letters) {
 	size_t letters = 0, seqs = 0, total_seqs = 0;
 	size_t i_chunk = 0;
 
-	rewind();
-	seek(pos_array_offset);
+	size_t oid = 0, oid_begin;
+	set_seqinfo_ptr(oid);
+	init_seqinfo_access();
 
-	SeqInfo r, r_next;
-	size_t pos;
+	SeqInfo r = read_seqinfo();
 	bool first = true;
 
-	read(&r, 1);
 	while (r.seq_len) {
+		SeqInfo r_next = read_seqinfo();
 		if (first) {
-			pos = pos_array_offset;
+			oid_begin = oid;
 			first = false;
 		}
 		letters += r.seq_len;
 		++seqs;
 		++total_seqs;
-		read(&r_next, 1);
 		if ((letters > max_letters) || (r_next.seq_len == 0)) {
-			partition.chunks.push_back(Chunk(i_chunk, pos, seqs));
+			partition.chunks.push_back(Chunk(i_chunk, oid_begin, seqs));
 			first = true;
 			seqs = 0;
 			letters = 0;
 			++i_chunk;
 		}
-		pos_array_offset += SeqInfo::SIZE;
 		r = r_next;
+		++oid;
 	}
 
 	reverse(partition.chunks.begin(), partition.chunks.end());
@@ -527,7 +526,7 @@ void DatabaseFile::init_seqinfo_access() {
 
 void DatabaseFile::seek_chunk(const Chunk& chunk) {
 	current_ref_block = chunk.i;
-	seek(chunk.offset);
+	set_seqinfo_ptr(chunk.offset);
 }
 
 std::string DatabaseFile::seqid(size_t oid) const

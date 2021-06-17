@@ -82,10 +82,9 @@ Block* SequenceFile::load_seqs(const size_t max_letters, bool load_ids, const Bi
 	task_timer timer("Loading reference sequences");
 	reopen();
 
-	if (max_letters > 0)
-		init_seqinfo_access();
-	else
+	if(max_letters == 0)
 		seek_chunk(chunk);
+	init_seqinfo_access();
 
 	size_t database_id = tell_seq();
 	size_t letters = 0, seqs = 0, id_letters = 0, seqs_processed = 0, filtered_seq_count = 0;
