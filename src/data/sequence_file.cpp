@@ -72,6 +72,11 @@ void SequenceFile::load_block(size_t block_id_begin, size_t block_id_end, size_t
 	}
 }
 
+size_t SequenceFile::dict_block(const size_t ref_block)
+{
+	return config.multiprocessing ? ref_block : 0;
+}
+
 Block* SequenceFile::load_seqs(const size_t max_letters, bool load_ids, const BitVector* filter, bool fetch_seqs, bool lazy_masking, const Chunk& chunk)
 {
 	task_timer timer("Loading reference sequences");
@@ -223,6 +228,10 @@ void SequenceFile::get_seq()
 
 SequenceFile::~SequenceFile()
 {
+	if (dict_file_) {
+		dict_file_->close();
+		dict_file_.reset();
+	}
 }
 
 SequenceFile* SequenceFile::auto_create(Flags flags, Metadata metadata) {
@@ -253,25 +262,36 @@ SequenceFile* SequenceFile::auto_create(Flags flags, Metadata metadata) {
 	throw std::runtime_error("Database does not have a supported format.");
 }
 
-void SequenceFile::load_dictionary()
+void SequenceFile::load_dict_block(InputFile* f, const size_t ref_block)
 {
-	if (config.multiprocessing) {
+	while (load_dict_entry(*f, ref_block));
+}
 
-	}
-	else if (!dict_file_)
+void SequenceFile::load_dictionary(const size_t query_block, const size_t ref_blocks)
+{
+	if (!dict_file_ && !config.multiprocessing)
 		return;
-	else {
-		task_timer timer("Loading dictionary", 3);
+	task_timer timer("Loading dictionary", 3);
+	if (config.multiprocessing) {
+		dict_oid_ = vector<vector<uint32_t>>(ref_blocks);
+		reserve_dict(ref_blocks);
+		for (size_t i = 0; i < ref_blocks; ++i) {
+			InputFile f(dict_file_name(query_block, i));
+			load_dict_block(&f, i);
+			f.close_and_delete();
+		}
+	}
+	else {		
 		TempFile* t = dynamic_cast<TempFile*>(dict_file_.get());
 		if (!t)
 			throw std::runtime_error("Failed to load dictionary file.");
-		dict_oid_.clear();
-		dict_oid_.reserve(next_dict_id_);
-		reserve_dict();
+		dict_oid_ = { {} };
+		dict_oid_.front().reserve(next_dict_id_);
+		reserve_dict(0);
 		InputFile f(*t);
-		for (uint32_t i = 0; i < next_dict_id_; ++i) {
-			load_dict_entry(f);
-		}
+		load_dict_block(&f, 0);
+		if (dict_oid_.front().size() != next_dict_id_)
+			throw std::runtime_error("Dictionary corrupted.");
 		f.close_and_delete();
 		dict_file_.reset();
 	}
@@ -290,6 +310,8 @@ size_t SequenceFile::total_blocks() const {
 
 void SequenceFile::init_dict(const size_t query_block, const size_t target_block)
 {
+	if (dict_file_)
+		dict_file_->close();
 	dict_file_.reset(config.multiprocessing ? new OutputFile(dict_file_name(query_block, target_block)) : new TempFile());
 	next_dict_id_ = 0;
 	dict_alloc_size_ = 0;
@@ -325,11 +347,11 @@ uint32_t SequenceFile::dict_id(size_t block, size_t block_id, size_t oid, size_t
 	}
 }
 
-size_t SequenceFile::oid(uint32_t dict_id) const
+size_t SequenceFile::oid(uint32_t dict_id, const size_t ref_block) const
 {
-	if (dict_id >= dict_oid_.size())
+	if (dict_id >= dict_oid_[dict_block(ref_block)].size())
 		throw std::runtime_error("Dictionary not loaded.");
-	return dict_oid_[dict_id];
+	return dict_oid_[dict_block(ref_block)][dict_id];
 }
 
 SequenceFile::SequenceFile(Type type, Alphabet alphabet, Flags flags):

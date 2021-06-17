@@ -115,30 +115,46 @@ void DatabaseFile::write_dict_entry(size_t block, size_t oid, size_t len, const 
 	dict_alloc_size_ += strlen(id);
 }
 
-void DatabaseFile::load_dict_entry(InputFile& f)
+bool DatabaseFile::load_dict_entry(InputFile& f, size_t ref_block)
 {
 	uint32_t oid, len;
 	string title;
-	f >> oid >> len >> title;
-	dict_oid_.push_back(oid);
-	dict_len_.push_back(len);
-	dict_title_.push_back(title.begin(), title.end());
+	try {
+		f >> oid;
+	}
+	catch (EndOfStream&) {
+		return false;
+	}
+	f >> len >> title;
+	const size_t b = dict_block(ref_block);
+	dict_oid_[b].push_back(oid);
+	dict_len_[b].push_back(len);
+	dict_title_[b].push_back(title.begin(), title.end());
 	if (flag_any(flags_, Flags::TARGET_SEQS)) {
 		vector<Letter> v(len);
 		f.read(v.data(), len);
-		dict_seq_.push_back(v.begin(), v.end());
+		dict_seq_[b].push_back(v.begin(), v.end());
 	}
+	return true;
 }
 
-void DatabaseFile::reserve_dict()
+void DatabaseFile::reserve_dict(const size_t ref_blocks)
 {
-	dict_len_.clear();
-	dict_len_.reserve(next_dict_id_);
-	dict_title_.clear();
-	dict_title_.reserve(next_dict_id_, dict_alloc_size_);
-	if (flag_any(flags_, Flags::TARGET_SEQS)) {
-		dict_seq_.clear();
-		dict_seq_.reserve(next_dict_id_, 0);
+	if (config.multiprocessing) {
+		dict_len_ = std::vector<std::vector<uint32_t>>(ref_blocks);
+		dict_title_ = std::vector<StringSet>(ref_blocks);
+		if (flag_any(flags_, Flags::TARGET_SEQS))
+			dict_seq_ = std::vector<SequenceSet>(ref_blocks);
+	}
+	else {
+		dict_len_ = { {} };
+		dict_len_[0].reserve(next_dict_id_);
+		dict_title_ = { {} };
+		dict_title_[0].reserve(next_dict_id_, dict_alloc_size_);
+		if (flag_any(flags_, Flags::TARGET_SEQS)) {
+			dict_seq_ = { {} };
+			dict_seq_[0].reserve(next_dict_id_, 0);
+		}
 	}
 }
 
@@ -518,24 +534,24 @@ std::string DatabaseFile::seqid(size_t oid) const
 {
 	throw std::runtime_error("Operation not supported (seqid).");
 }
-std::string DatabaseFile::dict_title(size_t dict_id) const
+std::string DatabaseFile::dict_title(size_t dict_id, const size_t ref_block) const
 {
-	if (dict_id >= dict_title_.size())
+	if (dict_id >= dict_title_[dict_block(ref_block)].size())
 		throw std::runtime_error("Dictionary not loaded.");
-	return dict_title_[dict_id];
+	return dict_title_[dict_block(ref_block)][dict_id];
 }
-size_t DatabaseFile::dict_len(size_t dict_id) const
+size_t DatabaseFile::dict_len(size_t dict_id, const size_t ref_block) const
 {
-	if (dict_id >= dict_len_.size())
+	if (dict_id >= dict_len_[dict_block(ref_block)].size())
 		throw std::runtime_error("Dictionary not loaded.");
-	return dict_len_[dict_id];
+	return dict_len_[dict_block(ref_block)][dict_id];
 }
 
-std::vector<Letter> DatabaseFile::dict_seq(size_t dict_id) const
+std::vector<Letter> DatabaseFile::dict_seq(size_t dict_id, const size_t ref_block) const
 {
-	if (dict_id >= dict_seq_.size())
+	if (dict_id >= dict_seq_[dict_block(ref_block)].size())
 		throw std::runtime_error("Dictionary not loaded.");
-	Sequence s = dict_seq_[dict_id];
+	Sequence s = dict_seq_[dict_block(ref_block)][dict_id];
 	return vector<Letter>(s.data(), s.end());
 }
 
@@ -665,10 +681,10 @@ size_t DatabaseFile::seq_length(size_t oid) const
 	throw std::runtime_error("Operation not supported.");
 }
 
-void DatabaseFile::init_random_access(bool dictionary)
+void DatabaseFile::init_random_access(const size_t query_block, const size_t ref_blocks, bool dictionary)
 {
 	if(dictionary)
-		load_dictionary();
+		load_dictionary(query_block, ref_blocks);
 }
 
 void DatabaseFile::end_random_access(bool dictionary)

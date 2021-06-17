@@ -594,7 +594,7 @@ void master_thread(task_timer &total_timer, Config &options)
 
 	timer.go("Closing the output file");
 	if (*output_format == Output_format::daa) {
-		db_file->init_random_access();
+		db_file->init_random_access(current_query_chunk, 0);
 		finish_daa(*static_cast<OutputFile*>(options.out.get()), *db_file);
 		db_file->end_random_access();
 	}

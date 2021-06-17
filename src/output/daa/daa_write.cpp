@@ -76,14 +76,14 @@ void finish_daa(OutputFile& f, const SequenceFile& db)
 
 	size_t s = 0;
 	for (size_t i = 0; i < n; ++i) {
-		const string title = db.dict_title(i);
+		const string title = db.dict_title(i, 0);
 		f << title;
 		s += title.length() + 1;
 	}
 	h2_.block_size[1] = s;
 
 	for (size_t i = 0; i < n; ++i)
-		f << (uint32_t)db.dict_len(i);
+		f << (uint32_t)db.dict_len(i, 0);
 	h2_.block_size[2] = n * sizeof(uint32_t);
 
 	f.seek(sizeof(DAA_header1));

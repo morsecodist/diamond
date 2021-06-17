@@ -91,9 +91,9 @@ struct SequenceFile {
 	virtual void read_id_data(char* dst, size_t len) = 0;
 	virtual void skip_id_data() = 0;
 	virtual std::string seqid(size_t oid) const = 0;
-	virtual std::string dict_title(size_t dict_id) const = 0;
-	virtual size_t dict_len(size_t dict_id) const = 0;
-	virtual std::vector<Letter> dict_seq(size_t dict_id) const = 0;
+	virtual std::string dict_title(size_t dict_id, const size_t ref_block) const = 0;
+	virtual size_t dict_len(size_t dict_id, const size_t ref_block) const = 0;
+	virtual std::vector<Letter> dict_seq(size_t dict_id, const size_t ref_block) const = 0;
 	virtual size_t sequence_count() const = 0;
 	virtual size_t sparse_sequence_count() const = 0;
 	virtual size_t letters() const = 0;
@@ -118,7 +118,7 @@ struct SequenceFile {
 	virtual std::string file_name() = 0;
 	virtual void seq_data(size_t oid, std::vector<Letter>& dst) const = 0;
 	virtual size_t seq_length(size_t oid) const = 0;
-	virtual void init_random_access(bool dictionary = true) = 0;
+	virtual void init_random_access(const size_t query_block, const size_t ref_blocks, bool dictionary = true) = 0;
 	virtual void end_random_access(bool dictionary = true) = 0;
 	virtual LoadTitles load_titles() = 0;
 	virtual ~SequenceFile();
@@ -136,7 +136,7 @@ struct SequenceFile {
 	void init_dict(const size_t query_block, const size_t target_block);
 	void init_dict_block(size_t block, size_t seq_count, bool persist);
 	uint32_t dict_id(size_t block, size_t block_id, size_t oid, size_t len, const char* id, const Letter* seq);
-	size_t oid(uint32_t dict_id) const;
+	size_t oid(uint32_t dict_id, const size_t ref_block) const;
 	size_t dict_size() const {
 		return next_dict_id_;
 	}
@@ -145,23 +145,25 @@ struct SequenceFile {
 
 protected:
 
-	void load_dictionary();
+	void load_dictionary(const size_t query_block, const size_t ref_blocks);
 	void free_dictionary();
+	static size_t dict_block(const size_t ref_block);
 
 	const Flags flags_;
 	std::unique_ptr<OutputFile> dict_file_;
 	uint32_t next_dict_id_;
 	size_t dict_alloc_size_;
-	std::vector<uint32_t> dict_oid_;
+	std::vector<std::vector<uint32_t>> dict_oid_;
 
 private:
 
 	static const uint32_t DICT_EMPTY = UINT32_MAX;
 
 	virtual void write_dict_entry(size_t block, size_t oid, size_t len, const char* id, const Letter* seq) = 0;
-	virtual void load_dict_entry(InputFile& f) = 0;
-	virtual void reserve_dict() = 0;
+	virtual bool load_dict_entry(InputFile& f, const size_t ref_block) = 0;
+	virtual void reserve_dict(const size_t ref_blocks) = 0;
 	void load_block(size_t block_id_begin, size_t block_id_end, size_t pos, bool use_filter, const vector<uint64_t>* filtered_pos, bool load_ids, Block* block);
+	void load_dict_block(InputFile* f, const size_t ref_block);
 
 	const Type type_;
 	const Alphabet alphabet_;

@@ -20,9 +20,9 @@ struct BlastDB : public SequenceFile {
 	virtual void read_id_data(char* dst, size_t len) override;
 	virtual void skip_id_data() override;
 	virtual std::string seqid(size_t oid) const override;
-	virtual std::string dict_title(size_t dict_id) const override;
-	virtual size_t dict_len(size_t dict_id) const override;
-	virtual std::vector<Letter> dict_seq(size_t dict_id) const override;
+	virtual std::string dict_title(size_t dict_id, const size_t ref_block) const override;
+	virtual size_t dict_len(size_t dict_id, const size_t ref_block) const override;
+	virtual std::vector<Letter> dict_seq(size_t dict_id, const size_t ref_block) const override;
 	virtual size_t sequence_count() const override;
 	virtual size_t sparse_sequence_count() const override;
 	virtual size_t letters() const override;
@@ -47,7 +47,7 @@ struct BlastDB : public SequenceFile {
 	virtual std::vector<unsigned> taxids(size_t oid) const override;
 	virtual void seq_data(size_t oid, std::vector<Letter>& dst) const override;
 	virtual size_t seq_length(size_t oid) const override;
-	virtual void init_random_access(bool dictionary = true) override;
+	virtual void init_random_access(const size_t query_block, const size_t ref_blocks, bool dictionary = true) override;
 	virtual void end_random_access(bool dictionary = true) override;
 	virtual LoadTitles load_titles() override;
 	virtual ~BlastDB();
@@ -57,8 +57,8 @@ struct BlastDB : public SequenceFile {
 private:
 
 	virtual void write_dict_entry(size_t block, size_t oid, size_t len, const char* id, const Letter* seq) override;
-	virtual void load_dict_entry(InputFile& f) override;
-	virtual void reserve_dict() override;
+	virtual bool load_dict_entry(InputFile& f, const size_t ref_block) override;
+	virtual void reserve_dict(const size_t ref_blocks) override;
 
 	const std::string file_name_;
 	std::unique_ptr<ncbi::CSeqDBExpert> db_;

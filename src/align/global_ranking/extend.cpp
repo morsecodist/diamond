@@ -199,7 +199,7 @@ void extend(Search::Config& cfg) {
 		log_stream << "Masked letters: " << n << endl;
 	}
 
-	cfg.db->init_random_access();
+	cfg.db->init_random_access(current_query_chunk, 0);
 
 	timer.go("Computing alignments");
 	OutputSink::instance.reset(new OutputSink(0, cfg.out.get()));

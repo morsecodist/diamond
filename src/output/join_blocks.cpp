@@ -144,7 +144,7 @@ struct JoinRecord
 		info_.read(it);
 		same_subject_ = info_.target_dict_id == subject;
 		if (*output_format != Output_format::daa)
-			info_.target_oid = db.oid(info_.target_dict_id);
+			info_.target_oid = db.oid(info_.target_dict_id, ref_block);
 	}
 
 	static bool push_next(unsigned block, unsigned subject, BinaryBuffer::Iterator &it, vector<JoinRecord> &v, const SequenceFile& db)
@@ -242,11 +242,11 @@ void join_query(
 					query_seq,
 					query_name,
 					target_oid,
-					cfg.db->dict_len(dict_id),
-					cfg.db->dict_title(dict_id).c_str(),
+					cfg.db->dict_len(dict_id, block_idx),
+					cfg.db->dict_title(dict_id, block_idx).c_str(),
 					n_target_seq,
 					hsp_num,
-					flag_any(f.flags, Output::Flags::TARGET_SEQS) ? Sequence(cfg.db->dict_seq(dict_id)) : Sequence()
+					flag_any(f.flags, Output::Flags::TARGET_SEQS) ? Sequence(cfg.db->dict_seq(dict_id, block_idx)) : Sequence()
 					).parse(), cfg, out);
 			}
 		}
@@ -321,7 +321,7 @@ void join_blocks(unsigned ref_blocks, Consumer &master_out, const PtrVector<Temp
 	const vector<string> tmp_file_names)
 {
 	if (*output_format != Output_format::daa)
-		cfg.db->init_random_access();
+		cfg.db->init_random_access(current_query_chunk, tmp_file.size());
 	task_timer timer("Joining output blocks");
 
 	if (tmp_file_names.size() > 0) {

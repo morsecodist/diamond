@@ -169,7 +169,7 @@ void align_queries(Consumer* output_file, Search::Config& cfg)
 	task_timer timer(nullptr, 3);
 
 	if (!blocked_processing && !cfg.iterated())
-		cfg.db->init_random_access(false);
+		cfg.db->init_random_access(current_query_chunk, 0, false);
 	
 	cfg.seed_hit_buf->load(max_size);
 

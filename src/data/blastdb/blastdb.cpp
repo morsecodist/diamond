@@ -189,26 +189,26 @@ std::string BlastDB::seqid(size_t oid) const
 	}
 }
 
-std::string BlastDB::dict_title(size_t dict_id) const
+std::string BlastDB::dict_title(size_t dict_id, const size_t ref_block) const
 {
-	if (dict_id >= dict_oid_.size())
+	if (dict_id >= dict_oid_[dict_block(ref_block)].size())
 		throw std::runtime_error("Dictionary not loaded.");
-	return seqid(dict_oid_[dict_id]);
+	return seqid(dict_oid_[dict_block(ref_block)][dict_id]);
 }
 
-size_t BlastDB::dict_len(size_t dict_id) const
+size_t BlastDB::dict_len(size_t dict_id, const size_t ref_block) const
 {
-	if (dict_id >= dict_oid_.size())
+	if (dict_id >= dict_oid_[dict_block(ref_block)].size())
 		throw std::runtime_error("Dictionary not loaded.");
-	return db_->GetSeqLength(dict_oid_[dict_id]);
+	return db_->GetSeqLength(dict_oid_[dict_block(ref_block)][dict_id]);
 }
 
-std::vector<Letter> BlastDB::dict_seq(size_t dict_id) const
+std::vector<Letter> BlastDB::dict_seq(size_t dict_id, const size_t ref_block) const
 {
 	if (dict_id >= dict_oid_.size())
 		throw std::runtime_error("Dictionary not loaded.");
 	vector<Letter> v;
-	seq_data(dict_oid_[dict_id], v);
+	seq_data(dict_oid_[dict_block(ref_block)][dict_id], v);
 	for (Letter& l : v)
 		l = NCBI_TO_STD[(int)l];
 	return v;
@@ -370,10 +370,10 @@ size_t BlastDB::seq_length(size_t oid) const
 
 const char* BlastDB::ACCESSION_FIELD = "#accession*";
 
-void BlastDB::init_random_access(bool dictionary)
+void BlastDB::init_random_access(const size_t query_block, const size_t ref_block, bool dictionary)
 {
 	if(dictionary)
-		load_dictionary();
+		load_dictionary(query_block, ref_block);
 	if (flag_any(flags_, Flags::FULL_TITLES))
 		return;
 	task_timer timer("Loading accessions");
@@ -436,14 +436,20 @@ void BlastDB::write_dict_entry(size_t block, size_t oid, size_t len, const char*
 	*dict_file_ << (uint32_t)oid;
 }
 
-void BlastDB::load_dict_entry(InputFile& f)
+bool BlastDB::load_dict_entry(InputFile& f, const size_t ref_block)
 {
 	uint32_t oid;
-	f >> oid;
-	dict_oid_.push_back(oid);
+	try {
+		f >> oid;
+	}
+	catch (EndOfStream&) {
+		return false;
+	}
+	dict_oid_[dict_block(ref_block)].push_back(oid);
+	return true;
 }
 
-void BlastDB::reserve_dict()
+void BlastDB::reserve_dict(const size_t ref_blocks)
 {
 }
 
