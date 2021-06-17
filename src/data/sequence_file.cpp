@@ -325,6 +325,14 @@ void SequenceFile::init_dict_block(size_t block, size_t seq_count, bool persist)
 		block_to_dict_id_[block] = vector<uint32_t>(seq_count, DICT_EMPTY);
 }
 
+void SequenceFile::close_dict_block()
+{
+	if (config.multiprocessing) {
+		dict_file_->close();
+		dict_file_.reset();
+	}
+}
+
 uint32_t SequenceFile::dict_id(size_t block, size_t block_id, size_t oid, size_t len, const char* id, const Letter* seq)
 {
 	auto it = block_to_dict_id_.find(block);

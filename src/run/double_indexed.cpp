@@ -199,6 +199,7 @@ void run_ref_chunk(SequenceFile &db_file,
 
 	timer.go("Deallocating reference");
 	cfg.target.reset();
+	cfg.db->close_dict_block();
 	timer.finish();
 }
 
