@@ -434,10 +434,10 @@ void DatabaseFile::create_partition_fixednumber(size_t n) {
 }
 
 void DatabaseFile::create_partition_balanced(size_t max_letters) {
-	double n = std::ceil(static_cast<double>(ref_header.letters) / static_cast<double>(max_letters));
-	size_t max_letters_balanced = static_cast<size_t>(std::ceil(static_cast<double>(ref_header.letters)/n));
-	cout << "Balanced partitioning using " << max_letters_balanced << " (" << max_letters << ")" << endl;
-	this->create_partition(max_letters_balanced);
+	//double n = std::ceil(static_cast<double>(ref_header.letters) / static_cast<double>(max_letters));
+	//size_t max_letters_balanced = static_cast<size_t>(std::ceil(static_cast<double>(ref_header.letters)/n));
+	//cout << "Balanced partitioning using " << max_letters_balanced << " (" << max_letters << ")" << endl;
+	this->create_partition(max_letters);
 }
 
 void DatabaseFile::create_partition(size_t max_letters) {
