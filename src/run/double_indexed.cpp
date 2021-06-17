@@ -513,7 +513,8 @@ void master_thread(task_timer &total_timer, Config &options)
 	if (config.multiprocessing && config.mp_init) {
 		task_timer timer("Counting query blocks", true);
 
-		for (;!options.query->empty(); ++current_query_chunk) {
+		size_t block_count = 0;
+		do {
 			if (options.self) {
 				db_file->set_seqinfo_ptr(query_file_offset);
 				options.query.reset(db_file->load_seqs((size_t)(config.chunk_size * 1e9), true, options.db_filter.get()));
@@ -521,7 +522,8 @@ void master_thread(task_timer &total_timer, Config &options)
 			} else {
 				options.query.reset(new Block(options.query_file->begin(), options.query_file->end(), *format_n, (size_t)(config.chunk_size * 1e9), input_value_traits, config.store_query_quality, paired_mode ? 2 : 1));
 			}
-		}
+			++block_count;
+		} while (!options.query->empty());
 		if (options.self) {
 			db_file->set_seqinfo_ptr(0);
 			query_file_offset = 0;
@@ -529,7 +531,7 @@ void master_thread(task_timer &total_timer, Config &options)
 			options.query_file->front().rewind();
 		}
 
-		for (size_t i = 0; i < current_query_chunk; ++i) {
+		for (size_t i = 0; i < block_count - 1; ++i) {
 			const string annotation = "# query_chunk=" + std::to_string(i);
 			db_file->save_partition(get_ref_part_file_name(stack_align_todo, i), annotation);
 		}
