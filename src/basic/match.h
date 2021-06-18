@@ -245,10 +245,10 @@ struct HspContext
 	) :
 		query(query),
 		query_title(query_title),
+		target_title(subject_title),
 		query_id(query_id),
 		subject_oid(subject_oid),
-		subject_len(subject_len),
-		target_title(subject_title),
+		subject_len(subject_len),		
 		hit_num(hit_num),
 		hsp_num(hsp_num),
 		ungapped_score(ungapped_score),

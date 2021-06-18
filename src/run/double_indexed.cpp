@@ -440,6 +440,7 @@ void run_query_chunk(const unsigned query_chunk,
 
 	timer.go("Deallocating queries");
 	options.query.reset();
+	options.ranking_table.reset();
 }
 
 void master_thread(task_timer &total_timer, Config &options)
@@ -522,7 +523,7 @@ void master_thread(task_timer &total_timer, Config &options)
 				options.query.reset(db_file->load_seqs((size_t)(config.chunk_size * 1e9), true, options.db_filter.get()));
 				query_file_offset = db_file->tell_seq();
 			} else {
-				options.query.reset(new Block(options.query_file->begin(), options.query_file->end(), *format_n, (size_t)(config.chunk_size * 1e9), input_value_traits, config.store_query_quality, paired_mode ? 2 : 1));
+				options.query.reset(new Block(options.query_file->begin(), options.query_file->end(), *format_n, (size_t)(config.chunk_size * 1e9), input_value_traits, config.store_query_quality, false, paired_mode ? 2 : 1));
 			}
 			++block_count;
 		} while (!options.query->empty());
@@ -564,7 +565,7 @@ void master_thread(task_timer &total_timer, Config &options)
 			query_file_offset = db_file->tell_seq();
 		}
 		else
-			options.query.reset(new Block(options.query_file->begin(), options.query_file->end(), *format_n, (size_t)(config.chunk_size * 1e9), input_value_traits, config.store_query_quality, paired_mode ? 2 : 1));
+			options.query.reset(new Block(options.query_file->begin(), options.query_file->end(), *format_n, (size_t)(config.chunk_size * 1e9), input_value_traits, config.store_query_quality, false, paired_mode ? 2 : 1));
 
 		if (options.query->empty())
 			break;

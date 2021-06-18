@@ -76,7 +76,7 @@ struct Block {
 	Alphabet alphabet() const {
 		return seqs_.alphabet();
 	}
-	const bool has_ids() const {
+	bool has_ids() const {
 		return !ids_.empty();
 	}
 	bool fetch_seq_if_unmasked(size_t block_id, std::vector<Letter>& seq);
