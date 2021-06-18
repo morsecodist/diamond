@@ -314,6 +314,7 @@ void run_query_iteration(const unsigned query_chunk,
 	timer.go("Deallocating buffers");
 	delete[] query_buffer;
 	query_seeds_hashed.reset();
+	options.query_skip.reset();
 	delete Extension::memory;
 }
 
