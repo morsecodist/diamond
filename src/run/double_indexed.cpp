@@ -61,9 +61,9 @@ using std::shared_ptr;
 
 namespace Search {
 
-static const size_t MAX_INDEX_QUERY_SIZE      = 0x2000000;
-static const size_t MAX_HASH_SET_SIZE         = 0x800000;
-static const size_t MIN_QUERY_INDEXED_DB_SIZE = 0x10000000;
+static const size_t MAX_INDEX_QUERY_SIZE = 32 * MEGABYTES;
+static const size_t MAX_HASH_SET_SIZE = 8 * MEGABYTES;
+static const size_t MIN_QUERY_INDEXED_DB_SIZE = 256 * MEGABYTES;
 
 static const string label_align = "align";
 static const string stack_align_todo = label_align + "_todo";
@@ -349,7 +349,7 @@ void run_query_chunk(const unsigned query_chunk,
 	log_rss();
 
 	size_t aligned = 0;
-	for (unsigned query_iteration = 0; query_iteration < options.sensitivity.size(); ++query_iteration) {
+	for (unsigned query_iteration = 0; query_iteration < options.sensitivity.size() && aligned < query_ids.size(); ++query_iteration) {
 		setup_search(options.sensitivity[query_iteration], options);
 		run_query_iteration(query_chunk, query_iteration, master_out, unaligned_file, aligned_file, tmp_file, options);
 		if (options.iterated()) {

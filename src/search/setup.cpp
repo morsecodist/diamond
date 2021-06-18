@@ -43,6 +43,16 @@ const map<Sensitivity, SensitivityTraits> sensitivity_traits {
 	{ Sensitivity::ULTRA_SENSITIVE, {true,  20.0,  9,    300000, 30000,  1,     1,        64 }}
 };
 
+const map<Sensitivity, vector<Sensitivity>> iterated_sens{
+	{ Sensitivity::FAST,            { }},
+	{ Sensitivity::DEFAULT,         { }},
+	{ Sensitivity::MID_SENSITIVE,   {Sensitivity::DEFAULT}},
+	{ Sensitivity::SENSITIVE,       {Sensitivity::DEFAULT}},
+	{ Sensitivity::MORE_SENSITIVE,  {Sensitivity::DEFAULT}},
+	{ Sensitivity::VERY_SENSITIVE,  {Sensitivity::DEFAULT, Sensitivity::MORE_SENSITIVE}},
+	{ Sensitivity::ULTRA_SENSITIVE, {Sensitivity::DEFAULT, Sensitivity::MORE_SENSITIVE}}
+};
+
 const map<Sensitivity, vector<string>> shape_codes = {
 
 	{Sensitivity::DEFAULT, {

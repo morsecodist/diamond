@@ -51,6 +51,7 @@ struct SensitivityTraits {
 
 extern const std::map<Sensitivity, SensitivityTraits> sensitivity_traits;
 extern const std::map<Sensitivity, std::vector<std::string>> shape_codes;
+extern const std::map<Sensitivity, std::vector<Sensitivity>> iterated_sens;
 
 namespace Search {
 

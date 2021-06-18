@@ -8,6 +8,7 @@
 #include "../search/hit.h"
 #include "../util/data_structures/deque.h"
 #include "../align/global_ranking/global_ranking.h"
+#include "../search/search.h"
 
 using std::endl;
 
@@ -23,21 +24,24 @@ Config::Config() :
 	taxonomy_scientific_names(nullptr),
 	iteration_query_aligned(0)
 {
-	if (!config.iterate.empty()) {
+	if (config.iterate) {
 		if (config.multiprocessing)
 			throw std::runtime_error("Iterated search is not compatible with --multiprocessing.");
-		if(config.target_indexed)
+		if (config.target_indexed)
 			throw std::runtime_error("Iterated search is not compatible with --target-indexed.");
-		for (const string& s : config.iterate)
-			sensitivity.push_back(from_string<Sensitivity>(s));
+		sensitivity = iterated_sens.find(config.sensitivity)->second;
+	}
+	
+	sensitivity.push_back(config.sensitivity);
+
+	if (sensitivity.size() > 1) {
 		message_stream << "Running iterated search mode with sensitivity steps:";
 		for (Sensitivity s : sensitivity)
 			message_stream << ' ' << to_string(s);
 		message_stream << endl;
 		track_aligned_queries = true;
 	}
-	else
-		sensitivity.push_back(config.sensitivity);
+
 	if (!config.unaligned.empty() || !config.aligned_file.empty())
 		track_aligned_queries = true;
 
