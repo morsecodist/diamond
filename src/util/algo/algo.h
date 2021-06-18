@@ -15,11 +15,11 @@ struct Edge {
 std::vector<int> greedy_vertex_cover(std::vector<std::vector<int>> &neighbors);
 
 template<typename It, typename Out>
-size_t merge_capped(It i0, It i1, It j0, It j1, size_t cap, Out out) {
+size_t merge_capped(It i0, const It i1, It j0, const It j1, const size_t cap, Out out) {
 	const ptrdiff_t m = (ptrdiff_t)cap;
 	ptrdiff_t n = 0;
 	size_t count = 0;
-	while (n < cap) {
+	while (n < m) {
 		if (i0 == i1) {
 			const ptrdiff_t d = std::min(m - n, j1 - j0);
 			std::copy(j0, j0 + d, out);

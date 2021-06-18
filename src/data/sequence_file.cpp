@@ -363,9 +363,9 @@ size_t SequenceFile::oid(uint32_t dict_id, const size_t ref_block) const
 }
 
 SequenceFile::SequenceFile(Type type, Alphabet alphabet, Flags flags):
+	flags_(flags),
 	type_(type),
-	alphabet_(alphabet),
-	flags_(flags)
+	alphabet_(alphabet)
 {}
 
 void db_info() {

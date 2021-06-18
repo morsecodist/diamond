@@ -4,9 +4,9 @@
 template<typename _t = size_t>
 struct Partition
 {
-	Partition() : items(0), parts(0), size_(0), remainder(0)
+	Partition() : parts(0), items(0), size_(0), remainder(0)
 	{ }
-	Partition(_t items, _t parts) : items(items), parts(std::min(parts, items))
+	Partition(_t items, _t parts) : parts(std::min(parts, items)), items(items)
 	{
 		if (this->parts > 0) {
 			size_ = items / this->parts;

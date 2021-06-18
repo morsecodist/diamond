@@ -18,8 +18,8 @@ Config::Config() :
 	self(config.self),
 	track_aligned_queries(false),
 	db(nullptr),
-	out(nullptr),
 	query_file(nullptr),
+	out(nullptr),
 	taxon_nodes(nullptr),
 	taxonomy_scientific_names(nullptr),
 	iteration_query_aligned(0)
