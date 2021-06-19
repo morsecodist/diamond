@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../basic/value.h"
 #include "../util/io/serialize.h"
 
-#define HIT_KEEP_TARGET_ID
+// #define HIT_KEEP_TARGET_ID
 
 namespace Search {
 
