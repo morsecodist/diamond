@@ -27,6 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../basic/value.h"
 #include "../util/io/serialize.h"
 
+#define HIT_KEEP_TARGET_ID
+
 namespace Search {
 
 #pragma pack(1)
@@ -40,17 +42,23 @@ struct Hit
 	PackedLoc subject_;
 	SeedOffset seed_offset_;
 	uint16_t score_;
+#ifdef HIT_KEEP_TARGET_ID
+	uint32_t target_block_id;
+#endif
 
 	Hit() :
 		query_(),
 		subject_(),
 		seed_offset_()
 	{ }
-	Hit(unsigned query, PackedLoc subject, SeedOffset seed_offset, uint16_t score = 0) :
+	Hit(unsigned query, PackedLoc subject, SeedOffset seed_offset, uint16_t score = 0, uint32_t target_block_id = 0) :
 		query_(query),
 		subject_(subject),
 		seed_offset_(seed_offset),
 		score_(score)
+#ifdef HIT_KEEP_TARGET_ID
+		,target_block_id(target_block_id)
+#endif
 	{ }
 	bool operator==(const Hit& h) const {
 		return query_ == h.query_ && subject_ == h.subject_ && seed_offset_ == h.seed_offset_ && score_ == h.score_;
@@ -182,6 +190,9 @@ template<> struct TypeSerializer<Search::Hit> {
 			buf_->write_raw((const char*)&hit.subject_, 5);
 		else
 			buf_->write(hit.subject_.low);
+#ifdef HIT_KEEP_TARGET_ID
+		buf_->write(hit.target_block_id);
+#endif
 		return *this;
 	}
 
@@ -229,7 +240,13 @@ template<> struct TypeDeserializer<Search::Hit> {
 					f_->read(x);
 					subject_loc = x;
 				}
+#ifdef HIT_KEEP_TARGET_ID
+				uint32_t target_block_id;
+				f_->read(target_block_id);
+				*it = { query_id, subject_loc, seed_offset, score, target_block_id };
+#else
 				*it = { query_id, subject_loc, seed_offset, score };
+#endif
 			}
 		}
 	}

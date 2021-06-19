@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../basic/packed_loc.h"
 
 #pragma pack(1)
-// #define KEEP_TARGET_ID
+#define KEEP_TARGET_ID
 
 struct SeedArray
 {

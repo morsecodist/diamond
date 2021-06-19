@@ -119,7 +119,11 @@ static void search_query_offset(const SeedArray::Entry::Value& q,
 					if(config.global_ranking_targets)
 						*work_set.out = { query_id, (uint64_t)s[*(i + j)].block_id, seed_offset, (uint16_t)scores[j] };
 					else
+#ifdef HIT_KEEP_TARGET_ID
+						*work_set.out = { query_id, (uint64_t)s[*(i + j)].pos, seed_offset, (uint16_t)scores[j], s[*(i + j)].block_id };
+#else
 						*work_set.out = { query_id, (uint64_t)s[*(i + j)].pos, seed_offset, (uint16_t)scores[j] };
+#endif
 #else
 					*work_set.out = { query_id, (uint64_t)s[*(i + j)], seed_offset, (uint16_t)scores[j] };
 #endif

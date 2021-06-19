@@ -36,9 +36,17 @@ void load_hits(Search::Hit* begin, Search::Hit* end, FlatArray<SeedHit> &hits, v
 	unsigned target_len;
 	uint32_t target = UINT32_MAX;
 	uint16_t score = 0;
+#ifdef HIT_KEEP_TARGET_ID
+	if(true) {
+#else
 	if (std::log2(total_subjects) * (end - begin) < total_subjects / 10) {
+#endif
 		for (Search::Hit* i = begin; i < end; ++i) {
+#ifdef HIT_KEEP_TARGET_ID
+			std::pair<size_t, size_t> l{ i->target_block_id, (size_t)i->subject_ - ref_seqs.position(i->target_block_id, 0) };
+#else
 			std::pair<size_t, size_t> l = ref_seqs.local_position((uint64_t)i->subject_);
+#endif
 			const uint32_t t = (uint32_t)l.first;
 			if (t != target) {
 				if (target != UINT32_MAX) {
