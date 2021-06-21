@@ -26,7 +26,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../util/queue.h"
 #include "../output/output.h"
 #include "legacy/query_mapper.h"
-#include "../util/merge_sort.h"
+#if _MSC_FULL_VER == 191627042
+#include "../util/algo/merge_sort.h"
+#endif
 #include "extend.h"
 #include "../util/algo/radix_sort.h"
 #include "target.h"

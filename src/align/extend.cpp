@@ -35,6 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "global_ranking/global_ranking.h"
 #include "../basic/masking.h"
 #include "../search/hit.h"
+#include "load_hits.h"
 
 using std::vector;
 using std::list;
@@ -238,7 +239,7 @@ vector<Match> extend(size_t query_id, Search::Hit* begin, Search::Hit* end, cons
 	thread_local FlatArray<SeedHit> seed_hits;
 	thread_local vector<uint32_t> target_block_ids;
 	thread_local vector<TargetScore> target_scores;
-	load_hits(begin, end, seed_hits, target_block_ids, target_scores, (unsigned)cfg.query->seqs()[query_id * align_mode.query_contexts].length(), cfg.target->seqs());
+	load_hits(begin, end, seed_hits, target_block_ids, target_scores, cfg.target->seqs());
 	stat.inc(Statistics::TARGET_HITS0, target_block_ids.size());
 	stat.inc(Statistics::TIME_LOAD_HIT_TARGETS, timer.microseconds());
 	timer.finish();

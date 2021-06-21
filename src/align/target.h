@@ -132,7 +132,6 @@ struct TargetScore {
 	}
 };
 
-void load_hits(Search::Hit* begin, Search::Hit* end, FlatArray<SeedHit> &hits, std::vector<uint32_t> &target_block_ids, std::vector<TargetScore> &target_scores, unsigned query_len, const SequenceSet& ref_seqs);
 void culling(std::vector<Target>& targets, int source_query_len, const char* query_title, const Sequence& query_seq, size_t min_keep, const Block& target_block);
 bool append_hits(std::vector<Target>& targets, std::vector<Target>::const_iterator begin, std::vector<Target>::const_iterator end, size_t chunk_size, int source_query_len, const char* query_title, const Sequence& query_seq, const Block& target_block);
 std::vector<WorkTarget> gapped_filter(const Sequence *query, const Bias_correction* query_cbs, std::vector<WorkTarget>& targets, Statistics &stat);

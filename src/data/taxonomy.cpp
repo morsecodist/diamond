@@ -25,7 +25,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "taxonomy.h"
 #include "../util/io/text_input_file.h"
 #include "../basic/config.h"
-#include "../util/merge_sort.h"
 #include "../util/log_stream.h"
 #include "reference.h"
 #include "../util/string/string.h"

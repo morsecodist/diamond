@@ -183,7 +183,7 @@ void extend(Search::Config& cfg) {
 	const BitVector filter = db_filter(*cfg.ranking_table, cfg.db->sequence_count());
 	timer.go("Loading target sequences");
 	cfg.db->set_seqinfo_ptr(0);
-	cfg.target.reset(cfg.db->load_seqs(SIZE_MAX, false, &filter, true));
+	cfg.target.reset(cfg.db->load_seqs(SIZE_MAX, cfg.db->load_titles() == SequenceFile::LoadTitles::SINGLE_PASS, &filter, true));
 	TargetMap db2block_id;
 	const size_t db_count = cfg.target->seqs().size();
 	db2block_id.reserve(db_count);

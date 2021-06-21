@@ -24,7 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace Extension {
 
-void load_hits(Search::Hit* begin, Search::Hit* end, FlatArray<SeedHit> &hits, vector<uint32_t> &target_block_ids, vector<TargetScore> &target_scores, unsigned query_len, const SequenceSet& ref_seqs) {
+template<typename It>
+void load_hits(It begin, It end, FlatArray<SeedHit> &hits, vector<uint32_t> &target_block_ids, vector<TargetScore> &target_scores, const SequenceSet& ref_seqs) {
 	hits.clear();
 	hits.reserve(end - begin);
 	target_block_ids.clear();
@@ -41,7 +42,7 @@ void load_hits(Search::Hit* begin, Search::Hit* end, FlatArray<SeedHit> &hits, v
 #else
 	if (std::log2(total_subjects) * (end - begin) < total_subjects / 10) {
 #endif
-		for (Search::Hit* i = begin; i < end; ++i) {
+		for (auto i = begin; i < end; ++i) {
 #ifdef HIT_KEEP_TARGET_ID
 			std::pair<size_t, size_t> l{ i->target_block_id, (size_t)i->subject_ - ref_seqs.position(i->target_block_id, 0) };
 #else
@@ -68,7 +69,7 @@ void load_hits(Search::Hit* begin, Search::Hit* end, FlatArray<SeedHit> &hits, v
 	}
 	else {
 		typename vector<size_t>::const_iterator limit_begin = ref_seqs.limits_begin(), it = limit_begin;
-		for (const Search::Hit* i = begin; i < end; ++i) {
+		for (auto i = begin; i < end; ++i) {
 			const size_t subject_offset = (uint64_t)i->subject_;
 			while (*it <= subject_offset) ++it;
 			uint32_t t = (uint32_t)(it - limit_begin) - 1;

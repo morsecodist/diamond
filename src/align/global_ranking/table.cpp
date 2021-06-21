@@ -26,6 +26,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../../util/util.h"
 #include "../../util/algo/algo.h"
 #include "../../data/seed_array.h"
+#if _MSC_FULL_VER == 191627042
+#include "../../util/algo/merge_sort.h"
+#endif
+#include "../load_hits.h"
+#include "../dp/ungapped.h"
 
 using std::endl;
 using std::thread;
@@ -35,10 +40,8 @@ using SeedHits = Search::Config::RankingBuffer;
 
 namespace Extension { namespace GlobalRanking {
 
-static void update_query(SeedHits::Iterator begin, SeedHits::Iterator end, vector<Hit>& hits, vector<Hit>& merged, size_t& merged_count, Search::Config& cfg) {
-	const size_t N = config.global_ranking_targets;
+static void get_query_hits(SeedHits::Iterator begin, SeedHits::Iterator end, vector<Hit>& hits, Search::Config& cfg) {
 	hits.clear();
-	merged.clear();
 	const SequenceSet& target_seqs = cfg.target->seqs();
 #ifdef KEEP_TARGET_ID
 	auto get_target = [](const Search::Hit& hit) { return (uint64_t)hit.subject_; };
@@ -78,10 +81,37 @@ static void update_query(SeedHits::Iterator begin, SeedHits::Iterator end, vecto
 	}
 #endif
 #endif
+}
+
+static int target_score(const FlatArray<Extension::SeedHit>::ConstIterator begin, const FlatArray<Extension::SeedHit>::ConstIterator end, const Sequence& query_seq, const Sequence& target_seq) {
+	int score = 0;
+	for (auto i = begin; i != end; ++i) {
+		const Diagonal_segment d = xdrop_ungapped(query_seq, target_seq, i->i, i->j);
+		score = std::max(score, d.score);
+	}
+	return score;
+}
+
+static void get_query_hits_reextend(SeedHits::Iterator begin, SeedHits::Iterator end, vector<Hit>& hits, Search::Config& cfg) {
+	const Sequence query_seq = cfg.query->seqs()[begin->query_];
+	const SequenceSet& target_seqs = cfg.target->seqs();
+
+	FlatArray<Extension::SeedHit> seed_hits;
+	vector<uint32_t> target_block_ids;
+	vector<Extension::TargetScore> scores;
+	Extension::load_hits(begin, end, seed_hits, target_block_ids, scores, cfg.target->seqs());
+	for (size_t i = 0; i < target_block_ids.size(); ++i) {
+		const int score = target_score(seed_hits.cbegin(i), seed_hits.cend(i), query_seq, target_seqs[target_block_ids[i]]);
+		hits.emplace_back((uint32_t)cfg.target->block_id2oid(target_block_ids[i]), score);
+	}
+}
+
+static void merge_hits(const size_t query, vector<Hit>& hits, vector<Hit>& merged, Search::Config& cfg, size_t& merged_count) {
+	const size_t N = config.global_ranking_targets;
 	std::sort(hits.begin(), hits.end());
-	const size_t q = begin->query_;
-	vector<Hit>::iterator table_begin = cfg.ranking_table->begin() + q * N, table_end = table_begin + N;
+	vector<Hit>::iterator table_begin = cfg.ranking_table->begin() + query * N, table_end = table_begin + N;
 	while (table_end > table_begin && (table_end - 1)->score == 0) --table_end;
+	merged.clear();
 	merged_count += Util::Algo::merge_capped(table_begin, table_end, hits.begin(), hits.end(), N, std::back_inserter(merged));
 	std::copy(merged.begin(), merged.end(), table_begin);
 }
@@ -92,15 +122,21 @@ void update_table(Search::Config& cfg) {
 	if (hits.size() == 0)
 		return;
 	task_timer timer("Sorting seed hits");
+#if _MSC_FULL_VER == 191627042
+	merge_sort(hits.begin(), hits.end(), config.threads_, Search::Hit::CmpQueryTarget());
+#else
 	ips4o::parallel::sort(hits.begin(), hits.end(), Search::Hit::CmpQueryTarget(), config.threads_);
+#endif
 	timer.go("Processing seed hits");
 	std::atomic_size_t merged_count(0);
 	auto worker = [&cfg, &merged_count](SeedHits::Iterator begin, SeedHits::Iterator end) {
 		auto it = merge_keys(begin, end, ::Search::Hit::Query());
 		size_t n = 0;
 		while (it.good()) {
+			const size_t query = it.begin()->query_;
 			vector<Hit> hits, merged;
-			update_query(it.begin(), it.end(), hits, merged, n, cfg);
+			get_query_hits_reextend(it.begin(), it.end(), hits, cfg);
+			merge_hits(query, hits, merged, cfg, n);
 			++it;
 		}
 		merged_count += n;

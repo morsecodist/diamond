@@ -241,7 +241,6 @@ set(OBJECTS
   src/lib/alp/sls_pvalues.cpp
   src/align/global_ranking/global_ranking.cpp
   src/align/global_ranking/extend.cpp
-  src/align/load_hits.cpp
   src/tools/rocid.cpp
   src/lib/blast/blast_seg.cpp
   src/lib/blast/blast_filter.cpp
@@ -341,9 +340,6 @@ endif()
 
 if(WITH_ZSTD OR BLAST_INCLUDE_DIR)
   find_path(${ZSTD_INCLUDE_DIR} NAMES zstd.h PATHS ${ZSTD_INCLUDE_DIR})
-  if(ZSTD_INCLUDE_DIR STREQUAL "ZSTD_INCLUDE_DIR-NOTFOUND")
-    message(FATAL_ERROR "Unable to find ZSTD library")
-  endif()
   find_library(ZSTD_LIBRARY NAMES libzstd.a libzstd_static)
   target_include_directories(diamond PRIVATE "${ZSTD_INCLUDE_DIR}")
   target_link_libraries(diamond ${ZSTD_LIBRARY})

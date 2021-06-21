@@ -75,6 +75,14 @@ struct FlatArray {
 		return data_.cbegin() + limits_[i + 1];
 	}
 
+	ConstIterator cbegin(size_t i) const {
+		return data_.cbegin() + limits_[i];
+	}
+
+	ConstIterator cend(size_t i) const {
+		return data_.cbegin() + limits_[i + 1];
+	}
+
 	Iterator begin(size_t i) {
 		return data_.begin() + limits_[i];
 	}
