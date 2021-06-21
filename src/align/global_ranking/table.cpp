@@ -100,6 +100,7 @@ static void get_query_hits_reextend(SeedHits::Iterator begin, SeedHits::Iterator
 	const Sequence query_seq = cfg.query->seqs()[begin->query_];
 	const SequenceSet& target_seqs = cfg.target->seqs();
 
+	hits.clear();
 	FlatArray<Extension::SeedHit> seed_hits;
 	vector<uint32_t> target_block_ids;
 	vector<Extension::TargetScore> scores;
