@@ -158,7 +158,7 @@ protected:
 
 private:
 
-	static const uint32_t DICT_EMPTY = UINT32_MAX;
+	static constexpr uint32_t DICT_EMPTY = UINT32_MAX;
 
 	virtual void write_dict_entry(size_t block, size_t oid, size_t len, const char* id, const Letter* seq) = 0;
 	virtual bool load_dict_entry(InputFile& f, const size_t ref_block) = 0;
