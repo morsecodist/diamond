@@ -413,9 +413,13 @@ struct KeyMergeIterator {
 	KeyMergeIterator(const It& begin, const It& end, const Key& key) :
 		end_(end),
 		key_end_(begin),
-		get_key_(key),
-		next_key_(key(*begin))
+		get_key_(key)
 	{
+		if (begin == end) {
+			begin_ = begin;
+			return;
+		}
+		next_key_ = key(*begin);
 		assert(begin != end);
 		this->operator++();
 	}
