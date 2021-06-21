@@ -70,6 +70,16 @@ struct Hit {
 			return h.oid;
 		}
 	};
+	struct CmpOidScore {
+		bool operator()(const Hit&x, const Hit& y) const {
+			return x.oid < y.oid || (x.oid == y.oid && x.score > y.score);
+		}
+	};
+	struct CmpOid {
+		bool operator()(const Hit&x, const Hit& y) const {
+			return x.oid == y.oid;
+		}
+	};
 };
 
 }}

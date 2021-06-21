@@ -113,12 +113,18 @@ static void get_query_hits_reextend(SeedHits::Iterator begin, SeedHits::Iterator
 
 static void merge_hits(const size_t query, vector<Hit>& hits, vector<Hit>& merged, Search::Config& cfg, size_t& merged_count) {
 	const size_t N = config.global_ranking_targets;
-	std::sort(hits.begin(), hits.end());
+	//std::sort(hits.begin(), hits.end());
 	vector<Hit>::iterator table_begin = cfg.ranking_table->begin() + query * N, table_end = table_begin + N;
 	while (table_end > table_begin && (table_end - 1)->score == 0) --table_end;
+	hits.insert(hits.end(), table_begin, table_end);
+	std::sort(hits.begin(), hits.end(), Hit::CmpOidScore());
 	merged.clear();
-	merged_count += Util::Algo::merge_capped(table_begin, table_end, hits.begin(), hits.end(), N, std::back_inserter(merged));
-	std::copy(merged.begin(), merged.end(), table_begin);
+	std::unique_copy(hits.begin(), hits.end(), std::back_inserter(merged), Hit::CmpOid());
+	std::sort(merged.begin(), merged.end());
+	std::copy(merged.begin(), merged.begin() + std::min(N, merged.size()), table_begin);
+	//merged.clear();
+	//merged_count += Util::Algo::merge_capped(table_begin, table_end, hits.begin(), hits.end(), N, std::back_inserter(merged));
+	//std::copy(merged.begin(), merged.end(), table_begin);
 }
 
 void update_table(Search::Config& cfg) {
