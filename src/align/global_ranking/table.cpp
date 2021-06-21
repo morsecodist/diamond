@@ -83,10 +83,14 @@ static void get_query_hits(SeedHits::Iterator begin, SeedHits::Iterator end, vec
 #endif
 }
 
-static int target_score(const FlatArray<Extension::SeedHit>::ConstIterator begin, const FlatArray<Extension::SeedHit>::ConstIterator end, const Sequence& query_seq, const Sequence& target_seq) {
-	int score = 0;
-	for (auto i = begin; i != end; ++i) {
-		const Diagonal_segment d = xdrop_ungapped(query_seq, target_seq, i->i, i->j);
+static int target_score(const FlatArray<Extension::SeedHit>::Iterator begin, const FlatArray<Extension::SeedHit>::Iterator end, const Sequence& query_seq, const Sequence& target_seq) {
+	std::sort(begin, end);
+	Diagonal_segment d = xdrop_ungapped(query_seq, target_seq, begin->i, begin->j);
+	int score = d.score;
+	for (auto i = begin + 1; i != end; ++i) {
+		if (d.diag() == i->diag() && d.subject_end() >= i->j)
+			continue;
+		d = xdrop_ungapped(query_seq, target_seq, i->i, i->j);
 		score = std::max(score, d.score);
 	}
 	return score;
@@ -101,7 +105,7 @@ static void get_query_hits_reextend(SeedHits::Iterator begin, SeedHits::Iterator
 	vector<Extension::TargetScore> scores;
 	Extension::load_hits(begin, end, seed_hits, target_block_ids, scores, cfg.target->seqs());
 	for (size_t i = 0; i < target_block_ids.size(); ++i) {
-		const int score = target_score(seed_hits.cbegin(i), seed_hits.cend(i), query_seq, target_seqs[target_block_ids[i]]);
+		const int score = target_score(seed_hits.begin(i), seed_hits.end(i), query_seq, target_seqs[target_block_ids[i]]);
 		hits.emplace_back((uint32_t)cfg.target->block_id2oid(target_block_ids[i]), score);
 	}
 }
