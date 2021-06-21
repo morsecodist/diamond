@@ -103,6 +103,11 @@ static void search_query_offset(const SeedArray::Entry::Value& q,
 			subjects[j] = ref_seqs.data(s[*(i + j)]) - window_left;
 		DP::window_ungapped_best(query_clipped.data(), subjects, n, window_clipped, scores);
 
+		if (config.global_ranking_targets)
+			for (size_t j = 0; j < n; ++j)
+				if (scores[j] == UCHAR_MAX)
+					scores[j] = ::ungapped_window(query_clipped.data(), subjects[j], window_clipped);
+
 		for (size_t j = 0; j < n; ++j) {
 			if (scores[j] > score_cutoff) {
 #ifdef UNGAPPED_SPOUGE

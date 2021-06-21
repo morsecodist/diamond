@@ -14,6 +14,7 @@
 - Added support for reading zstd-compressed input files (auto-detected) and writing
   zstd-compressed output files (option `--compress zstd`) (requires compilation
   using `cmake -DWITH_ZSTD=ON`).
+- Compilation with BLAST database support requires the zstd library.
 
 [2.0.9]
 - Reduced the memory use of database building with taxonomy mapping.
