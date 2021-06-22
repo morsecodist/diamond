@@ -412,13 +412,12 @@ struct KeyMergeIterator {
 	typedef typename std::result_of<Key(const typename It::value_type&)>::type KeyType;
 	KeyMergeIterator(const It& begin, const It& end, const Key& key) :
 		end_(end),
+		begin_(begin),
 		key_end_(begin),
 		get_key_(key)
 	{
-		if (begin == end) {
-			begin_ = begin;
+		if (begin == end)
 			return;
-		}
 		next_key_ = key(*begin);
 		assert(begin != end);
 		this->operator++();
@@ -426,6 +425,8 @@ struct KeyMergeIterator {
 	void operator++()
 	{
 		begin_ = key_end_;
+		if (begin_ == end_)
+			return;
 		key_ = next_key_;
 		++key_end_;
 		while (key_end_ != end_ && (next_key_ = get_key_(*key_end_)) == key_) ++key_end_;

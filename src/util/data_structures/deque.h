@@ -233,6 +233,8 @@ struct AsyncWriter : public Writer<T> {
 	{}
 
 	virtual AsyncWriter& operator=(const T& v) override {
+		if (SerializerTraits<T>::is_sentry(v))
+			return *this;
 		buf_.push_back(v);
 		if (buf_.size() >= BUF_SIZE) {
 			dst_->push_back(buf_.begin(), buf_.end());
