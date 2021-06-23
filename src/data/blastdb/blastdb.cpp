@@ -374,6 +374,7 @@ const char* BlastDB::ACCESSION_FIELD = "#accession*";
 
 void BlastDB::init_random_access(const size_t query_block, const size_t ref_block, bool dictionary)
 {
+	reopen();
 	if(dictionary)
 		load_dictionary(query_block, ref_block);
 	if (flag_any(flags_, Flags::FULL_TITLES))

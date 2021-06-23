@@ -114,11 +114,13 @@ void run_ref_chunk(SequenceFile &db_file,
 	}
 
 	const bool daa = *output_format == Output_format::daa;
-	if((blocked_processing || daa || cfg.iterated()) && !config.global_ranking_targets) {
+	const bool persist_dict = daa || cfg.iterated();
+	if(((blocked_processing || daa) && !config.global_ranking_targets) || cfg.iterated()) {
 		timer.go("Initializing dictionary");
 		if (config.multiprocessing || (current_ref_block == 0 && (!daa || query_chunk == 0) && query_iteration == 0))
 			db_file.init_dict(query_chunk, current_ref_block);
-		db_file.init_dict_block(current_ref_block, ref_seqs.size(), daa || cfg.iterated());
+		if(!config.global_ranking_targets)
+			db_file.init_dict_block(current_ref_block, ref_seqs.size(), persist_dict);
 	}
 
 	timer.go("Initializing temporary storage");
@@ -165,7 +167,8 @@ void run_ref_chunk(SequenceFile &db_file,
 	}
 
 	Consumer* out;
-	if (blocked_processing || cfg.iterated()) {
+	const bool temp_output = (blocked_processing || cfg.iterated()) && !config.global_ranking_targets;
+	if (temp_output) {
 		timer.go("Opening temporary output file");
 		if (config.multiprocessing) {
 			const string file_name = get_ref_block_tmpfile_name(query_chunk, current_ref_block);
@@ -194,12 +197,12 @@ void run_ref_chunk(SequenceFile &db_file,
 		cfg.seed_hit_buf.reset();
 	}	
 
-	if (blocked_processing || cfg.iterated())
+	if (temp_output)
 		IntermediateRecord::finish_file(*out);
 
 	timer.go("Deallocating reference");
 	cfg.target.reset();
-	cfg.db->close_dict_block();
+	cfg.db->close_dict_block(persist_dict);
 	timer.finish();
 }
 
@@ -246,6 +249,11 @@ void run_query_iteration(const unsigned query_chunk,
 		verbose_stream << "Seed frequency SD: " << options.freq_sd << endl;
 		verbose_stream << "Shape configuration: " << ::shapes << endl;
 	}	
+
+	if (config.global_ranking_targets) {
+		timer.go("Allocating global ranking table");
+		options.ranking_table.reset(new Search::Config::RankingTable(query_seqs.size() * config.global_ranking_targets / align_mode.query_contexts));
+	}
 
 	char* query_buffer = nullptr;
 	if (!config.swipe_all && !config.target_indexed) {
@@ -316,6 +324,20 @@ void run_query_iteration(const unsigned query_chunk,
 	query_seeds_hashed.reset();
 	options.query_skip.reset();
 	delete Extension::memory;
+
+	if (config.global_ranking_targets) {
+		timer.go("Computing alignments");
+		Consumer* out;
+		if (options.iterated()) {
+			tmp_file.push_back(new TempFile());
+			out = &tmp_file.back();
+		}
+		else {
+			out = &master_out;
+		}
+		Extension::GlobalRanking::extend(options, *out);
+		options.ranking_table.reset();
+	}
 }
 
 void run_query_chunk(const unsigned query_chunk,
@@ -333,11 +355,6 @@ void run_query_chunk(const unsigned query_chunk,
 	options.db_seqs = db_file.sequence_count();
 	options.db_letters = db_file.letters();
 	options.ref_blocks = db_file.total_blocks();
-	
-	if (config.global_ranking_targets) {
-		timer.go("Allocating global ranking table");
-		options.ranking_table.reset(new Search::Config::RankingTable(query_seqs.size() * config.global_ranking_targets));
-	}
 
 	PtrVector<TempFile> tmp_file;
 	if (options.track_aligned_queries) {
@@ -422,9 +439,7 @@ void run_query_chunk(const unsigned query_chunk,
 			}
 			P->delete_stack(stack_join_todo);
 		} else {
-			if (config.global_ranking_targets)
-				Extension::GlobalRanking::extend(options);
-			else
+			if (!tmp_file.empty())
 				join_blocks(current_ref_block, master_out, tmp_file, options, db_file);
 		}
 	}
@@ -440,7 +455,6 @@ void run_query_chunk(const unsigned query_chunk,
 
 	timer.go("Deallocating queries");
 	options.query.reset();
-	options.ranking_table.reset();
 }
 
 void master_thread(task_timer &total_timer, Config &options)

@@ -126,12 +126,12 @@ void extend(SequenceFile& db, TempFile& merged_query_list, BitVector& ranking_db
 	cfg.target.reset();
 }
 
-void extend_query(size_t query_block_id, const TargetMap& db2block_id, const Search::Config& cfg, Statistics& stats) {
+void extend_query(size_t source_query_block_id, const TargetMap& db2block_id, Search::Config& cfg, Statistics& stats) {
 	const size_t N = config.global_ranking_targets;
 	thread_local vector<uint32_t> target_block_ids;
 	thread_local vector<TargetScore> target_scores;
 	thread_local FlatArray<SeedHit> seed_hits;
-	vector<Hit>::const_iterator table_begin = cfg.ranking_table->cbegin() + query_block_id * N, table_end = table_begin + N;
+	vector<Hit>::const_iterator table_begin = cfg.ranking_table->cbegin() + source_query_block_id * N, table_end = table_begin + N;
 	while (table_end > table_begin && (table_end - 1)->score == 0) --table_end;
 	const size_t n = table_end - table_begin;
 	TextBuffer* buf = nullptr;
@@ -146,13 +146,13 @@ void extend_query(size_t query_block_id, const TargetMap& db2block_id, const Sea
 			target_block_ids.push_back(db2block_id.at(table_begin[i].oid));
 			target_scores.push_back({ (uint32_t)i, table_begin[i].score });
 			seed_hits.next();
-			seed_hits.push_back({ 0,0,table_begin[i].score,0 });
+			seed_hits.push_back({ 0,0,table_begin[i].score, table_begin[i].context });
 		}
 
 		int flags = DP::FULL_MATRIX;
 
 		vector<Match> matches = Extension::extend(
-			query_block_id,
+			source_query_block_id,
 			cfg,
 			stats,
 			flags,
@@ -160,13 +160,17 @@ void extend_query(size_t query_block_id, const TargetMap& db2block_id, const Sea
 			target_block_ids,
 			target_scores);
 
-		buf = Extension::generate_output(matches, query_block_id, stats, cfg);
-		if (!matches.empty() && (!config.unaligned.empty() || !config.aligned_file.empty())) {
+		buf = cfg.iterated() ? Extension::generate_intermediate_output(matches, source_query_block_id, cfg) : Extension::generate_output(matches, source_query_block_id, stats, cfg);
+
+		if (!matches.empty() && cfg.track_aligned_queries) {
 			std::lock_guard<std::mutex> lock(query_aligned_mtx);
-			query_aligned[query_block_id] = true;
+			if (!query_aligned[source_query_block_id]) {
+				query_aligned[source_query_block_id] = true;
+				++cfg.iteration_query_aligned;
+			}
 		}
 	}
-	OutputSink::get().push(query_block_id, buf);
+	OutputSink::get().push(source_query_block_id, buf);
 }
 
 
@@ -178,7 +182,7 @@ static BitVector db_filter(const Search::Config::RankingTable& table, size_t db_
 	return v;
 }
 
-void extend(Search::Config& cfg) {
+void extend(Search::Config& cfg, Consumer& out) {
 	task_timer timer("Listing target sequences");
 	const BitVector filter = db_filter(*cfg.ranking_table, cfg.db->sequence_count());
 	timer.go("Loading target sequences");
@@ -192,19 +196,28 @@ void extend(Search::Config& cfg) {
 	timer.finish();
 	verbose_stream << "#Ranked database sequences: " << db_count << endl;
 
-	if (config.masking == 1) {
+	if (config.masking == 1 || config.target_seg == 1) {
 		timer.go("Masking reference");
-		size_t n = mask_seqs(cfg.target->seqs(), Masking::get());
+		size_t n;
+		if (config.target_seg == 1)
+			n = mask_seqs(cfg.target->seqs(), Masking::get(), true, Masking::Algo::SEG);
+		else
+			n = mask_seqs(cfg.target->seqs(), Masking::get());
 		timer.finish();
 		log_stream << "Masked letters: " << n << endl;
 	}
 
-	cfg.db->init_random_access(current_query_chunk, 0);
+	if (cfg.iterated()) {
+		current_ref_block = 0;
+		cfg.db->init_dict_block(0, db_count, true);
+	}
+	else
+		cfg.db->init_random_access(current_query_chunk, 0);
 
 	timer.go("Computing alignments");
-	OutputSink::instance.reset(new OutputSink(0, cfg.out.get()));
+	OutputSink::instance.reset(new OutputSink(0, &out));
 	std::atomic_size_t next_query(0);
-	const size_t query_count = cfg.query->seqs().size();
+	const size_t query_count = cfg.query->seqs().size() / align_mode.query_contexts;
 	auto worker = [&next_query, &db2block_id, &cfg, query_count] {
 		try {
 			Statistics stats;
@@ -225,7 +238,12 @@ void extend(Search::Config& cfg) {
 
 	timer.go("Deallocating memory");
 	cfg.target.reset();
-	cfg.db->end_random_access();
+	if (!cfg.iterated())
+		cfg.db->end_random_access();
+	else {
+		cfg.db->close_dict_block(true);
+		IntermediateRecord::finish_file(out);
+	}
 }
 
 }}

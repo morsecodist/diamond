@@ -76,28 +76,35 @@ static void get_query_hits(SeedHits::Iterator begin, SeedHits::Iterator end, vec
 		uint16_t score = 0;
 		for (SeedHits::Iterator i = it.begin(); i != it.end(); ++i)
 			score = std::max(score, i->score_);
-		hits.emplace_back((uint32_t)cfg.target->block_id2oid(it.key()), score);
+		hits.emplace_back((uint32_t)cfg.target->block_id2oid(it.key()), score, 0);
 		++it;
 	}
 #endif
 #endif
 }
 
-static int target_score(const FlatArray<Extension::SeedHit>::Iterator begin, const FlatArray<Extension::SeedHit>::Iterator end, const Sequence& query_seq, const Sequence& target_seq) {
+static pair<int, unsigned> target_score(const FlatArray<Extension::SeedHit>::Iterator begin, const FlatArray<Extension::SeedHit>::Iterator end, const Sequence* query_seq, const Sequence& target_seq) {
 	std::sort(begin, end);
-	Diagonal_segment d = xdrop_ungapped(query_seq, target_seq, begin->i, begin->j);
+	Diagonal_segment d = xdrop_ungapped(query_seq[begin->frame], target_seq, begin->i, begin->j);
 	int score = d.score;
+	unsigned context = begin->frame;
 	for (auto i = begin + 1; i != end; ++i) {
 		if (d.diag() == i->diag() && d.subject_end() >= i->j)
 			continue;
-		d = xdrop_ungapped(query_seq, target_seq, i->i, i->j);
-		score = std::max(score, d.score);
+		d = xdrop_ungapped(query_seq[i->frame], target_seq, i->i, i->j);
+		if (d.score > score) {
+			score = d.score;
+			context = i->frame;
+		}
 	}
-	return score;
+	return { score,context };
 }
 
-static void get_query_hits_reextend(SeedHits::Iterator begin, SeedHits::Iterator end, vector<Hit>& hits, Search::Config& cfg) {
-	const Sequence query_seq = cfg.query->seqs()[begin->query_];
+static void get_query_hits_reextend(size_t source_query_block_id, SeedHits::Iterator begin, SeedHits::Iterator end, vector<Hit>& hits, Search::Config& cfg) {
+	const unsigned contexts = align_mode.query_contexts;
+	vector<Sequence> query_seq;
+	for (unsigned i = 0; i < contexts; ++i)
+		query_seq.push_back(cfg.query->seqs()[source_query_block_id * contexts + i]);
 	const SequenceSet& target_seqs = cfg.target->seqs();
 
 	hits.clear();
@@ -106,8 +113,8 @@ static void get_query_hits_reextend(SeedHits::Iterator begin, SeedHits::Iterator
 	vector<Extension::TargetScore> scores;
 	Extension::load_hits(begin, end, seed_hits, target_block_ids, scores, cfg.target->seqs());
 	for (size_t i = 0; i < target_block_ids.size(); ++i) {
-		const int score = target_score(seed_hits.begin(i), seed_hits.end(i), query_seq, target_seqs[target_block_ids[i]]);
-		hits.emplace_back((uint32_t)cfg.target->block_id2oid(target_block_ids[i]), score);
+		const auto score = target_score(seed_hits.begin(i), seed_hits.end(i), query_seq.data(), target_seqs[target_block_ids[i]]);
+		hits.emplace_back((uint32_t)cfg.target->block_id2oid(target_block_ids[i]), score.first, score.second);
 	}
 }
 
@@ -141,19 +148,19 @@ void update_table(Search::Config& cfg) {
 	timer.go("Processing seed hits");
 	std::atomic_size_t merged_count(0);
 	auto worker = [&cfg, &merged_count](SeedHits::Iterator begin, SeedHits::Iterator end) {
-		auto it = merge_keys(begin, end, ::Search::Hit::Query());
+		auto it = merge_keys(begin, end, ::Search::Hit::SourceQuery{ align_mode.query_contexts });
 		size_t n = 0;
 		while (it.good()) {
-			const size_t query = it.begin()->query_;
+			const size_t query = it.begin()->query_ / align_mode.query_contexts;
 			vector<Hit> hits, merged;
-			get_query_hits_reextend(it.begin(), it.end(), hits, cfg);
+			get_query_hits_reextend(query, it.begin(), it.end(), hits, cfg);
 			merge_hits(query, hits, merged, cfg, n);
 			++it;
 		}
 		merged_count += n;
 	};
 	vector<thread> threads;
-	auto p = Util::Algo::partition_table(hits.begin(), hits.end(), config.threads_, ::Search::Hit::Query());
+	auto p = Util::Algo::partition_table(hits.begin(), hits.end(), config.threads_, ::Search::Hit::SourceQuery{ align_mode.query_contexts });
 	for (size_t i = 0; i < p.size() - 1; ++i)
 		threads.emplace_back(worker, p[i], p[i + 1]);
 	for (thread& t : threads)

@@ -1,6 +1,6 @@
 /****
 DIAMOND protein aligner
-Copyright (C) 2013-2020 Max Planck Society for the Advancement of Science e.V.
+Copyright (C) 2013-2021 Max Planck Society for the Advancement of Science e.V.
                         Benjamin Buchfink
                         Eberhard Karls Universitaet Tuebingen
 						
@@ -170,7 +170,8 @@ struct BlockJoiner
 			it.push_back(buf[i].begin());
 			JoinRecord::push_next(i, std::numeric_limits<unsigned>::max(), it.back(), records, db);
 		}
-		std::make_heap(records.begin(), records.end(), (config.toppercent == 100.0 && config.global_ranking_targets == 0) ? JoinRecord::cmp_evalue : JoinRecord::cmp_score);
+		//std::make_heap(records.begin(), records.end(), (config.toppercent == 100.0 && config.global_ranking_targets == 0) ? JoinRecord::cmp_evalue : JoinRecord::cmp_score);
+		std::make_heap(records.begin(), records.end(), (config.toppercent == 100.0) ? JoinRecord::cmp_evalue : JoinRecord::cmp_score);
 	}
 	bool get(vector<IntermediateRecord> &target_hsp, unsigned & block_idx, size_t& target_oid, const SequenceFile& db)
 	{
@@ -182,7 +183,8 @@ struct BlockJoiner
 		target_oid = first.info_.target_oid;
 		const unsigned subject = first.info_.target_dict_id;
 		target_hsp.clear();
-		const auto pred = (config.toppercent == 100.0 && config.global_ranking_targets == 0) ? JoinRecord::cmp_evalue : JoinRecord::cmp_score;
+		//const auto pred = (config.toppercent == 100.0 && config.global_ranking_targets == 0) ? JoinRecord::cmp_evalue : JoinRecord::cmp_score;
+		const auto pred = (config.toppercent == 100.0) ? JoinRecord::cmp_evalue : JoinRecord::cmp_score;
 		do {
 			const JoinRecord &next = records.front();
 			if (next.block_ != block || next.info_.target_dict_id != subject)
@@ -207,8 +209,7 @@ void join_query(
 	const char *query_name,
 	unsigned query_source_len,
 	Output_format &f,
-	const Search::Config &cfg,
-	BitVector& ranking_db_filter)
+	const Search::Config &cfg)
 {
 	TranslatedSequence query_seq(cfg.query->translated(query));
 	BlockJoiner joiner(buf, *cfg.db);
@@ -232,8 +233,8 @@ void join_query(
 		for (vector<IntermediateRecord>::const_iterator i = target_hsp.begin(); i != target_hsp.end(); ++i, ++hsp_num) {
 			if (f == Output_format::daa)
 				write_daa_record(out, *i);
-			else if (config.global_ranking_targets > 0)
-				Extension::GlobalRanking::write_merged_query_list(*i, out, ranking_db_filter, statistics);
+			/*else if (config.global_ranking_targets > 0)
+				Extension::GlobalRanking::write_merged_query_list(*i, out, ranking_db_filter, statistics);*/
 			else {
 				Hsp hsp(*i, query_source_len);
 				f.print_match(HspContext(hsp,
@@ -252,10 +253,10 @@ void join_query(
 
 		culling->add(target_hsp, rank_taxon_ids);
 		++n_target_seq;
-		if (!config.global_ranking_targets) {
+		//if (!config.global_ranking_targets) {
 			statistics.inc(Statistics::PAIRWISE);
 			statistics.inc(Statistics::MATCHES, hsp_num);
-		}
+		//}
 	}
 }
 
@@ -268,10 +269,11 @@ void join_worker(Task_queue<TextBuffer, JoinWriter> *queue, const Search::Config
 		TextBuffer* out;
 		Statistics stat;
 		const StringSet& qids = cfg->query->ids();
-		BitVector ranking_db_filter(config.global_ranking_targets > 0 ? cfg->db_seqs : 0);
+		//BitVector ranking_db_filter(config.global_ranking_targets > 0 ? cfg->db_seqs : 0);
 
 		while (queue->get(n, out, fetcher) && fetcher.query_id != IntermediateRecord::FINISHED) {
-			if (!config.global_ranking_targets) stat.inc(Statistics::ALIGNED);
+			//if (!config.global_ranking_targets) stat.inc(Statistics::ALIGNED);
+			stat.inc(Statistics::ALIGNED);
 			size_t seek_pos;
 
 			const char* query_name = qids[qids.check_idx(fetcher.query_id)];
@@ -289,27 +291,27 @@ void join_worker(Task_queue<TextBuffer, JoinWriter> *queue, const Search::Config
 
 			if (*f == Output_format::daa)
 				seek_pos = write_daa_query_record(*out, query_name, query_seq);
-			else if (config.global_ranking_targets)
-				seek_pos = Extension::GlobalRanking::write_merged_query_list_intro(fetcher.query_id, *out);
+			/*else if (config.global_ranking_targets)
+				seek_pos = Extension::GlobalRanking::write_merged_query_list_intro(fetcher.query_id, *out);*/
 			else
 				f->print_query_intro(fetcher.query_id, query_name, (unsigned)query_seq.length(), *out, false, *cfg);
 
-			join_query(fetcher.buf, *out, stat, fetcher.query_id, query_name, (unsigned)query_seq.length(), *f, *cfg, ranking_db_filter);
+			join_query(fetcher.buf, *out, stat, fetcher.query_id, query_name, (unsigned)query_seq.length(), *f, *cfg); // ranking_db_filter);
 
 			if (*f == Output_format::daa)
 				finish_daa_query_record(*out, seek_pos);
-			else if (config.global_ranking_targets)
-				Extension::GlobalRanking::finish_merged_query_list(*out, seek_pos);
+			/*else if (config.global_ranking_targets)
+				Extension::GlobalRanking::finish_merged_query_list(*out, seek_pos);*/
 			else
 				f->print_query_epilog(*out, query_name, false, *cfg);
 			queue->push(n);
 		}
 
 		statistics += stat;
-		if (config.global_ranking_targets) {
+		/*if (config.global_ranking_targets) {
 			std::lock_guard<std::mutex> lock(mtx);
 			(*ranking_db_filter_out) |= ranking_db_filter;
-		}
+		}*/
 	}
 	catch (std::exception& e) {
 		exit_with_error(e);
@@ -332,14 +334,15 @@ void join_blocks(unsigned ref_blocks, Consumer &master_out, const PtrVector<Temp
 	const StringSet& query_ids = cfg.query->ids();
 
 	unique_ptr<TempFile> merged_query_list;
-	if (config.global_ranking_targets)
+	/*if (config.global_ranking_targets)
 		merged_query_list.reset(new TempFile());
-	JoinWriter writer(config.global_ranking_targets ? *merged_query_list : master_out);
+	JoinWriter writer(config.global_ranking_targets ? *merged_query_list : master_out);*/
+	JoinWriter writer(master_out);
 	Task_queue<TextBuffer, JoinWriter> queue(3 * config.threads_, writer);
 	vector<thread> threads;
-	BitVector ranking_db_filter(config.global_ranking_targets > 0 ? cfg.db_seqs : 0);
+	//BitVector ranking_db_filter(config.global_ranking_targets > 0 ? cfg.db_seqs : 0);
 	for (unsigned i = 0; i < config.threads_; ++i)
-		threads.emplace_back(join_worker, &queue, &cfg, &ranking_db_filter);
+		threads.emplace_back(join_worker, &queue, &cfg, nullptr); // &ranking_db_filter);
 	for (auto &t : threads)
 		t.join();
 	JoinFetcher::finish();
@@ -352,8 +355,8 @@ void join_blocks(unsigned ref_blocks, Consumer &master_out, const PtrVector<Temp
 		writer(out);
 	}
 
-	if (config.global_ranking_targets)
-		Extension::GlobalRanking::extend(db_file, *merged_query_list, ranking_db_filter, cfg, master_out);
+	/*if (config.global_ranking_targets)
+		Extension::GlobalRanking::extend(db_file, *merged_query_list, ranking_db_filter, cfg, master_out);*/
 	if (*output_format != Output_format::daa)
 		cfg.db->end_random_access();
 }

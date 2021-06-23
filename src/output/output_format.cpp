@@ -36,12 +36,12 @@ unique_ptr<Output_format> output_format;
 void IntermediateRecord::read(BinaryBuffer::Iterator& f)
 {
 	f.read(target_dict_id);
-	if (config.global_ranking_targets > 0) {
+	/*if (config.global_ranking_targets > 0) {
 		uint16_t s;
 		f.read(s);
 		score = s;
 		return;
-	}
+	}*/
 	if (*output_format == Output_format::daa)
 		f.read(target_oid);
 	f.read(flag);
@@ -208,6 +208,8 @@ void init_output()
 
 	if (*output_format == Output_format::daa && config.multiprocessing)
 		throw std::runtime_error("The DAA format is not supported in multiprocessing mode.");
+	if (*output_format == Output_format::daa && config.global_ranking_targets)
+		throw std::runtime_error("The DAA format is not supported in global ranking mode.");
 	if (*output_format == Output_format::taxon && config.toppercent == 100.0 && config.min_bit_score == 0.0)
 		config.toppercent = 10.0;
 	if (config.toppercent == 100.0) {

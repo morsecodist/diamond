@@ -47,6 +47,13 @@ Config::Config() :
 
 	if (config.multiprocessing && (!config.taxonlist.empty() || !config.taxon_exclude.empty()))
 		throw std::runtime_error("Multiprocessing mode is not compatible with database filtering.");
+
+	if (config.global_ranking_targets) {
+		if (config.frame_shift)
+			throw std::runtime_error("Global ranking mode is not compatible with frameshift alignments.");
+		if(config.multiprocessing)
+			throw std::runtime_error("Global ranking mode is not compatible with --multiprocessing.");
+	}
 }
 
 Config::~Config() {

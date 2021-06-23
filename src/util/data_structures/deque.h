@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <iterator>
 #include "../parallel/mutex.h"
 #include "writer.h"
+#include "../io/serialize.h"
 
 template<typename T, size_t E, typename Sync = ::Sync>
 struct Deque {

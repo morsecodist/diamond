@@ -163,7 +163,7 @@ Block* SequenceFile::load_seqs(const size_t max_letters, bool load_ids, const Bi
 	else
 		blocked_processing = seqs_processed < sequence_count();
 
-	if (blocked_processing)
+	if (blocked_processing) // should be always
 		close_weakly();
 
 	if (lazy_masking)
@@ -325,12 +325,14 @@ void SequenceFile::init_dict_block(size_t block, size_t seq_count, bool persist)
 		block_to_dict_id_[block] = vector<uint32_t>(seq_count, DICT_EMPTY);
 }
 
-void SequenceFile::close_dict_block()
+void SequenceFile::close_dict_block(bool persist)
 {
 	if (config.multiprocessing) {
 		dict_file_->close();
 		dict_file_.reset();
 	}
+	if (!persist)
+		block_to_dict_id_.clear();
 }
 
 uint32_t SequenceFile::dict_id(size_t block, size_t block_id, size_t oid, size_t len, const char* id, const Letter* seq)
