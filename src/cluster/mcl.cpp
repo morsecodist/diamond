@@ -386,7 +386,7 @@ shared_ptr<SparseMatrixStream<float>> get_graph_handle(shared_ptr<SequenceFile>&
 		format = "qcovhsp/100*scovhsp/100*pident/100";
 	}
 	config.output_format = {"clus", format};
-	shared_ptr<SparseMatrixStream<float>> ms(new SparseMatrixStream<float>(db->sequence_count(), config.cluster_graph_file));
+	shared_ptr<SparseMatrixStream<float>> ms(new SparseMatrixStream<float>(symmetric, db->sequence_count(), config.cluster_graph_file));
 	if(config.chunk_size > 0){
 		ms->set_max_mem(config.chunk_size);
 	}
