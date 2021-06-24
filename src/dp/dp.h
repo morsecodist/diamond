@@ -234,13 +234,15 @@ int score_range(Sequence query, Sequence subject, int i, int j, int j_end);
 
 namespace DP {
 
+enum { BINS = 3};
+
 struct Traceback {};
 struct StatTraceback {};
 struct VectorTraceback {};
 struct ScoreOnly {};
 struct ScoreWithCoords {};
 
-enum { TRACEBACK = 1, PARALLEL = 2, FULL_MATRIX = 4, WITH_COORDINATES = 8 };
+enum class Flags { TRACEBACK = 1, PARALLEL = 2, FULL_MATRIX = 4, WITH_COORDINATES = 8 };
 
 struct NoCBS {
 	constexpr void* operator[](int i) const { return nullptr; }
