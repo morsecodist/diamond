@@ -29,5 +29,6 @@ void Clustering_format::print_match(const HspContext& r, const Search::Config &m
 	out.write((uint32_t) metadata.query->block_id2oid(r.query_id));
 	out.write((uint32_t) r.subject_oid);
 	RecursiveParser rp(&r, format.c_str(), false);
-	out.write(rp.evaluate());
+	const double res = rp.evaluate();
+	out.write(res);
 }

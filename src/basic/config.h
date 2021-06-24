@@ -269,6 +269,7 @@ struct Config
 	bool multiprocessing;
 	bool mp_init;
 	bool mp_recover;
+	int mp_query_chunk;
 
 	enum {
 		makedb = 0, blastp = 1, blastx = 2, view = 3, help = 4, version = 5, getseq = 6, benchmark = 7, random_seqs = 8, compare = 9, sort = 10, roc = 11, db_stat = 12, model_sim = 13,
@@ -295,7 +296,7 @@ struct Config
 	uint32_t cluster_mcl_chunk_size;
 	uint32_t cluster_mcl_max_iter;
 	bool cluster_mcl_stats;
-	bool cluster_mcl_symmetrize;
+	bool cluster_mcl_nonsymmetric;
 
 	enum { query_parallel = 0, target_parallel = 1 };
 	unsigned load_balancing;

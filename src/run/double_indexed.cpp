@@ -585,6 +585,8 @@ void master_thread(task_timer &total_timer, Config &options)
 			break;
 		timer.finish();
 		options.query->seqs().print_stats();
+		if ((config.mp_query_chunk >= 0) && (current_query_chunk != (unsigned)config.mp_query_chunk))
+			continue;
 
 		if (current_query_chunk == 0 && *output_format != Output_format::daa)
 			output_format->print_header(*options.out, align_mode.mode, config.matrix.c_str(), score_matrix.gap_open(), score_matrix.gap_extend(), config.max_evalue, options.query->ids()[0],
