@@ -30,6 +30,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 using std::mutex;
 using std::lock_guard;
+using std::array;
+
+static bool looks_like_dna(const Sequence& seq) {
+	array<size_t, AMINO_ACID_COUNT> count;
+	count.fill(0);
+	for (size_t i = 0; i < seq.length(); ++i)
+		++count[(int)seq[i]];
+	return count[(int)value_traits.from_char('A')]
+		+ count[(int)value_traits.from_char('C')]
+		+ count[(int)value_traits.from_char('G')]
+		+ count[(int)value_traits.from_char('T')]
+		+ count[(int)value_traits.from_char('N')] == seq.length();
+}
 
 Block::Block(Alphabet alphabet):
 	seqs_(alphabet),
@@ -103,6 +116,7 @@ Block::Block(std::list<TextInputFile>::iterator file_begin,
 	source_seqs_(Alphabet::STD),
 	unmasked_seqs_(Alphabet::STD)
 {
+	static constexpr size_t CHECK_FOR_DNA_COUNT = 10;
 	size_t letters = 0, n = 0;
 	vector<Letter> seq;
 	string id;
@@ -127,6 +141,8 @@ Block::Block(std::list<TextInputFile>::iterator file_begin,
 			++n;
 			if (seqs_.size() > (size_t)std::numeric_limits<int>::max())
 				throw std::runtime_error("Number of sequences in file exceeds supported maximum.");
+			if (n <= CHECK_FOR_DNA_COUNT && value_traits.seq_type == amino_acid && looks_like_dna(Sequence(seq)) && !config.ignore_warnings)
+				throw std::runtime_error("The sequences are expected to be proteins but only contain DNA letters. Use the option --ignore-warnings to proceed.");
 		}
 		++file_it;
 		if (file_it == file_end)

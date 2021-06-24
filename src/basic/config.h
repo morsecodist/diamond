@@ -262,6 +262,7 @@ struct Config
 	std::string seqidlist;
 	bool skip_missing_seqids;
 	bool iterate;
+	bool ignore_warnings;
 
 	Sensitivity sensitivity;
 

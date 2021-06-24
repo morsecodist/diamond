@@ -17,6 +17,8 @@
   zstd-compressed output files (option `--compress zstd`) (requires compilation
   using `cmake -DWITH_ZSTD=ON`).
 - Compilation with BLAST database support requires the zstd library.
+- Added error message when reading protein sequences from FASTA files that only
+  contain DNA letters (can be disabled using `--ignore-warnings`).
 
 [2.0.9]
 - Reduced the memory use of database building with taxonomy mapping.
