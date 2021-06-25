@@ -147,6 +147,10 @@ struct StringSetBase
 		return limits_.end();
 	}
 
+	struct ConstIterator {
+
+	};
+
 private:
 
 	std::vector<_t> data_;
