@@ -28,79 +28,102 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../score_vector_int16.h"
 #include "../score_vector_int8.h"
 #include "../../util/log_stream.h"
-#include "../../util/dynamic_iterator.h"
 #include "../../data/sequence_set.h"
+#include "full_swipe.h"
+#include "banded_swipe.h"
 
 using std::list;
 using std::atomic;
 using std::thread;
 using std::array;
 
-namespace DP { namespace Swipe { namespace DISPATCH_ARCH {
-
-template<typename _sv, typename _traceback, typename _cbs>
-list<Hsp> swipe(const Sequence& query, Frame frame, DynamicIterator<DpTarget>& targets, _cbs composition_bias, vector<DpTarget>& overflow, Statistics& stats);
-
-}}}
-
 namespace DP { namespace BandedSwipe { namespace DISPATCH_ARCH {
 
-template<typename _sv, typename _traceback, typename _cbs>
-list<Hsp> swipe(
-	const Sequence&query,
-	Frame frame,
-	vector<DpTarget>::const_iterator subject_begin,
-	vector<DpTarget>::const_iterator subject_end,
-	_cbs composition_bias,
-	vector<DpTarget> &overflow,
-	Statistics &stat);
+static const array<bool, BINS> have_bin = {
+#ifdef __SSE4_1__
+	true,
+#else
+	false,
+#endif
+#ifdef __SSE2__
+	true,
+#else
+	false,
+#endif
+	true
+};
 
-template<typename _sv, typename _traceback>
-list<Hsp> swipe_dispatch_cbs(
+static unsigned bin(int x) {
+	return x <= UCHAR_MAX ? 0 : (x <= USHRT_MAX ? 1 : 2);
+}
+
+unsigned bin(HspValues v, int query_len, int score) {
+#if !defined(__SSE4_1__) && !defined(__SSE2__)
+	return 2;
+#endif
+	unsigned b = 0;
+	if (flag_any(v, HspValues::TRANSCRIPT | HspValues::QUERY_COORDS | HspValues::STATS))
+		b = std::max(b, bin(query_len));
+	b = std::max(b, bin(score));
+#ifdef __SSE4_1__
+	return b;
+#else
+	return std::max(b, 1u);
+#endif
+}
+
+template<typename Sv, typename Traceback, typename Cbs, typename It>
+list<Hsp> dispatch_swipe(const Sequence& query,
+	const It begin,
+	const It end,
+	const Frame frame,
+	Cbs composition_bias,
+	const Flags flags,
+	vector<DpTarget>& overflow,
+	Statistics& stat)
+{
+	constexpr auto CHANNELS = vector<DpTarget>::const_iterator::difference_type(::DISPATCH_ARCH::ScoreTraits<Sv>::CHANNELS);
+	list<Hsp> out;
+	if (flag_any(flags, Flags::FULL_MATRIX))
+		return ::DP::Swipe::swipe<Sv, Traceback, Cbs, It>(query, frame, begin, end, composition_bias, overflow, stat);
+	else
+		for (It i = begin; i < end; i += std::min(CHANNELS, end - i))
+			out.splice(out.end(), ::DP::BandedSwipe::swipe<Sv, Traceback, Cbs, It>(query, frame, i, i + std::min(CHANNELS, end - i), composition_bias, overflow, stat));
+	return out;
+}
+
+template<typename Sv, typename Traceback, typename It>
+list<Hsp> dispatch_swipe(
 	const Sequence&query,
-	Frame frame,
-	vector<DpTarget>::const_iterator subject_begin,
-	vector<DpTarget>::const_iterator subject_end,
+	const It begin,
+	const It end,
+	const Frame frame,	
 	const int8_t* composition_bias,
+	const Flags flags,
 	vector<DpTarget> &overflow,
 	Statistics &stat)
 {
 	if (composition_bias == nullptr)
-		return swipe<_sv, _traceback>(query, frame, subject_begin, subject_end, NoCBS(), overflow, stat);
+		return dispatch_swipe<Sv, Traceback, NoCBS, It>(query, begin, end, frame, NoCBS(), flags, overflow, stat);
 	else
-		return swipe<_sv, _traceback>(query, frame, subject_begin, subject_end, composition_bias, overflow, stat);
+		return dispatch_swipe<Sv, Traceback, const int8_t*, It>(query, begin, end, frame, composition_bias, flags, overflow, stat);
 }
 
-template<typename _sv, typename _traceback>
-list<Hsp> full_swipe_dispatch_cbs(
-	const Sequence&query,
-	Frame frame,
-	DynamicIterator<DpTarget>& targets,
-	const int8_t* composition_bias,
-	vector<DpTarget> &overflow,
-	Statistics &stat)
-{
-	if (composition_bias == nullptr)
-		return DP::Swipe::DISPATCH_ARCH::swipe<_sv, _traceback>(query, frame, targets, NoCBS(), overflow, stat);
-	else
-		return DP::Swipe::DISPATCH_ARCH::swipe<_sv, _traceback>(query, frame, targets, composition_bias, overflow, stat);
-}
-
-template<typename _sv>
-list<Hsp> swipe_targets(const Sequence&query,
-	vector<DpTarget>::const_iterator begin,
-	vector<DpTarget>::const_iterator end,
-	DynamicIterator<DpTarget>* targets,
-	Frame frame,
+template<typename Sv, typename It>
+list<Hsp> dispatch_swipe(const Sequence& query,
+	const It begin,
+	const It end,
+	const Frame frame,
 	const int8_t *composition_bias,
-	int flags,
+	const Flags flags,
+	const HspValues v,
 	vector<DpTarget> &overflow,
 	Statistics &stat)
 {
 	constexpr auto CHANNELS = vector<DpTarget>::const_iterator::difference_type(::DISPATCH_ARCH::ScoreTraits<_sv>::CHANNELS);
 	list<Hsp> out;
-	if (flags & DP::FULL_MATRIX) {
-		if (flags & TRACEBACK)
+	if (flag_any(flags, Flags::FULL_MATRIX)) {
+		if (flag_any(flags, Flags::TRACEBACK))
 			return full_swipe_dispatch_cbs<_sv, VectorTraceback>(query, frame, *targets, composition_bias, overflow, stat);
 		else if (flags & WITH_COORDINATES)
 			return full_swipe_dispatch_cbs<_sv, ScoreWithCoords>(query, frame, *targets, composition_bias, overflow, stat);
@@ -118,15 +141,15 @@ list<Hsp> swipe_targets(const Sequence&query,
 	return out;
 }
 
-template<typename _sv>
-void swipe_worker(const Sequence*query,
-	vector<DpTarget>::const_iterator begin,
-	vector<DpTarget>::const_iterator end,
-	DynamicIterator<DpTarget>* targets,
+template<typename _sv, typename It>
+void swipe_worker(const Sequence* query,
+	const It begin,
+	const It end,
 	atomic<size_t> *next,
-	Frame frame,
+	const Frame frame,
 	const int8_t *composition_bias,
-	int flags,
+	const Flags flags,
+	const HspValues v,
 	list<Hsp> *out,
 	vector<DpTarget> *overflow,
 	Statistics *stat)
@@ -134,34 +157,30 @@ void swipe_worker(const Sequence*query,
 	Statistics stat2;
 	size_t pos;
 	vector<DpTarget> of;
-	if (targets == nullptr) {
+	if (flag_any(flags, Flags::FULL_MATRIX))
+		*out = swipe_targets<_sv, It>(*query, begin, end, targets, frame, composition_bias, flags, of, stat2);
+	else
 		while (begin + (pos = next->fetch_add(::DISPATCH_ARCH::ScoreTraits<_sv>::CHANNELS)) < end)
 			out->splice(out->end(), swipe_targets<_sv>(*query, begin + pos, std::min(begin + pos + ::DISPATCH_ARCH::ScoreTraits<_sv>::CHANNELS, end), nullptr, frame, composition_bias, flags, of, stat2));
-	}
-	else
-		out->splice(out->end(), swipe_targets<_sv>(*query, begin, end, targets, frame, composition_bias, flags, of, stat2));
+		
 	*overflow = std::move(of);
 	*stat += stat2;
 }
 
-template<typename _sv>
+template<typename _sv, typename It>
 list<Hsp> swipe_threads(const Sequence& query,
-	vector<DpTarget>::const_iterator begin,
-	vector<DpTarget>::const_iterator end,
-	DynamicIterator<DpTarget>* targets,
-	Frame frame,
+	const It begin,
+	const It end,
+	const Frame frame,
 	const int8_t *composition_bias,
-	int flags,
+	const Flags flags,
+	const HspValues v,
 	vector<DpTarget> &overflow,
 	Statistics &stat) {
-	if (end <= begin && (!targets || targets->count == 0))
+	if (begin == end)
 		return {};
 
-	std::unique_ptr<DynamicIterator<DpTarget>> my_targets;
-	if (targets == nullptr && (flags & DP::FULL_MATRIX))
-		my_targets.reset(new VectorIterator<DpTarget>(begin, end));
-
-	if (flags & PARALLEL) {
+	if (flag_any(flags, Flags::PARALLEL)) {
 		task_timer timer("Banded swipe (run)", config.target_parallel_verbosity);
 		const size_t n = config.threads_align ? config.threads_align : config.threads_;
 		vector<thread> threads;
@@ -197,47 +216,10 @@ list<Hsp> swipe_threads(const Sequence& query,
 		return swipe_targets<_sv>(query, begin, end, targets ? targets : my_targets.get(), frame, composition_bias, flags, overflow, stat);
 }
 
-list<Hsp> recompute_reversed(const Sequence& query, Frame frame, const Bias_correction* composition_bias, Flags flags, Statistics& stat, list<Hsp>::const_iterator begin, list<Hsp>::const_iterator end) {
-	array<vector<DpTarget>, 3> dp_targets;
-	vector<DpTarget> overflow;
-	SequenceSet reversed_targets;
-	const int qlen = (int)query.length();
-#ifdef __SSE4_1__
-	const int min_b = qlen <= UCHAR_MAX ? 0 : 1;
-#elif defined(__SSE2__)
-	const int min_b = 1;
-#else
-	const int min_b = 2;
-#endif
-	for (auto i = begin; i != end; ++i)
-		reversed_targets.reserve(i->target_seq.length());
-	reversed_targets.finish_reserve();
-
-	size_t j = 0;
-	for (auto i = begin; i != end; ++i, ++j) {
-		std::reverse_copy(i->target_seq.data(), i->target_seq.end(), reversed_targets.ptr(j));
-		int b = i->score <= UCHAR_MAX ? 0 : (i->score <= USHRT_MAX ? 1 : 2);
-		b = std::max(b, min_b);
-		dp_targets[b].emplace_back(reversed_targets[j], i->swipe_target, i->query_range.end_, i->subject_range.end_);
-	}
-
-	list<Hsp> out;
-	vector<Letter> reversed = query.reverse();
-	Bias_correction rev_cbs = composition_bias ? composition_bias->reverse() : Bias_correction();
-#ifdef __SSE4_1__
-	out = swipe_threads<::DISPATCH_ARCH::score_vector<int8_t>>(Sequence(reversed), dp_targets[0].begin(), dp_targets[0].end(), nullptr, frame, composition_bias ? rev_cbs.int8.data() : nullptr, flags, overflow, stat);
-#endif
-#ifdef __SSE2__
-	out.splice(out.end(), swipe_threads<::DISPATCH_ARCH::score_vector<int16_t>>(Sequence(reversed), dp_targets[1].begin(), dp_targets[1].end(), nullptr, frame, composition_bias ? rev_cbs.int8.data() : nullptr, flags, overflow, stat));
-#endif
-	out.splice(out.end(), swipe_threads<int32_t>(Sequence(reversed), dp_targets[2].begin(), dp_targets[2].end(), nullptr, frame, composition_bias ? rev_cbs.int8.data() : nullptr, flags, overflow, stat));
-	return out;
-}
-
 template<typename It>
-pair<list<Hsp>, vector<DpTarget>> swipe_bin(const unsigned bin, const Sequence &query, const It begin, const It end, Frame frame, const int8_t* composition_bias, Flags flags, Statistics &stat) {
+pair<list<Hsp>, vector<DpTarget>> swipe_bin(const unsigned bin, const Sequence &query, const It begin, const It end, Frame frame, const int8_t* composition_bias, Flags flags, HspValues v, Statistics &stat) {
 	if (end - begin == 0)
-		return;
+		return { {},{} };
 	vector<DpTarget> overflow;
 	list<Hsp> out;
 	auto time_stat = flag_any(flags, Flags::TRACEBACK) ? Statistics::TIME_TRACEBACK_SW : Statistics::TIME_SW;
@@ -246,14 +228,18 @@ pair<list<Hsp>, vector<DpTarget>> swipe_bin(const unsigned bin, const Sequence &
 	stat.inc(Statistics::value(Statistics::EXT8 + bin), end - begin);
 	task_timer timer;
 	switch (bin) {
+#ifdef __SSE4_1__
 	case 0:
-		out = swipe_threads<::DISPATCH_ARCH::score_vector<int8_t>>(query, begin, end, frame, composition_bias, flags, overflow, stat);
+		out = swipe_threads<::DISPATCH_ARCH::score_vector<int8_t>>(query, begin, end, frame, composition_bias, flags, v, overflow, stat);
 		break;
+#endif
+#ifdef __SSE2__
 	case 1:
-		out = swipe_threads<::DISPATCH_ARCH::score_vector<int16_t>>(query, begin, end, frame, composition_bias, flags, overflow, stat);
+		out = swipe_threads<::DISPATCH_ARCH::score_vector<int16_t>>(query, begin, end, frame, composition_bias, flags, v, overflow, stat);
 		break;
+#endif
 	case 2:
-		out = swipe_threads<int32_t>(query, begin, end, frame, composition_bias, flags, overflow, stat);
+		out = swipe_threads<int32_t>(query, begin, end, frame, composition_bias, flags, v, overflow, stat);
 		break;
 	default:
 		throw std::runtime_error("Invalid SWIPE bin.");
@@ -262,7 +248,33 @@ pair<list<Hsp>, vector<DpTarget>> swipe_bin(const unsigned bin, const Sequence &
 	return { out, overflow };
 }
 
-list<Hsp> swipe(const Sequence &query, const array<vector<DpTarget>, BINS> &targets, const Frame frame, const Bias_correction *composition_bias, const DP::Flags flags, Statistics &stat)
+
+list<Hsp> recompute_reversed(const Sequence& query, Frame frame, const Bias_correction* composition_bias, Flags flags, HspValues v, Statistics& stat, list<Hsp>::const_iterator begin, list<Hsp>::const_iterator end) {
+	array<vector<DpTarget>, BINS> dp_targets;
+	vector<DpTarget> overflow;
+	SequenceSet reversed_targets;
+	const int qlen = (int)query.length();
+
+	for (auto i = begin; i != end; ++i)
+		reversed_targets.reserve(i->target_seq.length());
+	reversed_targets.finish_reserve();
+
+	size_t j = 0;
+	for (auto i = begin; i != end; ++i, ++j) {
+		std::reverse_copy(i->target_seq.data(), i->target_seq.end(), reversed_targets.ptr(j));
+		dp_targets[bin(v, qlen, i->score)].emplace_back(reversed_targets[j], i->swipe_target, i->query_range.end_, i->subject_range.end_);
+	}
+
+	list<Hsp> out;
+	vector<Letter> reversed = query.reverse();
+	Bias_correction rev_cbs = composition_bias ? composition_bias->reverse() : Bias_correction();
+	const int8_t* cbs = composition_bias ? rev_cbs.int8.data() : nullptr;
+	for (unsigned bin = 0; bin < BINS; ++bin)
+		out.splice(out.end(), swipe_bin(bin, query, dp_targets[bin].cbegin(), dp_targets[bin].cend(), frame, cbs, flags, v, stat).first);
+	return out;
+}
+
+list<Hsp> swipe(const Sequence &query, const array<vector<DpTarget>, BINS> &targets, const Frame frame, const Bias_correction *composition_bias, const DP::Flags flags, const HspValues v, Statistics &stat)
 {
 	const auto cbs = composition_bias ? composition_bias->int8.data() : nullptr;
 	pair<list<Hsp>, vector<DpTarget>> result;
@@ -272,14 +284,27 @@ list<Hsp> swipe(const Sequence &query, const array<vector<DpTarget>, BINS> &targ
 		round_targets.reserve(targets[bin].size() + result.second.size());
 		round_targets.insert(round_targets.end(), targets[bin].begin(), targets[bin].end());
 		round_targets.insert(round_targets.end(), result.second.begin(), result.second.end());
-		result = swipe_bin(bin, query, round_targets.begin(), round_targets.end(), frame, cbs, flags, stat);
+		result = swipe_bin(bin, query, round_targets.cbegin(), round_targets.cend(), frame, cbs, flags, v, stat);
 		out.splice(out.end(), result.first);
 	}
 	assert(result.second.empty());	
-	return flag_any(flags, Flags::WITH_COORDINATES) ? recompute_reversed(query, frame, composition_bias, flags, stat, out.begin(), out.end()) : out;
+	return flag_any(flags, Flags::WITH_COORDINATES) ? recompute_reversed(query, frame, composition_bias, flags, v, stat, out.begin(), out.end()) : out;
 }
 
-list<Hsp> swipe(const Sequence& query, const array<vector<DpTarget>, BINS>& targets, const Frame frame, const Bias_correction* composition_bias, const DP::Flags flags, Statistics& stat) {
+list<Hsp> swipe(const Sequence& query, const SequenceSet::ConstIterator begin, const SequenceSet::ConstIterator end, const Frame frame, const Bias_correction* composition_bias, const DP::Flags flags, const HspValues v, Statistics& stat) {
+	const auto cbs = composition_bias ? composition_bias->int8.data() : nullptr;
+	const unsigned bin = std::find(have_bin.begin(), have_bin.end(), true) - have_bin.begin();
+	pair<list<Hsp>, vector<DpTarget>> result = swipe_bin(bin, query, begin, end, frame, cbs, flags, v, stat);
+	if (flag_any(flags, Flags::WITH_COORDINATES))
+		result.first = recompute_reversed(query, frame, composition_bias, flags, v, stat, result.first.begin(), result.first.end());
+	if (bin < BINS - 1 && !result.second.empty()) {
+		array<vector<DpTarget>, BINS> targets;
+		targets[bin + 1] = std::move(result.second);
+		result.first.splice(result.first.end(), swipe(query, targets, frame, composition_bias, flags, v, stat));
+		return result.first;
+	}
+	else
+		return result.first;
 }
-		
+
 }}}

@@ -357,8 +357,8 @@ Hsp traceback(const Sequence &query, Frame frame, _cbs bias_correction, const Tr
 	return out;
 }
 
-template<typename _sv, typename _traceback, typename _cbs>
-list<Hsp> swipe(const Sequence& query, Frame frame, DynamicIterator<DpTarget>& target_it, _cbs composition_bias, vector<DpTarget>& overflow, Statistics &stats)
+template<typename _sv, typename _traceback, typename _cbs, typename It>
+list<Hsp> swipe(const Sequence& query, const Frame frame, const It target_begin, const It target_end, _cbs composition_bias, vector<DpTarget>& overflow, Statistics &stats)
 {
 	typedef typename ScoreTraits<_sv>::Score Score;
 	typedef typename MatrixTraits<_sv, _traceback>::Type Matrix;
@@ -453,33 +453,5 @@ list<Hsp> swipe(const Sequence& query, Frame frame, DynamicIterator<DpTarget>& t
 
 	return out;
 }
-
-#ifdef __SSE4_1__
-template list<Hsp> swipe<score_vector<int8_t>, VectorTraceback, const int8_t*>(const Sequence&, Frame, DynamicIterator<DpTarget>& target_it, const int8_t*, vector<DpTarget>&, Statistics&);
-template list<Hsp> swipe<score_vector<int8_t>, ScoreOnly, const int8_t*>(const Sequence&, Frame, DynamicIterator<DpTarget>& target_it, const int8_t*, vector<DpTarget>&, Statistics&);
-template list<Hsp> swipe<score_vector<int8_t>, ScoreWithCoords, const int8_t*>(const Sequence&, Frame, DynamicIterator<DpTarget>& target_it, const int8_t*, vector<DpTarget>&, Statistics&);
-#endif
-#ifdef __SSE2__
-template list<Hsp> swipe<score_vector<int16_t>, VectorTraceback, const int8_t*>(const Sequence&, Frame, DynamicIterator<DpTarget>& target_it, const int8_t*, vector<DpTarget>&, Statistics&);
-template list<Hsp> swipe<score_vector<int16_t>, ScoreOnly, const int8_t*>(const Sequence&, Frame, DynamicIterator<DpTarget>& target_it, const int8_t*, vector<DpTarget>&, Statistics&);
-template list<Hsp> swipe<score_vector<int16_t>, ScoreWithCoords, const int8_t*>(const Sequence&, Frame, DynamicIterator<DpTarget>& target_it, const int8_t*, vector<DpTarget>&, Statistics&);
-#endif
-template list<Hsp> swipe<int32_t, VectorTraceback, const int8_t*>(const Sequence&, Frame, DynamicIterator<DpTarget>& target_it, const int8_t*, vector<DpTarget>&, Statistics&);
-template list<Hsp> swipe<int32_t, ScoreOnly, const int8_t*>(const Sequence&, Frame, DynamicIterator<DpTarget>& target_it, const int8_t*, vector<DpTarget>&, Statistics&);
-template list<Hsp> swipe<int32_t, ScoreWithCoords, const int8_t*>(const Sequence&, Frame, DynamicIterator<DpTarget>& target_it, const int8_t*, vector<DpTarget>&, Statistics&);
-
-#ifdef __SSE4_1__
-template list<Hsp> swipe<score_vector<int8_t>, VectorTraceback, NoCBS>(const Sequence&, Frame, DynamicIterator<DpTarget>& target_it, NoCBS, vector<DpTarget>&, Statistics&);
-template list<Hsp> swipe<score_vector<int8_t>, ScoreOnly, NoCBS>(const Sequence&, Frame, DynamicIterator<DpTarget>& target_it, NoCBS, vector<DpTarget>&, Statistics&);
-template list<Hsp> swipe<score_vector<int8_t>, ScoreWithCoords, NoCBS>(const Sequence&, Frame, DynamicIterator<DpTarget>& target_it, NoCBS, vector<DpTarget>&, Statistics&);
-#endif
-#ifdef __SSE2__
-template list<Hsp> swipe<score_vector<int16_t>, VectorTraceback, NoCBS>(const Sequence&, Frame, DynamicIterator<DpTarget>& target_it, NoCBS, vector<DpTarget>&, Statistics&);
-template list<Hsp> swipe<score_vector<int16_t>, ScoreOnly, NoCBS>(const Sequence&, Frame, DynamicIterator<DpTarget>& target_it, NoCBS, vector<DpTarget>&, Statistics&);
-template list<Hsp> swipe<score_vector<int16_t>, ScoreWithCoords, NoCBS>(const Sequence&, Frame, DynamicIterator<DpTarget>& target_it, NoCBS, vector<DpTarget>&, Statistics&);
-#endif
-template list<Hsp> swipe<int32_t, VectorTraceback, NoCBS>(const Sequence&, Frame, DynamicIterator<DpTarget>& target_it, NoCBS, vector<DpTarget>&, Statistics&);
-template list<Hsp> swipe<int32_t, ScoreOnly, NoCBS>(const Sequence&, Frame, DynamicIterator<DpTarget>& target_it, NoCBS, vector<DpTarget>&, Statistics&);
-template list<Hsp> swipe<int32_t, ScoreWithCoords, NoCBS>(const Sequence&, Frame, DynamicIterator<DpTarget>& target_it, NoCBS, vector<DpTarget>&, Statistics&);
 
 }}}
