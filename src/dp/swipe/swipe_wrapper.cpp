@@ -39,20 +39,6 @@ using std::array;
 
 namespace DP { namespace BandedSwipe { namespace DISPATCH_ARCH {
 
-static const array<bool, BINS> have_bin = {
-#ifdef __SSE4_1__
-	true,
-#else
-	false,
-#endif
-#ifdef __SSE2__
-	true,
-#else
-	false,
-#endif
-	true
-};
-
 static unsigned bin(int x) {
 	return x <= UCHAR_MAX ? 0 : (x <= USHRT_MAX ? 1 : 2);
 }
@@ -120,25 +106,12 @@ list<Hsp> dispatch_swipe(const Sequence& query,
 	vector<DpTarget> &overflow,
 	Statistics &stat)
 {
-	constexpr auto CHANNELS = vector<DpTarget>::const_iterator::difference_type(::DISPATCH_ARCH::ScoreTraits<_sv>::CHANNELS);
-	list<Hsp> out;
-	if (flag_any(flags, Flags::FULL_MATRIX)) {
-		if (flag_any(flags, Flags::TRACEBACK))
-			return full_swipe_dispatch_cbs<_sv, VectorTraceback>(query, frame, *targets, composition_bias, overflow, stat);
-		else if (flags & WITH_COORDINATES)
-			return full_swipe_dispatch_cbs<_sv, ScoreWithCoords>(query, frame, *targets, composition_bias, overflow, stat);
-		else
-			return full_swipe_dispatch_cbs<_sv, ScoreOnly>(query, frame, *targets, composition_bias, overflow, stat);
-	}
-	else {
-		for (vector<DpTarget>::const_iterator i = begin; i < end; i += std::min(CHANNELS, end - i)) {
-			if (flags & TRACEBACK)
-				out.splice(out.end(), swipe_dispatch_cbs<_sv, VectorTraceback>(query, frame, i, i + std::min(CHANNELS, end - i), composition_bias, overflow, stat));
-			else
-				out.splice(out.end(), swipe_dispatch_cbs<_sv, ScoreOnly>(query, frame, i, i + std::min(CHANNELS, end - i), composition_bias, overflow, stat));
-		}
-	}
-	return out;
+	if (flag_any(flags, Flags::TRACEBACK))
+		return dispatch_swipe<Sv, VectorTraceback, It>(query, begin, end, frame, composition_bias, flags, overflow, stat);
+	else if (flag_any(flags, Flags::WITH_COORDINATES))
+		return dispatch_swipe<Sv, ScoreWithCoords, It>(query, begin, end, frame, composition_bias, flags, overflow, stat);
+	else
+		return dispatch_swipe<Sv, ScoreOnly, It>(query, begin, end, frame, composition_bias, flags, overflow, stat);
 }
 
 template<typename _sv, typename It>
@@ -154,14 +127,15 @@ void swipe_worker(const Sequence* query,
 	vector<DpTarget> *overflow,
 	Statistics *stat)
 {
+	const size_t CHANNELS = ::DISPATCH_ARCH::ScoreTraits<_sv>::CHANNELS;
 	Statistics stat2;
 	size_t pos;
 	vector<DpTarget> of;
 	if (flag_any(flags, Flags::FULL_MATRIX))
-		*out = swipe_targets<_sv, It>(*query, begin, end, targets, frame, composition_bias, flags, of, stat2);
+		*out = dispatch_swipe<_sv, It>(*query, begin, end, frame, composition_bias, flags, v, of, stat2);
 	else
-		while (begin + (pos = next->fetch_add(::DISPATCH_ARCH::ScoreTraits<_sv>::CHANNELS)) < end)
-			out->splice(out->end(), swipe_targets<_sv>(*query, begin + pos, std::min(begin + pos + ::DISPATCH_ARCH::ScoreTraits<_sv>::CHANNELS, end), nullptr, frame, composition_bias, flags, of, stat2));
+		while (begin + (pos = next->fetch_add(CHANNELS)) < end)
+			out->splice(out->end(), dispatch_swipe<_sv, It>(*query, begin + pos, std::min(begin + pos + CHANNELS, end), frame, composition_bias, flags, v, of, stat2));
 		
 	*overflow = std::move(of);
 	*stat += stat2;
@@ -193,7 +167,6 @@ list<Hsp> swipe_threads(const Sequence& query,
 				&query,
 				begin,
 				end,
-				targets ? targets : my_targets.get(),
 				&next,
 				frame,
 				composition_bias,
@@ -213,7 +186,7 @@ list<Hsp> swipe_threads(const Sequence& query,
 		return out;
 	}
 	else
-		return swipe_targets<_sv>(query, begin, end, targets ? targets : my_targets.get(), frame, composition_bias, flags, overflow, stat);
+		return swipe_targets<_sv>(query, begin, end, frame, composition_bias, flags, overflow, stat);
 }
 
 template<typename It>
@@ -293,7 +266,7 @@ list<Hsp> swipe(const Sequence &query, const array<vector<DpTarget>, BINS> &targ
 
 list<Hsp> swipe(const Sequence& query, const SequenceSet::ConstIterator begin, const SequenceSet::ConstIterator end, const Frame frame, const Bias_correction* composition_bias, const DP::Flags flags, const HspValues v, Statistics& stat) {
 	const auto cbs = composition_bias ? composition_bias->int8.data() : nullptr;
-	const unsigned bin = std::find(have_bin.begin(), have_bin.end(), true) - have_bin.begin();
+	const unsigned bin = bin(v, 0, 0);
 	pair<list<Hsp>, vector<DpTarget>> result = swipe_bin(bin, query, begin, end, frame, cbs, flags, v, stat);
 	if (flag_any(flags, Flags::WITH_COORDINATES))
 		result.first = recompute_reversed(query, frame, composition_bias, flags, v, stat, result.first.begin(), result.first.end());
