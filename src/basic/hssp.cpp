@@ -47,7 +47,7 @@ bool Hsp::is_weakly_enveloped(const Hsp &j) const
 
 HspContext& HspContext::parse()
 {
-	if (!(output_format->hsp_values & Output::TRANSCRIPT) && config.command != Config::view) {
+	if (!flag_any(output_format->hsp_values, HspValues::TRANSCRIPT) && config.command != Config::view) {
 		hsp_.query_source_range = TranslatedPosition::absolute_interval(
 			TranslatedPosition(hsp_.query_range.begin_, Frame(hsp_.frame)),
 			TranslatedPosition(hsp_.query_range.end_, Frame(hsp_.frame)),
@@ -279,7 +279,7 @@ Hsp::Hsp(const IntermediateRecord &r, unsigned query_source_len) :
 		frame = 0;
 		query_range.begin_ = r.query_begin;
 	}
-	if ((output_format->hsp_values & Output::STATS_OR_COORDS) && !(output_format->hsp_values & Output::TRANSCRIPT)) {
+	if (flag_any(output_format->hsp_values, HspValues::STATS_OR_COORDS) && !flag_any(output_format->hsp_values, HspValues::TRANSCRIPT)) {
 		identities = r.identities;
 		gaps = r.gaps;
 		gap_openings = r.gap_openings;

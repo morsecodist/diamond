@@ -89,25 +89,25 @@ vector<Target> extend(size_t query_id,
 	vector<uint32_t> &target_block_ids,
 	const Search::Config& cfg,
 	Statistics& stat,
-	int flags)
+	DP::Flags flags)
 {
 	static const size_t GAPPED_FILTER_MIN_QLEN = 85;
 	stat.inc(Statistics::TARGET_HITS2, target_block_ids.size());
-	task_timer timer(flags & DP::PARALLEL ? config.target_parallel_verbosity : UINT_MAX);
+	task_timer timer(flag_any(flags, DP::Flags::PARALLEL) ? config.target_parallel_verbosity : UINT_MAX);
 
 	stat.inc(Statistics::MASKED_LAZY, lazy_masking(target_block_ids, *cfg.target));
 
 	if (cfg.gapped_filter_evalue > 0.0 && config.global_ranking_targets == 0 && (!align_mode.query_translated || query_seq[0].length() >= GAPPED_FILTER_MIN_QLEN)) {
 		timer.go("Computing gapped filter");
 		gapped_filter(query_seq, query_cb, seed_hits, target_block_ids, stat, flags, cfg);
-		if ((flags & DP::PARALLEL) == 0)
+		if (!flag_any(flags, DP::Flags::PARALLEL))
 			stat.inc(Statistics::TIME_GAPPED_FILTER, timer.microseconds());
 	}
 	stat.inc(Statistics::TARGET_HITS3, target_block_ids.size());
 
 	timer.go("Computing chaining");
 	vector<WorkTarget> targets = ungapped_stage(query_seq, query_cb, query_comp, seed_hits, target_block_ids, flags, stat, *cfg.target);
-	if ((flags & DP::PARALLEL) == 0)
+	if (!flag_any(flags, DP::Flags::PARALLEL))
 		stat.inc(Statistics::TIME_CHAINING, timer.microseconds());
 
 	return align(targets, query_seq, query_cb, source_query_len, flags, stat);
@@ -117,7 +117,7 @@ vector<Match> extend(
 	size_t query_id,
 	const Search::Config& cfg,
 	Statistics& stat,
-	int flags,
+	DP::Flags flags,
 	FlatArray<SeedHit>& seed_hits,
 	vector<uint32_t>& target_block_ids,
 	const vector<TargetScore>& target_scores)
@@ -128,14 +128,14 @@ vector<Match> extend(
 	vector<Bias_correction> query_cb;
 	const char* query_title = cfg.query->ids()[query_id];
 
-	if (config.log_query || ((flags & DP::PARALLEL) && !config.swipe_all))
+	if (config.log_query || (flag_any(flags, DP::Flags::PARALLEL) && !config.swipe_all))
 		log_stream << "Query=" << query_title << " Hits=" << seed_hits.data_size() << endl;
 
 	for (unsigned i = 0; i < contexts; ++i)
 		query_seq.push_back(cfg.query->seqs()[query_id * contexts + i]);
 	const unsigned query_len = (unsigned)query_seq.front().length();
 
-	task_timer timer(flags & DP::PARALLEL ? config.target_parallel_verbosity : UINT_MAX);
+	task_timer timer(flag_any(flags, DP::Flags::PARALLEL) ? config.target_parallel_verbosity : UINT_MAX);
 	if (Stats::CBS::hauser(config.comp_based_stats)) {
 		timer.go("Computing CBS");
 		for (unsigned i = 0; i < contexts; ++i)
@@ -162,12 +162,12 @@ vector<Match> extend(
 	const size_t previous_count = config.query_memory ? memory->count(query_id) : 0;
 
 	if (config.min_id > 0)
-		flags |= DP::TRACEBACK;
+		flags |= DP::Flags::TRACEBACK;
 	else if (config.query_cover > 0 || config.subject_cover > 0) {
 		if (config.ext == "full")
-			flags |= DP::WITH_COORDINATES;
+			flags |= DP::Flags::WITH_COORDINATES;
 		else
-			flags |= DP::TRACEBACK;
+			flags |= DP::Flags::TRACEBACK;
 	}
 
 	//size_t multiplier = 1;
@@ -233,8 +233,8 @@ vector<Match> extend(
 	return matches;
 }
 
-vector<Match> extend(size_t query_id, Search::Hit* begin, Search::Hit* end, const Search::Config &cfg, Statistics &stat, int flags) {
-	task_timer timer(flags & DP::PARALLEL ? config.target_parallel_verbosity : UINT_MAX);
+vector<Match> extend(size_t query_id, Search::Hit* begin, Search::Hit* end, const Search::Config &cfg, Statistics &stat, DP::Flags flags) {
+	task_timer timer(flag_any(flags, DP::Flags::PARALLEL) ? config.target_parallel_verbosity : UINT_MAX);
 	timer.go("Loading seed hits");
 	thread_local FlatArray<SeedHit> seed_hits;
 	thread_local vector<uint32_t> target_block_ids;

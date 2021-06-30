@@ -84,7 +84,7 @@ Match::Match(size_t target_block_id, std::array<std::list<Hsp>, MAX_CONTEXT> &hs
 		max_hsp_culling();
 }
 
-void add_dp_targets(const WorkTarget& target, int target_idx, const Sequence* query_seq, array<array<vector<DpTarget>, 3>, MAX_CONTEXT>& dp_targets, int flags) {
+void add_dp_targets(const WorkTarget& target, int target_idx, const Sequence* query_seq, array<array<vector<DpTarget>, 3>, MAX_CONTEXT>& dp_targets, DP::Flags flags) {
 	const int band = Extension::band((int)query_seq->length()),
 		slen = (int)target.seq.length();
 	const size_t qlen = query_seq[0].length();
@@ -140,7 +140,7 @@ void add_dp_targets(const WorkTarget& target, int target_idx, const Sequence* qu
 	}
 }
 
-vector<Target> align(const vector<WorkTarget> &targets, const Sequence *query_seq, const Bias_correction *query_cb, int source_query_len, int flags, Statistics &stat) {
+vector<Target> align(const vector<WorkTarget> &targets, const Sequence *query_seq, const Bias_correction *query_cb, int source_query_len, DP::Flags flags, Statistics &stat) {
 	array<array<vector<DpTarget>, 3>, MAX_CONTEXT> dp_targets;
 	vector<Target> r;
 	if (targets.empty())
@@ -187,7 +187,7 @@ vector<Target> align(const vector<WorkTarget> &targets, const Sequence *query_se
 	return r2;
 }
 
-vector<Target> full_db_align(const Sequence *query_seq, const Bias_correction *query_cb, int flags, Statistics &stat, const Block& target_block) {	
+vector<Target> full_db_align(const Sequence *query_seq, const Bias_correction *query_cb, DP::Flags flags, Statistics &stat, const Block& target_block) {
 	vector<DpTarget> v;
 	vector<Target> r;
 	Stats::TargetMatrix matrix;
@@ -222,7 +222,7 @@ vector<Target> full_db_align(const Sequence *query_seq, const Bias_correction *q
 	return r;
 }
 
-void add_dp_targets(const Target &target, int target_idx, const Sequence *query_seq, array<array<vector<DpTarget>, 3>, MAX_CONTEXT> &dp_targets, int flags) {
+void add_dp_targets(const Target &target, int target_idx, const Sequence *query_seq, array<array<vector<DpTarget>, 3>, MAX_CONTEXT> &dp_targets, DP::Flags flags) {
 	const int band = Extension::band((int)query_seq->length()),
 		slen = (int)target.seq.length();
 	const Stats::TargetMatrix* matrix = target.adjusted_matrix() ? &target.matrix : nullptr;
@@ -240,7 +240,7 @@ void add_dp_targets(const Target &target, int target_idx, const Sequence *query_
 	}
 }
 
-vector<Match> align(vector<Target> &targets, const Sequence *query_seq, const Bias_correction *query_cb, int source_query_len, int flags, Statistics &stat) {
+vector<Match> align(vector<Target> &targets, const Sequence *query_seq, const Bias_correction *query_cb, int source_query_len, DP::Flags flags, Statistics &stat) {
 	array<array<vector<DpTarget>, 3>, MAX_CONTEXT> dp_targets;
 	vector<Match> r;
 	if (targets.empty())

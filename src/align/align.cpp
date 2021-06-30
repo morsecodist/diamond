@@ -133,7 +133,7 @@ void align_worker(size_t thread_id, Search::Config* cfg)
 				continue;
 			}
 			task_timer timer;
-			vector<Extension::Match> matches = Extension::extend(hits.query, hits.begin, hits.end, *cfg, stat, hits.target_parallel || parallel ? DP::PARALLEL : 0);
+			vector<Extension::Match> matches = Extension::extend(hits.query, hits.begin, hits.end, *cfg, stat, hits.target_parallel || parallel ? DP::Flags::PARALLEL : DP::Flags::NONE);
 			TextBuffer* buf = blocked_processing ? Extension::generate_intermediate_output(matches, hits.query, *cfg) : Extension::generate_output(matches, hits.query, stat, *cfg);
 			if (!matches.empty() && cfg->track_aligned_queries) {
 				std::lock_guard<std::mutex> lock(query_aligned_mtx);

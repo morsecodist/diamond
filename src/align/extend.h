@@ -56,7 +56,7 @@ struct Match {
 	std::list<Hsp> hsp;
 };
 
-std::vector<Match> extend(size_t query_id, Search::Hit* begin, Search::Hit* end, const Search::Config &cfg, Statistics &stat, int flags);
+std::vector<Match> extend(size_t query_id, Search::Hit* begin, Search::Hit* end, const Search::Config &cfg, Statistics &stat, DP::Flags flags);
 TextBuffer* generate_output(vector<Match> &targets, size_t query_block_id, Statistics &stat, const Search::Config& cfg);
 TextBuffer* generate_intermediate_output(const vector<Match> &targets, size_t query_block_id, const Search::Config& cfg);
 

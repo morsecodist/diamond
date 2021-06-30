@@ -237,13 +237,17 @@ namespace DP {
 
 enum { BINS = 3};
 
+using Targets = std::array<std::vector<DpTarget>, BINS>;
+
 struct Traceback {};
 struct StatTraceback {};
 struct VectorTraceback {};
 struct ScoreOnly {};
 struct ScoreWithCoords {};
 
-enum class Flags { TRACEBACK = 1, PARALLEL = 2, FULL_MATRIX = 4, WITH_COORDINATES = 8 };
+enum class Flags { NONE = 0, TRACEBACK = 1, PARALLEL = 2, FULL_MATRIX = 4, WITH_COORDINATES = 8 };
+
+DEF_ENUM_FLAG_OPERATORS(Flags)
 
 struct NoCBS {
 	constexpr void* operator[](int i) const { return nullptr; }
@@ -257,7 +261,7 @@ namespace Swipe {
 
 namespace BandedSwipe {
 
-DECL_DISPATCH(std::list<Hsp>, swipe, (const Sequence&query, std::vector<DpTarget> &targets8, const std::vector<DpTarget> &targets16, const std::vector<DpTarget>& targets32, DynamicIterator<DpTarget>* targets, Frame frame, const Bias_correction *composition_bias, int flags, Statistics &stat))
+DECL_DISPATCH(std::list<Hsp>, swipe, (const Sequence& query, const Targets& targets, const Frame frame, const Bias_correction* composition_bias, const DP::Flags flags, const HspValues v, Statistics& stat))
 
 }
 

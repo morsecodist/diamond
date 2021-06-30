@@ -72,7 +72,7 @@ void gapped_filter_worker(size_t i, size_t thread_id, const LongScoreProfile *qu
 	}
 }
 
-void gapped_filter(const Sequence* query, const Bias_correction* query_cbs, FlatArray<SeedHit>& seed_hits, std::vector<uint32_t>& target_block_ids, Statistics& stat, int flags, const Search::Config &params) {
+void gapped_filter(const Sequence* query, const Bias_correction* query_cbs, FlatArray<SeedHit>& seed_hits, std::vector<uint32_t>& target_block_ids, Statistics& stat, DP::Flags flags, const Search::Config &params) {
 	if (seed_hits.size() == 0)
 		return;
 	vector<LongScoreProfile> query_profile;
@@ -86,7 +86,7 @@ void gapped_filter(const Sequence* query, const Bias_correction* query_cbs, Flat
 	FlatArray<SeedHit> hits_out;
 	vector<uint32_t> target_ids_out;
 	
-	if(flags & DP::PARALLEL) {
+	if(flag_any(flags, DP::Flags::PARALLEL)) {
 		mutex mtx;
 		Util::Parallel::scheduled_thread_pool_auto(config.threads_, seed_hits.size(), gapped_filter_worker, query_profile.data(), &seed_hits, target_block_ids.data(), &hits_out, &target_ids_out, &mtx, &params);
 	}

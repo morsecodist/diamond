@@ -135,13 +135,13 @@ void ungapped_stage_worker(size_t i, size_t thread_id, const Sequence *query_seq
 	delete[] query_matrix;
 }
 
-vector<WorkTarget> ungapped_stage(const Sequence *query_seq, const Bias_correction *query_cb, const Stats::Composition& query_comp, FlatArray<SeedHit> &seed_hits, const vector<uint32_t>& target_block_ids, int flags, Statistics& stat, const Block& target_block) {
+vector<WorkTarget> ungapped_stage(const Sequence *query_seq, const Bias_correction *query_cb, const Stats::Composition& query_comp, FlatArray<SeedHit> &seed_hits, const vector<uint32_t>& target_block_ids, DP::Flags flags, Statistics& stat, const Block& target_block) {
 	vector<WorkTarget> targets;
 	if (target_block_ids.size() == 0)
 		return targets;
 	targets.reserve(target_block_ids.size());
 	const int16_t* query_matrix = nullptr;
-	if (flags & DP::PARALLEL) {
+	if (flag_any(flags, DP::Flags::PARALLEL)) {
 		mutex mtx;
 		Util::Parallel::scheduled_thread_pool_auto(config.threads_, seed_hits.size(), ungapped_stage_worker, query_seq, query_cb, &query_comp, &seed_hits, target_block_ids.data(), &targets, &mtx, &stat, &target_block);
 	}

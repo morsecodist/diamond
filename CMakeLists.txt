@@ -106,8 +106,6 @@ endif()
 
 set(DISPATCH_OBJECTS
 "src/dp/swipe/banded_3frame_swipe.cpp"
-"src/dp/swipe/swipe.cpp"
-"src/dp/swipe/banded_swipe.cpp"
 "src/search/stage2.cpp"
 "src/tools/benchmark.cpp"
 "src/dp/swipe/swipe_wrapper.cpp"
