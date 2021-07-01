@@ -358,7 +358,7 @@ Hsp traceback(const Sequence &query, Frame frame, _cbs bias_correction, const Tr
 }
 
 template<typename _sv, typename _traceback, typename _cbs, typename It>
-list<Hsp> swipe(const Sequence& query, const Frame frame, const It target_begin, const It target_end, _cbs composition_bias, vector<DpTarget>& overflow, Statistics &stats)
+list<Hsp> swipe(const Sequence& query, const Frame frame, const It target_begin, const It target_end, std::atomic_size_t* const next, _cbs composition_bias, vector<DpTarget>& overflow, Statistics &stats)
 {
 	typedef typename ScoreTraits<_sv>::Score Score;
 	typedef typename MatrixTraits<_sv, _traceback>::Type Matrix;
@@ -380,7 +380,7 @@ list<Hsp> swipe(const Sequence& query, const Frame frame, const It target_begin,
 	std::fill(best, best + CHANNELS, ScoreTraits<_sv>::zero_score());
 	SwipeProfile<_sv> profile;
 	std::array<const int8_t*, 32> target_scores;
-	AsyncTargetBuffer<Score> targets(target_it);
+	AsyncTargetBuffer<Score, It> targets(target_begin, target_end, next);
 	Matrix dp(qlen, targets.max_len());
 	CBSBuffer<_sv, _cbs> cbs_buf(composition_bias, qlen, 0);
 	list<Hsp> out;

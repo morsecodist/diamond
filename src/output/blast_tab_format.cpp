@@ -147,7 +147,7 @@ Blast_tab_format::Blast_tab_format() :
 		hsp_values |= field_def[j].hsp_values;
 		flags |= field_def[j].flags;
 	}
-	if (config.frame_shift != 0 && ((flag_any(hsp_values, HspValues::STATS_OR_COORDS) || config.query_range_culling))
+	if (config.frame_shift != 0 && (flag_any(hsp_values, HspValues::STATS_OR_COORDS) || config.query_range_culling))
 		hsp_values = HspValues::TRANSCRIPT;
 	//if (config.traceback_mode == TracebackMode::NONE && config.max_hsps == 1 && !needs_transcript && !needs_stats && !config.query_range_culling && config.min_id == 0.0 && config.query_cover == 0.0 && config.subject_cover == 0.0)
 		//config.traceback_mode = TracebackMode::SCORE_ONLY;

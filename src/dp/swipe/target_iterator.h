@@ -192,106 +192,21 @@ struct TargetIterator
 	const vector<DpTarget>::const_iterator subject_begin;
 };
 
-template<typename _t>
-struct TargetBuffer
-{
-
-	typedef ::DISPATCH_ARCH::SIMD::Vector<_t> SeqVector;
-	enum { CHANNELS = SeqVector::CHANNELS };
-
-	TargetBuffer(typename std::vector<DpTarget>::const_iterator subject_begin, typename std::vector<DpTarget>::const_iterator subject_end):
-		next(0),
-		n_targets(int(subject_end - subject_begin)),
-		subject_begin(subject_begin)
-	{
-		for (; next < std::min((int)CHANNELS, n_targets); ++next) {
-			pos[next] = 0;
-			target[next] = next;
-			active.push_back(next);
-		}
-	}
-
-	int max_len() const {
-		int l = 0;
-		for (int i = 0; i < n_targets; ++i)
-			l = std::max(l, (int)subject_begin[i].seq.length());
-		return l;
-	}
-
-	char operator[](int channel) const
-	{
-		if (pos[channel] >= 0) {
-			return dp_target(channel).seq[pos[channel]];
-		}
-		else
-			return SUPER_HARD_MASK;;
-	}
-
-#ifdef __SSSE3__
-	SeqVector seq_vector() const
-	{
-		alignas(32) _t s[CHANNELS];
-		std::fill(s, s + CHANNELS, SUPER_HARD_MASK);
-		for (int i = 0; i < active.size(); ++i) {
-			const int channel = active[i];
-			s[channel] = (*this)[channel];
-		}
-		return SeqVector(s);
-	}
-#else
-	uint64_t seq_vector()
-	{
-		uint64_t dst = 0;
-		for (int i = 0; i < active.size(); ++i) {
-			const int channel = active[i];
-			dst |= uint64_t((*this)[channel]) << (8 * channel);
-		}
-		return dst;
-	}
-#endif
-
-	bool init_target(int i, int channel)
-	{
-		if (next < n_targets) {
-			pos[channel] = 0;
-			target[channel] = next++;
-			return true;
-		}
-		active.erase(i);
-		return false;
-	}
-
-	bool inc(int channel)
-	{
-		++pos[channel];
-		if (pos[channel] >= (int)dp_target(channel).seq.length())
-			return false;
-		return true;
-	}
-
-	const DpTarget& dp_target(int channel) const {
-		return subject_begin[target[channel]];
-	}
-
-	int pos[CHANNELS], target[CHANNELS], next, n_targets, cols;
-	SmallVector<int, CHANNELS> active;
-	const vector<DpTarget>::const_iterator subject_begin;
-
-};
-
-template<typename _t>
+template<typename T, typename It>
 struct AsyncTargetBuffer
 {
 
-	typedef ::DISPATCH_ARCH::SIMD::Vector<_t> SeqVector;
+	typedef ::DISPATCH_ARCH::SIMD::Vector<T> SeqVector;
 	enum { CHANNELS = SeqVector::CHANNELS };
 
-	AsyncTargetBuffer(DynamicIterator<DpTarget>& target_it):
-		target_it(target_it),
+	AsyncTargetBuffer(const It begin, const It end, std::atomic_size_t* const next):
+		begin(begin),
+		target_count(end - begin),
+		next(next)
 		custom_matrix_16bit(false)
 	{
 		for (int i = 0; i < CHANNELS; ++i) {
-			DpTarget t = target_it++;
+			DpTarget t = begin[next++];
 			if (t.blank())
 				return;
 			pos[i] = 0;
@@ -366,7 +281,7 @@ struct AsyncTargetBuffer
 
 	bool init_target(int i, int channel)
 	{
-		DpTarget t = target_it++;
+		DpTarget t = begin[next++];
 		if (!t.blank()) {
 			pos[channel] = 0;
 			dp_targets[channel] = t;
@@ -400,7 +315,9 @@ struct AsyncTargetBuffer
 
 	int pos[CHANNELS];
 	SmallVector<int, CHANNELS> active;
-	DynamicIterator<DpTarget>& target_it;
+	const It begin;
+	const size_t target_count;
+	std::atomic_size_t* const next;
 	DpTarget dp_targets[CHANNELS];
 	bool custom_matrix_16bit;
 

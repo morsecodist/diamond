@@ -33,6 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "extend.h"
 #include "../util/data_structures/flat_array.h"
 #include "../stats/cbs.h"
+#include "../dp/flags.h"
 
 struct SequenceSet;
 

@@ -1,6 +1,6 @@
 /****
 DIAMOND protein aligner
-Copyright (C) 2016-2020 Max Planck Society for the Advancement of Science e.V.
+Copyright (C) 2016-2021 Max Planck Society for the Advancement of Science e.V.
                         Benjamin Buchfink
 						
 Code developed by Benjamin Buchfink <benjamin.buchfink@tue.mpg.de>
@@ -27,9 +27,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../stats/hauser_correction.h"
 #include "../basic/statistics.h"
 #include "../basic/config.h"
-#include "../util/dynamic_iterator.h"
+#include "../data/sequence_set.h"
 #include "../stats/cbs.h"
-#include "values.h"
+#include "flags.h"
 
 int smith_waterman(const Sequence&query, const Sequence&subject, unsigned band, unsigned padding, int op, int ep);
 
@@ -245,10 +245,6 @@ struct VectorTraceback {};
 struct ScoreOnly {};
 struct ScoreWithCoords {};
 
-enum class Flags { NONE = 0, TRACEBACK = 1, PARALLEL = 2, FULL_MATRIX = 4, WITH_COORDINATES = 8 };
-
-DEF_ENUM_FLAG_OPERATORS(Flags)
-
 struct NoCBS {
 	constexpr void* operator[](int i) const { return nullptr; }
 };
@@ -262,6 +258,8 @@ namespace Swipe {
 namespace BandedSwipe {
 
 DECL_DISPATCH(std::list<Hsp>, swipe, (const Sequence& query, const Targets& targets, const Frame frame, const Bias_correction* composition_bias, const DP::Flags flags, const HspValues v, Statistics& stat))
+//DECL_DISPATCH(std::list<Hsp>, swipe, (const Sequence& query, const SequenceSet::ConstIterator begin, const SequenceSet::ConstIterator end, const Frame frame, const Bias_correction* composition_bias, const DP::Flags flags, const HspValues v, Statistics& stat))
+DECL_DISPATCH(unsigned, bin, (HspValues v, int query_len, int score, int ungapped_score, size_t dp_size, unsigned score_width))
 
 }
 

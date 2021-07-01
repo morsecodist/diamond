@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../basic/statistics.h"
 #include "../util/text_buffer.h"
 #include "../run/config.h"
+#include "../dp/flags.h"
 
 namespace Extension {
 

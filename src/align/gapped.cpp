@@ -84,22 +84,18 @@ Match::Match(size_t target_block_id, std::array<std::list<Hsp>, MAX_CONTEXT> &hs
 		max_hsp_culling();
 }
 
-void add_dp_targets(const WorkTarget& target, int target_idx, const Sequence* query_seq, array<array<vector<DpTarget>, 3>, MAX_CONTEXT>& dp_targets, DP::Flags flags) {
+void add_dp_targets(const WorkTarget& target, int target_idx, const Sequence* query_seq, array<array<vector<DpTarget>, 3>, MAX_CONTEXT>& dp_targets, DP::Flags flags, const HspValues hsp_values) {
 	const int band = Extension::band((int)query_seq->length()),
 		slen = (int)target.seq.length();
 	const size_t qlen = query_seq[0].length();
 	const Stats::TargetMatrix* matrix = target.matrix.scores.empty() ? nullptr : &target.matrix;
+	const unsigned score_width = matrix ? matrix->score_width() : 0;
 	for (unsigned frame = 0; frame < align_mode.query_contexts; ++frame) {
 
 		if (config.ext == "full") {
 			if (target.ungapped_score[frame] == 0)
 				continue;
-			int b = target.ungapped_score[frame] <= config.cutoff_score_8bit ? 0 : 1;
-			if (((flags & DP::TRACEBACK) || (flags & DP::WITH_COORDINATES)) && query_seq[0].length() >= 256)
-				b = 1;
-			if ((flags & DP::TRACEBACK) && query_seq[0].length() * target.seq.length() > config.max_swipe_dp)
-				b = 2;
-			if (matrix) b = std::max(b, matrix->score_width());
+			const unsigned b = DP::BandedSwipe::bin(hsp_values, query_seq[0].length(), 0, target.ungapped_score[frame], query_seq[0].length() * target.seq.length(), score_width);
 			dp_targets[frame][b].emplace_back(target.seq, 0, 0, 0, 0, target_idx, (int)query_seq->length(), matrix);
 			continue;
 		}
@@ -117,10 +113,7 @@ void add_dp_targets(const WorkTarget& target, int target_idx, const Sequence* qu
 				d1 = std::max(d1, b1);
 				j0 = std::min(j0, hsp.subject_range.begin_);
 				j1 = std::max(j1, hsp.subject_range.end_);
-				bits = std::max(bits, (hsp.score <= config.cutoff_score_8bit && (d1 - d0) < 256) ? 0 : 1);
-				if (matrix) bits = std::max(bits, matrix->score_width());
-				if (flags & DP::TRACEBACK && size_t(d1 - d0) * qlen > config.max_swipe_dp)
-					bits = 2;
+				bits = std::max(bits, (int)DP::BandedSwipe::bin(hsp_values, d1 - d0, 0, hsp.score, size_t(d1 - d0) * target.seq.length(), score_width));
 			}
 			else {
 				if (d0 != INT_MAX)
@@ -129,10 +122,7 @@ void add_dp_targets(const WorkTarget& target, int target_idx, const Sequence* qu
 				d1 = b1;
 				j0 = hsp.subject_range.begin_;
 				j1 = hsp.subject_range.end_;
-				bits = (hsp.score <= config.cutoff_score_8bit && (d1 - d0) < 256) ? 0 : 1;
-				if (flags & DP::TRACEBACK && size_t(d1 - d0) * qlen > config.max_swipe_dp)
-					bits = 2;
-				if (matrix) bits = std::max(bits, matrix->score_width());
+				bits = (int)DP::BandedSwipe::bin(hsp_values, d1 - d0, 0, hsp.score, size_t(d1 - d0) * target.seq.length(), score_width);
 			}
 		}
 
@@ -140,15 +130,15 @@ void add_dp_targets(const WorkTarget& target, int target_idx, const Sequence* qu
 	}
 }
 
-vector<Target> align(const vector<WorkTarget> &targets, const Sequence *query_seq, const Bias_correction *query_cb, int source_query_len, DP::Flags flags, Statistics &stat) {
-	array<array<vector<DpTarget>, 3>, MAX_CONTEXT> dp_targets;
+vector<Target> align(const vector<WorkTarget> &targets, const Sequence *query_seq, const Bias_correction *query_cb, int source_query_len, DP::Flags flags, const HspValues hsp_values, Statistics &stat) {
+	array<DP::Targets, MAX_CONTEXT> dp_targets;
 	vector<Target> r;
 	if (targets.empty())
 		return r;
 	r.reserve(targets.size());
 	size_t cbs_targets = 0;
 	for (int i = 0; i < (int)targets.size(); ++i) {
-		add_dp_targets(targets[i], i, query_seq, dp_targets, flags);
+		add_dp_targets(targets[i], i, query_seq, dp_targets, flags, hsp_values);
 		if (targets[i].adjusted_matrix())
 			++cbs_targets;
 		r.emplace_back(targets[i].block_id, targets[i].seq, targets[i].ungapped_score.front(), targets[i].matrix);
@@ -156,20 +146,18 @@ vector<Target> align(const vector<WorkTarget> &targets, const Sequence *query_se
 	stat.inc(Statistics::TARGET_HITS3_CBS, cbs_targets);
 
 	if (config.ext == "full")
-		flags |= DP::FULL_MATRIX;
+		flags |= DP::Flags::FULL_MATRIX;
 
 	for (unsigned frame = 0; frame < align_mode.query_contexts; ++frame) {
 		if (dp_targets[frame].empty())
 			continue;
 		list<Hsp> hsp = DP::BandedSwipe::swipe(
 			query_seq[frame],
-			dp_targets[frame][0],
-			dp_targets[frame][1],
-			dp_targets[frame][2],
-			nullptr,
+			dp_targets[frame],
 			Frame(frame),
 			Stats::CBS::hauser(config.comp_based_stats) ? &query_cb[frame] : nullptr,
 			flags,
+			hsp_values,
 			stat);
 		while (!hsp.empty())
 			r[hsp.front().swipe_target].add_hit(hsp, hsp.begin());
@@ -179,7 +167,7 @@ vector<Target> align(const vector<WorkTarget> &targets, const Sequence *query_se
 	r2.reserve(r.size());
 	for (vector<Target>::iterator i = r.begin(); i != r.end(); ++i)
 		if (i->filter_evalue != DBL_MAX) {
-			if((flags & DP::TRACEBACK) || (flags & DP::WITH_COORDINATES))
+			if(have_coords(hsp_values))
 				i->inner_culling(source_query_len);
 			r2.push_back(std::move(*i));
 		}
@@ -187,7 +175,7 @@ vector<Target> align(const vector<WorkTarget> &targets, const Sequence *query_se
 	return r2;
 }
 
-vector<Target> full_db_align(const Sequence *query_seq, const Bias_correction *query_cb, DP::Flags flags, Statistics &stat, const Block& target_block) {
+vector<Target> full_db_align(const Sequence *query_seq, const Bias_correction *query_cb, DP::Flags flags, const HspValues hsp_values, Statistics &stat, const Block& target_block) {
 	vector<DpTarget> v;
 	vector<Target> r;
 	Stats::TargetMatrix matrix;
@@ -195,16 +183,14 @@ vector<Target> full_db_align(const Sequence *query_seq, const Bias_correction *q
 	const SequenceSet& ref_seqs = target_block.seqs();
 	
 	for (unsigned frame = 0; frame < align_mode.query_contexts; ++frame) {
-		ContainerIterator<DpTarget, SequenceSet> target_it(ref_seqs, ref_seqs.size());
 		list<Hsp> frame_hsp = DP::BandedSwipe::swipe(
 			query_seq[frame],
-			v,
-			v,
-			v,
-			&target_it,
+			ref_seqs.cbegin(),
+			ref_seqs.cend(),
 			Frame(frame),
 			Stats::CBS::hauser(config.comp_based_stats) ? &query_cb[frame] : nullptr,
-			flags | DP::FULL_MATRIX,
+			flags | DP::Flags::FULL_MATRIX,
+			hsp_values,
 			stat);
 		hsp.splice(hsp.begin(), frame_hsp, frame_hsp.begin(), frame_hsp.end());
 	}
@@ -222,25 +208,21 @@ vector<Target> full_db_align(const Sequence *query_seq, const Bias_correction *q
 	return r;
 }
 
-void add_dp_targets(const Target &target, int target_idx, const Sequence *query_seq, array<array<vector<DpTarget>, 3>, MAX_CONTEXT> &dp_targets, DP::Flags flags) {
+void add_dp_targets(const Target &target, int target_idx, const Sequence *query_seq, array<array<vector<DpTarget>, 3>, MAX_CONTEXT> &dp_targets, DP::Flags flags, const HspValues hsp_values) {
 	const int band = Extension::band((int)query_seq->length()),
 		slen = (int)target.seq.length();
 	const Stats::TargetMatrix* matrix = target.adjusted_matrix() ? &target.matrix : nullptr;
 	for (unsigned frame = 0; frame < align_mode.query_contexts; ++frame) {
 		const int qlen = (int)query_seq[frame].length();
 		for (const Hsp &hsp : target.hsp[frame]) {
-			const bool byte_row_counter = config.ext == "full" ? qlen < 256 : (hsp.d_end - hsp.d_begin < 256);
-			int b = (hsp.score < 255 && byte_row_counter) ? 0 : 1;
-			const size_t dp_size = config.ext == "full" ? query_seq[0].length() * target.seq.length() : query_seq[0].length() * size_t(hsp.d_end - hsp.d_begin);
-			if (dp_size > config.max_swipe_dp && (flags & DP::TRACEBACK))
-				b = 2;
-			if (matrix) b = std::max(b, matrix->score_width());
+			const size_t dp_size = flag_any(flags, DP::Flags::FULL_MATRIX) ? query_seq[0].length() * target.seq.length() : target.seq.length() * size_t(hsp.d_end - hsp.d_begin);
+			const int b = DP::BandedSwipe::bin(hsp_values, flag_any(flags, DP::Flags::FULL_MATRIX) ? qlen : hsp.d_end - hsp.d_begin, hsp.score, 0, dp_size, matrix ? matrix->score_width() : 0);
 			dp_targets[frame][b].emplace_back(target.seq, hsp.d_begin, hsp.d_end, hsp.seed_hit_range.begin_, hsp.seed_hit_range.end_, target_idx, qlen, matrix);
 		}
 	}
 }
 
-vector<Match> align(vector<Target> &targets, const Sequence *query_seq, const Bias_correction *query_cb, int source_query_len, DP::Flags flags, Statistics &stat) {
+vector<Match> align(vector<Target> &targets, const Sequence *query_seq, const Bias_correction *query_cb, int source_query_len, DP::Flags flags, const HspValues first_round, Statistics &stat) {
 	array<array<vector<DpTarget>, 3>, MAX_CONTEXT> dp_targets;
 	vector<Match> r;
 	if (targets.empty())

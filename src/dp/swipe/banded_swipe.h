@@ -678,8 +678,8 @@ template<typename _sv, typename _traceback, typename _cbs, typename It>
 list<Hsp> swipe(
 	const Sequence &query,
 	const Frame frame,
-	const It target_begin,
-	const It target_end,
+	const It subject_begin,
+	const It subject_end,
 	_cbs composition_bias,
 	vector<DpTarget> &overflow,
 	Statistics &stat)

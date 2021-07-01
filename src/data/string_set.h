@@ -188,6 +188,14 @@ struct StringSetBase
 
 	};
 
+	ConstIterator cbegin() const {
+		return ConstIterator(ptr(0), limits_.data());
+	}
+
+	ConstIterator cend() const {
+		return ConstIterator(nullptr, &limits_[size()]);
+	}
+
 private:
 
 	std::vector<T> data_;

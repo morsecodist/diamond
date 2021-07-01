@@ -1,6 +1,14 @@
 #pragma once
 #include "../util/enum.h"
 
+namespace DP {
+
+	enum class Flags { NONE = 0, TRACEBACK = 1, PARALLEL = 2, FULL_MATRIX = 4, WITH_COORDINATES = 8 };
+
+	DEF_ENUM_FLAG_OPERATORS(Flags)
+
+}
+
 enum class HspValues : unsigned {
 	NONE = 0,
 	TRANSCRIPT = 1,
@@ -17,3 +25,7 @@ enum class HspValues : unsigned {
 };
 
 DEF_ENUM_FLAG_OPERATORS(HspValues)
+
+static inline bool have_coords(const HspValues v) {
+	return flag_any(v, HspValues::TRANSCRIPT) || flag_all(v, HspValues::QUERY_COORDS | HspValues::TARGET_COORDS);
+}
