@@ -183,7 +183,7 @@ vector<Target> full_db_align(const Sequence *query_seq, const Bias_correction *q
 	const SequenceSet& ref_seqs = target_block.seqs();
 	
 	for (unsigned frame = 0; frame < align_mode.query_contexts; ++frame) {
-		list<Hsp> frame_hsp = DP::BandedSwipe::swipe(
+		list<Hsp> frame_hsp = DP::BandedSwipe::swipe_set(
 			query_seq[frame],
 			ref_seqs.cbegin(),
 			ref_seqs.cend(),
@@ -208,7 +208,7 @@ vector<Target> full_db_align(const Sequence *query_seq, const Bias_correction *q
 	return r;
 }
 
-void add_dp_targets(const Target &target, int target_idx, const Sequence *query_seq, array<array<vector<DpTarget>, 3>, MAX_CONTEXT> &dp_targets, DP::Flags flags, const HspValues hsp_values) {
+void add_dp_targets(const Target &target, int target_idx, const Sequence *query_seq, array<DP::Targets, MAX_CONTEXT> &dp_targets, DP::Flags flags, const HspValues hsp_values) {
 	const int band = Extension::band((int)query_seq->length()),
 		slen = (int)target.seq.length();
 	const Stats::TargetMatrix* matrix = target.adjusted_matrix() ? &target.matrix : nullptr;
@@ -223,32 +223,26 @@ void add_dp_targets(const Target &target, int target_idx, const Sequence *query_
 }
 
 vector<Match> align(vector<Target> &targets, const Sequence *query_seq, const Bias_correction *query_cb, int source_query_len, DP::Flags flags, const HspValues first_round, Statistics &stat) {
-	array<array<vector<DpTarget>, 3>, MAX_CONTEXT> dp_targets;
+	array<DP::Targets, MAX_CONTEXT> dp_targets;
 	vector<Match> r;
 	if (targets.empty())
 		return r;
 	r.reserve(targets.size());
 
-	if ((output_format->hsp_values == Output::NONE && config.max_hsps == 1) || (flags & DP::TRACEBACK) || ((flags & DP::WITH_COORDINATES) && !(output_format->hsp_values & Output::STATS_OR_TRANSCRIPT))) {
-		for (Target &t : targets)
+	const HspValues hsp_values = output_format->hsp_values;
+	if (config.max_hsps == 1 && flag_all(hsp_values, first_round)) {
+		for (Target& t : targets)
 			r.emplace_back(t.block_id, t.hsp, t.ungapped_score);
 		return r;
 	}
 
-	if (config.ext == "full") {
-		flags |= DP::FULL_MATRIX;
-		if ((output_format->hsp_values & Output::TRANSCRIPT) || (output_format->hsp_values & Output::STATS))
-			flags |= DP::TRACEBACK;
-		else
-			flags |= DP::WITH_COORDINATES;
-	}
-	else
-		flags |= DP::TRACEBACK;
+	if (config.ext == "full")
+		flags |= DP::Flags::FULL_MATRIX;
 
 	for (int i = 0; i < (int)targets.size(); ++i) {
 		/*if (config.log_subject)
 			std::cout << "Target=" << ref_ids::get()[targets[i].block_id] << " id=" << i << endl;*/
-		add_dp_targets(targets[i], i, query_seq, dp_targets, flags);
+		add_dp_targets(targets[i], i, query_seq, dp_targets, flags, hsp_values);
 		r.emplace_back(targets[i].block_id, targets[i].ungapped_score);
 	}
 
@@ -257,13 +251,11 @@ vector<Match> align(vector<Target> &targets, const Sequence *query_seq, const Bi
 			continue;
 		list<Hsp> hsp = DP::BandedSwipe::swipe(
 			query_seq[frame],
-			dp_targets[frame][0],
-			dp_targets[frame][1],
-			dp_targets[frame][2],
-			nullptr,
+			dp_targets[frame],
 			Frame(frame),
 			Stats::CBS::hauser(config.comp_based_stats) ? &query_cb[frame] : nullptr,
 			flags,
+			hsp_values,
 			stat);
 		while (!hsp.empty())
 			r[hsp.front().swipe_target].add_hit(hsp, hsp.begin());

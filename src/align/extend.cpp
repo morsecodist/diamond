@@ -89,7 +89,8 @@ vector<Target> extend(size_t query_id,
 	vector<uint32_t> &target_block_ids,
 	const Search::Config& cfg,
 	Statistics& stat,
-	DP::Flags flags)
+	DP::Flags flags,
+	const HspValues hsp_values)
 {
 	static const size_t GAPPED_FILTER_MIN_QLEN = 85;
 	stat.inc(Statistics::TARGET_HITS2, target_block_ids.size());
@@ -110,7 +111,7 @@ vector<Target> extend(size_t query_id,
 	if (!flag_any(flags, DP::Flags::PARALLEL))
 		stat.inc(Statistics::TIME_CHAINING, timer.microseconds());
 
-	return align(targets, query_seq, query_cb, source_query_len, flags, stat);
+	return align(targets, query_seq, query_cb, source_query_len, flags, hsp_values, stat);
 }
 
 vector<Match> extend(
@@ -161,14 +162,15 @@ vector<Match> extend(
 	const int low_score = config.query_memory ? memory->low_score(query_id) : 0;
 	const size_t previous_count = config.query_memory ? memory->count(query_id) : 0;
 
+
+	HspValues first_round = HspValues::NONE;
+
 	if (config.min_id > 0)
-		flags |= DP::Flags::TRACEBACK;
-	else if (config.query_cover > 0 || config.subject_cover > 0) {
-		if (config.ext == "full")
-			flags |= DP::Flags::WITH_COORDINATES;
-		else
-			flags |= DP::Flags::TRACEBACK;
-	}
+		first_round |= HspValues::IDENT | HspValues::LENGTH;
+	if (config.query_cover > 0)
+		first_round |= HspValues::QUERY_COORDS;
+	if (config.subject_cover > 0)
+		first_round |= HspValues::TARGET_COORDS;
 
 	//size_t multiplier = 1;
 	int tail_score = 0;
@@ -192,7 +194,7 @@ vector<Match> extend(
 
 		//multiplier = std::max(multiplier, chunk_size_multiplier(seed_hits_chunk, (int)query_seq.front().length()));
 
-		vector<Target> v = extend(query_id, query_seq.data(), source_query_len, query_cb.data(), query_comp, multi_chunk ? seed_hits_chunk : seed_hits, multi_chunk ? target_block_ids_chunk : target_block_ids, cfg, stat, flags);
+		vector<Target> v = extend(query_id, query_seq.data(), source_query_len, query_cb.data(), query_comp, multi_chunk ? seed_hits_chunk : seed_hits, multi_chunk ? target_block_ids_chunk : target_block_ids, cfg, stat, flags, first_round);
 		const size_t n = v.size();
 		stat.inc(Statistics::TARGET_HITS4, v.size());
 		bool new_hits = false;
@@ -216,7 +218,7 @@ vector<Match> extend(
 	}
 
 	if (config.swipe_all)
-		aligned_targets = full_db_align(query_seq.data(), query_cb.data(), flags, stat, *cfg.target);
+		aligned_targets = full_db_align(query_seq.data(), query_cb.data(), flags, first_round, stat, *cfg.target);
 
 	/*if (multiplier > 1)
 		stat.inc(Statistics::HARD_QUERIES);*/
@@ -228,7 +230,7 @@ vector<Match> extend(
 	stat.inc(Statistics::TARGET_HITS5, aligned_targets.size());
 	timer.finish();
 
-	vector<Match> matches = align(aligned_targets, query_seq.data(), query_cb.data(), source_query_len, flags, stat);
+	vector<Match> matches = align(aligned_targets, query_seq.data(), query_cb.data(), source_query_len, flags, first_round, stat);
 	std::sort(matches.begin(), matches.end(), config.toppercent == 100.0 ? Match::cmp_evalue : Match::cmp_score);
 	return matches;
 }

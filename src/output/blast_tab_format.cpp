@@ -60,14 +60,14 @@ const vector<OutputField> Blast_tab_format::field_def = {
 { "evalue", "Expected value", HspValues::NONE, Flags::NONE },		// 19 means Expect value
 { "bitscore", "Bit score", HspValues::NONE, Flags::NONE },		// 20 means Bit score
 { "score", "Raw score", HspValues::NONE, Flags::NONE },		// 21 means Raw score
-{ "length", "Alignment length", HspValues::STATS, Flags::NONE },		// 22 means Alignment length
-{ "pident", "Percentage of identical matches", HspValues::STATS, Flags::NONE },		// 23 means Percentage of identical matches
-{ "nident", "Number of identical matches", HspValues::STATS, Flags::NONE },		// 24 means Number of identical matches
-{ "mismatch", "Number of mismatches", HspValues::STATS, Flags::NONE },		// 25 means Number of mismatches
-{ "positive", "Number of positive-scoring matches", HspValues::STATS, Flags::NONE },		// 26 means Number of positive - scoring matches
-{ "gapopen", "Number of gap openings", HspValues::STATS, Flags::NONE },		// 27 means Number of gap openings
-{ "gaps", "Total number of gaps", HspValues::STATS, Flags::NONE },			// 28 means Total number of gaps
-{ "ppos", "Percentage of positive-scoring matches", HspValues::STATS, Flags::NONE },			// 29 means Percentage of positive - scoring matches
+{ "length", "Alignment length", HspValues::LENGTH, Flags::NONE },		// 22 means Alignment length
+{ "pident", "Percentage of identical matches", HspValues::IDENT | HspValues::LENGTH, Flags::NONE },		// 23 means Percentage of identical matches
+{ "nident", "Number of identical matches", HspValues::IDENT, Flags::NONE },		// 24 means Number of identical matches
+{ "mismatch", "Number of mismatches", HspValues::MISMATCHES, Flags::NONE },		// 25 means Number of mismatches
+{ "positive", "Number of positive-scoring matches", HspValues::TRANSCRIPT, Flags::NONE },		// 26 means Number of positive - scoring matches
+{ "gapopen", "Number of gap openings", HspValues::GAP_OPENINGS, Flags::NONE },		// 27 means Number of gap openings
+{ "gaps", "Total number of gaps", HspValues::GAPS, Flags::NONE },			// 28 means Total number of gaps
+{ "ppos", "Percentage of positive-scoring matches", HspValues::TRANSCRIPT, Flags::NONE },			// 29 means Percentage of positive - scoring matches
 { "frames", "frames", HspValues::NONE, Flags::NONE },		// 30 means Query and subject frames separated by a '/'
 { "qframe", "Query frame", HspValues::NONE, Flags::NONE },		// 31 means Query frame
 { "sframe", "sframe", HspValues::NONE, Flags::NONE },		// 32 means Subject frame
@@ -113,7 +113,7 @@ Blast_tab_format::Blast_tab_format() :
 	if (f.size() <= 1) {
 		fields = vector<unsigned>(stdf, stdf + 12);
 		if (config.frame_shift == 0)
-			hsp_values = HspValues::STATS;
+			hsp_values = HspValues::QUERY_COORDS | HspValues::TARGET_COORDS | HspValues::LENGTH | HspValues::IDENT | HspValues::MISMATCHES | HspValues::GAP_OPENINGS;
 		else
 			hsp_values = HspValues::TRANSCRIPT;
 		return;
@@ -147,8 +147,6 @@ Blast_tab_format::Blast_tab_format() :
 		hsp_values |= field_def[j].hsp_values;
 		flags |= field_def[j].flags;
 	}
-	if (config.frame_shift != 0 && (flag_any(hsp_values, HspValues::STATS_OR_COORDS) || config.query_range_culling))
-		hsp_values = HspValues::TRANSCRIPT;
 	//if (config.traceback_mode == TracebackMode::NONE && config.max_hsps == 1 && !needs_transcript && !needs_stats && !config.query_range_culling && config.min_id == 0.0 && config.query_cover == 0.0 && config.subject_cover == 0.0)
 		//config.traceback_mode = TracebackMode::SCORE_ONLY;
 }

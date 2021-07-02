@@ -179,6 +179,11 @@ struct StringSetBase
 		ConstIterator& operator+=(ptrdiff_t d) {
 			data_ += *(limits_ + d) - *limits_;
 			limits_ += d;
+			return *this;
+		}
+
+		std::pair<const T*, size_t> operator[](const ptrdiff_t i) const {
+			return { data_ + limits_[i] - limits_[0], limits_[i + 1] - limits_[i] };
 		}
 
 	private:

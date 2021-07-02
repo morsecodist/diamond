@@ -153,8 +153,9 @@ extern size_t cells;
 
 struct DpTarget
 {
+	enum { BLANK = -1 };
 	DpTarget():
-		target_idx(-1),
+		target_idx(BLANK),
 		previous_i1(0),
 		previous_j1(0),
 		matrix(nullptr)
@@ -181,6 +182,14 @@ struct DpTarget
 		previous_i1(previous_i1),
 		previous_j1(previous_j1)
 	{}
+	DpTarget(const std::pair<const Letter*, size_t> seq):
+		seq(seq.first, seq.second),
+		target_idx(BLANK),
+		previous_i1(0),
+		previous_j1(0),
+		matrix(nullptr)
+	{		
+	}
 	int left_i1() const
 	{
 		return std::max(d_end - 1, 0);
@@ -196,7 +205,7 @@ struct DpTarget
 		//return i < j || (i == j && (target_idx < x.target_idx || (target_idx == x.target_idx && d_begin < x.d_begin)));
 	}
 	bool blank() const {
-		return target_idx == -1;
+		return target_idx == BLANK;
 	}
 	bool adjusted_matrix() const {
 		return matrix != nullptr;
@@ -258,7 +267,7 @@ namespace Swipe {
 namespace BandedSwipe {
 
 DECL_DISPATCH(std::list<Hsp>, swipe, (const Sequence& query, const Targets& targets, const Frame frame, const Bias_correction* composition_bias, const DP::Flags flags, const HspValues v, Statistics& stat))
-//DECL_DISPATCH(std::list<Hsp>, swipe, (const Sequence& query, const SequenceSet::ConstIterator begin, const SequenceSet::ConstIterator end, const Frame frame, const Bias_correction* composition_bias, const DP::Flags flags, const HspValues v, Statistics& stat))
+DECL_DISPATCH(std::list<Hsp>, swipe_set, (const Sequence& query, const SequenceSet::ConstIterator begin, const SequenceSet::ConstIterator end, const Frame frame, const Bias_correction* composition_bias, const DP::Flags flags, const HspValues v, Statistics& stat))
 DECL_DISPATCH(unsigned, bin, (HspValues v, int query_len, int score, int ungapped_score, size_t dp_size, unsigned score_width))
 
 }

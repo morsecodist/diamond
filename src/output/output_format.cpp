@@ -226,7 +226,9 @@ void init_output()
 	}
 	else
 		message_stream << "Percentage range of top alignment score to report hits: " << config.toppercent << endl;
-	log_stream << "Format options: transcript=" << bool(output_format->hsp_values & HspValues::TRANSCRIPT) << " stats=" << bool(output_format->hsp_values & HspValues::STATS_OR_COORDS) << endl;
+	if (config.frame_shift != 0 && (output_format->hsp_values != HspValues::NONE || config.query_range_culling))
+		output_format->hsp_values = HspValues::TRANSCRIPT;
+	log_stream << "DP fields: " << (unsigned)output_format->hsp_values << endl;
 }
 
 void Bin1_format::print_query_intro(size_t query_num, const char *query_name, unsigned query_len, TextBuffer &out, bool unaligned, const Search::Config& cfg) const {

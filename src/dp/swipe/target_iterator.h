@@ -1,6 +1,6 @@
 /****
 DIAMOND protein aligner
-Copyright (C) 2016-2020 Max Planck Society for the Advancement of Science e.V.
+Copyright (C) 2016-2021 Max Planck Society for the Advancement of Science e.V.
                         Benjamin Buchfink
 						
 Code developed by Benjamin Buchfink <benjamin.buchfink@tue.mpg.de>
@@ -202,11 +202,11 @@ struct AsyncTargetBuffer
 	AsyncTargetBuffer(const It begin, const It end, std::atomic_size_t* const next):
 		begin(begin),
 		target_count(end - begin),
-		next(next)
+		next(next),
 		custom_matrix_16bit(false)
 	{
 		for (int i = 0; i < CHANNELS; ++i) {
-			DpTarget t = begin[next++];
+			const DpTarget t = begin[(*next)++];
 			if (t.blank())
 				return;
 			pos[i] = 0;
@@ -217,8 +217,8 @@ struct AsyncTargetBuffer
 
 	int max_len() const {
 		int l = 0;
-		for (size_t i = 0; i < target_it.count; ++i)
-			l = std::max(l, (int)target_it[i].seq.length());
+		for (size_t i = 0; i < target_count; ++i)
+			l = std::max(l, (int)DpTarget(begin[i]).seq.length());
 		return l;
 	}
 
@@ -234,7 +234,7 @@ struct AsyncTargetBuffer
 #ifdef __SSSE3__
 	SeqVector seq_vector() const
 	{
-		alignas(32) _t s[CHANNELS];
+		alignas(32) T s[CHANNELS];
 		std::fill(s, s + CHANNELS, SUPER_HARD_MASK);
 		for (int i = 0; i < active.size(); ++i) {
 			const int channel = active[i];
@@ -281,7 +281,7 @@ struct AsyncTargetBuffer
 
 	bool init_target(int i, int channel)
 	{
-		DpTarget t = begin[next++];
+		DpTarget t = begin[(*next)++];
 		if (!t.blank()) {
 			pos[channel] = 0;
 			dp_targets[channel] = t;

@@ -674,12 +674,12 @@ bool realign<VectorTraceback>(const Hsp &hsp, const DpTarget &dp_target) {
 	return hsp.subject_range.begin_ - config.min_realign_overhang > dp_target.j_begin || hsp.subject_range.end_ + config.min_realign_overhang < dp_target.j_end;
 }
 
-template<typename _sv, typename _traceback, typename _cbs, typename It>
+template<typename _sv, typename _traceback, typename _cbs>
 list<Hsp> swipe(
 	const Sequence &query,
 	const Frame frame,
-	const It subject_begin,
-	const It subject_end,
+	const vector<DpTarget>::const_iterator subject_begin,
+	const vector<DpTarget>::const_iterator subject_end,
 	_cbs composition_bias,
 	vector<DpTarget> &overflow,
 	Statistics &stat)

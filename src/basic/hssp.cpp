@@ -279,7 +279,7 @@ Hsp::Hsp(const IntermediateRecord &r, unsigned query_source_len) :
 		frame = 0;
 		query_range.begin_ = r.query_begin;
 	}
-	if (flag_any(output_format->hsp_values, HspValues::STATS_OR_COORDS) && !flag_any(output_format->hsp_values, HspValues::TRANSCRIPT)) {
+	if (IntermediateRecord::stats_mode(output_format->hsp_values)) {
 		identities = r.identities;
 		gaps = r.gaps;
 		gap_openings = r.gap_openings;

@@ -57,7 +57,7 @@ void extend_query(const QueryList& query_list, const TargetMap& db2block_id, con
 		seed_hits.push_back({ 0,0,query_list.targets[i].score,0 });
 	}
 	
-	int flags = DP::FULL_MATRIX;
+	DP::Flags flags = DP::Flags::FULL_MATRIX;
 	
 	vector<Match> matches = Extension::extend(
 		query_list.query_block_id,
@@ -149,7 +149,7 @@ void extend_query(size_t source_query_block_id, const TargetMap& db2block_id, Se
 			seed_hits.push_back({ 0,0,table_begin[i].score, table_begin[i].context });
 		}
 
-		int flags = DP::FULL_MATRIX;
+		DP::Flags flags = DP::Flags::FULL_MATRIX;
 
 		vector<Match> matches = Extension::extend(
 			source_query_block_id,

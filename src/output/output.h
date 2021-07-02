@@ -75,6 +75,9 @@ struct IntermediateRecord
 	static void write(TextBuffer& buf, const Hsp& match, unsigned query_id, size_t target_dict_id, size_t target_oid);
 	static void write(TextBuffer& buf, uint32_t target_block_id, int score, const Search::Config& cfg);
 	static void finish_file(Consumer& f);
+	static bool stats_mode(const HspValues v) {
+		return !flag_any(v, HspValues::TRANSCRIPT) && v != HspValues::NONE;
+	}
 	static const uint32_t FINISHED = UINT32_MAX;
 	uint32_t score, query_id, target_dict_id, target_oid, query_begin, subject_begin, query_end, subject_end, identities, mismatches, positives, gap_openings, gaps;
 	double evalue;
