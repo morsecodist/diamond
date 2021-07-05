@@ -610,7 +610,6 @@ Hsp traceback(const Sequence &query, Frame frame, _cbs bias_correction, const Tr
 	out.frame = frame.index();
 	out.d_begin = target.d_begin;
 	out.d_end = target.d_end;
-	out.seed_hit_range = interval(target.j_begin, target.j_end);
 	out.query_range.end_ = i0 + max_col + max_band_i + 1;
 	const int j0 = i1 - (target.d_end - 1);
 	out.subject_range.end_ = j0 + max_col + 1;
