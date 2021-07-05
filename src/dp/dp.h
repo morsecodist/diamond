@@ -53,7 +53,7 @@ struct Fixed_score_buffer
 	std::pair<int, int> find(_t s) const
 	{
 		const int i = int(std::find(data_.begin(), data_.end(), s) - data_.begin());
-		return std::pair<int, int>(int(i%col_size_), int(i / col_size_));
+		return std::pair<int, int>(int(i % col_size_), int(i / col_size_));
 	}
 
 	inline std::pair<_t*, _t*> get()
@@ -154,41 +154,52 @@ extern size_t cells;
 struct DpTarget
 {
 	enum { BLANK = -1 };
+	int get_cols(int qlen) const {
+		int pos = std::max(d_end - 1, 0) - (d_end - 1);
+		const int d0 = d_begin;
+		const int j1 = std::min(qlen - 1 - d0, (int)(seq.length() - 1)) + 1;
+		return j1 - pos;
+	}
 	DpTarget():
+		d_begin(),
+		d_end(),
 		target_idx(BLANK),
+		cols(),
 		previous_i1(0),
 		previous_j1(0),
 		matrix(nullptr)
 	{}
-	DpTarget(const Sequence &seq, int d_begin, int d_end, int j_begin, int j_end, int target_idx = 0, int qlen = 0, const Stats::TargetMatrix* matrix = nullptr) :
+	DpTarget(const Sequence &seq, int d_begin, int d_end, int target_idx, int qlen, const Stats::TargetMatrix* matrix = nullptr, int previous_i1 = 0, int previous_j1 = 0) :
 		seq(seq),
 		d_begin(d_begin),
 		d_end(d_end),
-		j_begin(j_begin),
-		j_end(j_end),
 		target_idx(target_idx),
+		cols(get_cols(qlen)),
 		previous_i1(0),
 		previous_j1(0),
 		matrix(matrix)
 	{
-		int pos = std::max(d_end - 1, 0) - (d_end - 1);
-		const int d0 = d_begin;
-		const int j1 = std::min(qlen - 1 - d0, (int)(seq.length() - 1)) + 1;
-		cols = j1 - pos;
 	}
-	DpTarget(const Sequence& seq, int target_idx, int previous_i1 = 0, int previous_j1 = 0):
+	DpTarget(const Sequence& seq, int target_idx, const Stats::TargetMatrix* matrix = nullptr, int previous_i1 = 0, int previous_j1 = 0):
 		seq(seq),
+		d_begin(),
+		d_end(),
 		target_idx(target_idx),
+		cols(),
 		previous_i1(previous_i1),
-		previous_j1(previous_j1)
+		previous_j1(previous_j1),
+		matrix()
 	{}
-	DpTarget(const std::pair<const Letter*, size_t> seq):
+	DpTarget(const std::pair<const Letter*, size_t> seq) :
 		seq(seq.first, seq.second),
+		d_begin(),
+		d_end(),
 		target_idx(BLANK),
+		cols(),
 		previous_i1(0),
 		previous_j1(0),
 		matrix(nullptr)
-	{		
+	{
 	}
 	int left_i1() const
 	{
@@ -214,7 +225,7 @@ struct DpTarget
 		return adjusted_matrix() ? config.cbs_matrix_scale : 1;
 	}
 	Sequence seq;
-	int d_begin, d_end, j_begin, j_end, target_idx, cols, previous_i1, previous_j1;
+	int d_begin, d_end, target_idx, cols, previous_i1, previous_j1;
 	const Stats::TargetMatrix* matrix;
 };
 

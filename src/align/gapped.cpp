@@ -96,7 +96,7 @@ void add_dp_targets(const WorkTarget& target, int target_idx, const Sequence* qu
 			if (target.ungapped_score[frame] == 0)
 				continue;
 			const unsigned b = DP::BandedSwipe::bin(hsp_values, query_seq[0].length(), 0, target.ungapped_score[frame], query_seq[0].length() * target.seq.length(), score_width);
-			dp_targets[frame][b].emplace_back(target.seq, 0, 0, 0, 0, target_idx, (int)query_seq->length(), matrix);
+			dp_targets[frame][b].emplace_back(target.seq, 0, 0, target_idx, (int)query_seq->length(), matrix);
 			continue;
 		}
 		if (target.hsp[frame].empty())
@@ -117,7 +117,7 @@ void add_dp_targets(const WorkTarget& target, int target_idx, const Sequence* qu
 			}
 			else {
 				if (d0 != INT_MAX)
-					dp_targets[frame][bits].emplace_back(target.seq, d0, d1, j0, j1, target_idx, (int)query_seq->length(), matrix);
+					dp_targets[frame][bits].emplace_back(target.seq, d0, d1, target_idx, (int)query_seq->length(), matrix);
 				d0 = b0;
 				d1 = b1;
 				j0 = hsp.subject_range.begin_;
@@ -126,7 +126,7 @@ void add_dp_targets(const WorkTarget& target, int target_idx, const Sequence* qu
 			}
 		}
 
-		dp_targets[frame][bits].emplace_back(target.seq, d0, d1, j0, j1, target_idx, (int)query_seq->length(), matrix);
+		dp_targets[frame][bits].emplace_back(target.seq, d0, d1, target_idx, (int)query_seq->length(), matrix);
 	}
 }
 
@@ -217,7 +217,7 @@ void add_dp_targets(const Target &target, int target_idx, const Sequence *query_
 		for (const Hsp &hsp : target.hsp[frame]) {
 			const size_t dp_size = flag_any(flags, DP::Flags::FULL_MATRIX) ? query_seq[0].length() * target.seq.length() : target.seq.length() * size_t(hsp.d_end - hsp.d_begin);
 			const int b = DP::BandedSwipe::bin(hsp_values, flag_any(flags, DP::Flags::FULL_MATRIX) ? qlen : hsp.d_end - hsp.d_begin, hsp.score, 0, dp_size, matrix ? matrix->score_width() : 0);
-			dp_targets[frame][b].emplace_back(target.seq, hsp.d_begin, hsp.d_end, hsp.seed_hit_range.begin_, hsp.seed_hit_range.end_, target_idx, qlen, matrix);
+			dp_targets[frame][b].emplace_back(target.seq, hsp.d_begin, hsp.d_end, target_idx, qlen, matrix);
 		}
 	}
 }
@@ -230,7 +230,7 @@ vector<Match> align(vector<Target> &targets, const Sequence *query_seq, const Bi
 	r.reserve(targets.size());
 
 	const HspValues hsp_values = output_format->hsp_values;
-	if (config.max_hsps == 1 && flag_all(hsp_values, first_round)) {
+	if (config.max_hsps == 1 && flag_all(first_round, hsp_values)) {
 		for (Target& t : targets)
 			r.emplace_back(t.block_id, t.hsp, t.ungapped_score);
 		return r;

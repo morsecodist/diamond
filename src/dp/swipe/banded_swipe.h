@@ -1,6 +1,6 @@
 /****
 DIAMOND protein aligner
-Copyright (C) 2016-2020 Max Planck Society for the Advancement of Science e.V.
+Copyright (C) 2016-2021 Max Planck Society for the Advancement of Science e.V.
                         Benjamin Buchfink
 						
 Code developed by Benjamin Buchfink <benjamin.buchfink@tue.mpg.de>
@@ -585,10 +585,17 @@ Hsp traceback(const Sequence &query, Frame frame, _cbs bias_correction, const Ma
 	out.frame = frame.index();
 	out.d_begin = target.d_begin;
 	out.d_end = target.d_end;
-	out.seed_hit_range = interval(target.j_begin, target.j_end);
-	out.query_range.end_ = i0 + max_col + max_band_i + 1;
-	const int j0 = i1 - (target.d_end - 1);
-	out.subject_range.end_ = j0 + max_col + 1;
+	const int j0 = i1 - (target.d_end - 1), i1_ = i0 + max_col + max_band_i + 1, j1_ = j0 + max_col + 1;
+	if (target.previous_i1 == 0) {
+		out.query_range.end_ = i1_;
+		out.subject_range.end_ = j1_;
+	}
+	else {
+		out.query_range.end_ = target.previous_i1;
+		out.subject_range.end_ = target.previous_j1;
+		out.query_range.begin_ = (int)query.length() - 1 - i1_;
+		out.subject_range.begin_ = (int)target.seq.length() - 1 - j1_;
+	}
 	return out;
 }
 
@@ -657,21 +664,6 @@ Hsp traceback(const Sequence &query, Frame frame, _cbs bias_correction, const Tr
 	out.transcript.reverse();
 	out.transcript.push_terminator();
 	return out;
-}
-
-template<typename _traceback>
-bool realign(const Hsp &hsp, const DpTarget &dp_target) {
-	return false;
-}
-
-template<>
-bool realign<Traceback>(const Hsp &hsp, const DpTarget &dp_target) {
-	return hsp.subject_range.begin_ - config.min_realign_overhang > dp_target.j_begin || hsp.subject_range.end_ + config.min_realign_overhang < dp_target.j_end;
-}
-
-template<>
-bool realign<VectorTraceback>(const Hsp &hsp, const DpTarget &dp_target) {
-	return hsp.subject_range.begin_ - config.min_realign_overhang > dp_target.j_begin || hsp.subject_range.end_ + config.min_realign_overhang < dp_target.j_end;
 }
 
 template<typename _sv, typename _traceback, typename _cbs>
@@ -811,7 +803,6 @@ list<Hsp> swipe(
 	}
 
 	list<Hsp> out;
-	int realign = 0;
 	task_timer timer;
 	for (int i = 0; i < targets.n_targets; ++i) {
 		if (best[i] < ScoreTraits<_sv>::max_score()) {
@@ -819,35 +810,13 @@ list<Hsp> swipe(
 			if (!subject_begin[i].adjusted_matrix())
 				score *= config.cbs_matrix_scale;
 			const double evalue = score_matrix.evalue(score, qlen, (unsigned)subject_begin[i].seq.length());
-			if (score_matrix.report_cutoff(score, evalue)) {
+			if (score_matrix.report_cutoff(score, evalue))
 				out.push_back(traceback<_sv>(query, frame, composition_bias, dp, subject_begin[i], d_begin[i], best[i], evalue, max_col[i], i, i0 - j, i1 - j, max_band_row[i]));
-				if ((config.max_hsps == 0 || config.max_hsps > 1) && !config.no_swipe_realign
-					&& ::DP::BandedSwipe::DISPATCH_ARCH::realign<_traceback>(out.back(), subject_begin[i]))
-					realign |= 1 << i;
-			}
 		}
 		else
 			overflow.push_back(subject_begin[i]);
 	}
 	stat.inc(Statistics::TIME_TRACEBACK, timer.microseconds());
-
-	if (realign) {
-		stat.inc(Statistics::SWIPE_REALIGN);
-		vector<vector<Letter>> seqs;
-		vector<DpTarget> realign_targets;
-		for (int i = 0; i < targets.n_targets; ++i) {
-			if ((realign & (1 << i)) == 0)
-				continue;
-			seqs.push_back(subject_begin[i].seq.copy());
-			realign_targets.push_back(subject_begin[i]);
-			realign_targets.back().seq = Sequence(seqs.back());
-			for (const Hsp& hsp : out)
-				if (hsp.swipe_target == subject_begin[i].target_idx)
-					realign_targets.back().seq.mask(hsp.subject_range);
-		}
-		vector<DpTarget> overflow;
-		out.splice(out.end(), swipe<_sv, _traceback>(query, frame, realign_targets.begin(), realign_targets.end(), composition_bias, overflow, stat));
-	}
 	return out;
 }
 

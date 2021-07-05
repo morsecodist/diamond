@@ -155,7 +155,7 @@ static list<Hsp> dispatch_swipe(const Sequence& query,
 {
 	if (flag_any(v, HspValues::TRANSCRIPT))
 		return dispatch_swipe<Sv, VectorTraceback, It>(query, begin, end, next, frame, composition_bias, flags, overflow, stat);
-	else if (v == HspValues::COORDS)
+	else if (flag_any(v, HspValues::COORDS))
 		return dispatch_swipe<Sv, ScoreWithCoords, It>(query, begin, end, next, frame, composition_bias, flags, overflow, stat);
 	else
 		return dispatch_swipe<Sv, ScoreOnly, It>(query, begin, end, next, frame, composition_bias, flags, overflow, stat);
@@ -283,7 +283,8 @@ static list<Hsp> recompute_reversed(const Sequence& query, Frame frame, const Bi
 	size_t j = 0;
 	for (auto i = begin; i != end; ++i, ++j) {
 		std::reverse_copy(i->target_seq.data(), i->target_seq.end(), reversed_targets.ptr(j));
-		dp_targets[bin(v, qlen, i->score, 0, 0, 0)].emplace_back(reversed_targets[j], i->swipe_target, i->query_range.end_, i->subject_range.end_);
+		const int band = flag_any(flags, Flags::FULL_MATRIX) ? qlen : i->d_end - i->d_begin;
+		dp_targets[bin(v, band, i->score, 0, 0, 0)].emplace_back(reversed_targets[j], 0, 0, i->swipe_target, qlen, nullptr, i->query_range.end_, i->subject_range.end_);
 	}
 
 	list<Hsp> out;
@@ -291,7 +292,7 @@ static list<Hsp> recompute_reversed(const Sequence& query, Frame frame, const Bi
 	Bias_correction rev_cbs = composition_bias ? composition_bias->reverse() : Bias_correction();
 	const int8_t* cbs = composition_bias ? rev_cbs.int8.data() : nullptr;
 	for (unsigned bin = 0; bin < BINS; ++bin)
-		out.splice(out.end(), swipe_bin(bin, query, dp_targets[bin].begin(), dp_targets[bin].end(), frame, cbs, flags, v, stat).first);
+		out.splice(out.end(), swipe_bin(bin, Sequence(reversed), dp_targets[bin].begin(), dp_targets[bin].end(), frame, cbs, flags, v, stat).first);
 	return out;
 }
 
