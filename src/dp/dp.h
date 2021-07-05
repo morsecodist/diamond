@@ -175,8 +175,8 @@ struct DpTarget
 		d_end(d_end),
 		target_idx(target_idx),
 		cols(get_cols(qlen)),
-		previous_i1(0),
-		previous_j1(0),
+		previous_i1(previous_i1),
+		previous_j1(previous_j1),
 		matrix(matrix)
 	{
 	}

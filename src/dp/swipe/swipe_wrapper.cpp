@@ -72,7 +72,8 @@ unsigned bin(HspValues v, int query_len, int score, int ungapped_score, size_t d
 }
 
 static bool reversed(const HspValues v) {
-	return flag_any(v, HspValues::QUERY_START | HspValues::TARGET_START | HspValues::MISMATCHES | HspValues::GAP_OPENINGS) && !flag_any(v, HspValues::TRANSCRIPT);
+	return flag_only(v, HspValues::COORDS) && v != HspValues::NONE;
+	//return flag_any(v, HspValues::QUERY_START | HspValues::TARGET_START | HspValues::MISMATCHES | HspValues::GAP_OPENINGS) && !flag_any(v, HspValues::TRANSCRIPT);
 }
 
 template<typename Sv, typename TracebackMode, typename Cbs>
@@ -153,12 +154,13 @@ static list<Hsp> dispatch_swipe(const Sequence& query,
 	vector<DpTarget> &overflow,
 	Statistics &stat)
 {
-	if (flag_any(v, HspValues::TRANSCRIPT))
-		return dispatch_swipe<Sv, VectorTraceback, It>(query, begin, end, next, frame, composition_bias, flags, overflow, stat);
-	else if (flag_any(v, HspValues::COORDS))
+	if (v == HspValues::NONE)
+		return dispatch_swipe<Sv, ScoreOnly, It>(query, begin, end, next, frame, composition_bias, flags, overflow, stat);
+	else if (flag_only(v, HspValues::COORDS))
 		return dispatch_swipe<Sv, ScoreWithCoords, It>(query, begin, end, next, frame, composition_bias, flags, overflow, stat);
 	else
-		return dispatch_swipe<Sv, ScoreOnly, It>(query, begin, end, next, frame, composition_bias, flags, overflow, stat);
+		return dispatch_swipe<Sv, VectorTraceback, It>(query, begin, end, next, frame, composition_bias, flags, overflow, stat);
+		
 }
 
 template<typename _sv, typename It>
@@ -283,8 +285,8 @@ static list<Hsp> recompute_reversed(const Sequence& query, Frame frame, const Bi
 	size_t j = 0;
 	for (auto i = begin; i != end; ++i, ++j) {
 		std::reverse_copy(i->target_seq.data(), i->target_seq.end(), reversed_targets.ptr(j));
-		const int band = flag_any(flags, Flags::FULL_MATRIX) ? qlen : i->d_end - i->d_begin;
-		dp_targets[bin(v, band, i->score, 0, 0, 0)].emplace_back(reversed_targets[j], 0, 0, i->swipe_target, qlen, nullptr, i->query_range.end_, i->subject_range.end_);
+		const int band = flag_any(flags, Flags::FULL_MATRIX) ? qlen : i->d_end - i->d_begin, tlen = (int)i->target_seq.length();
+		dp_targets[bin(v, band, i->score, 0, 0, 0)].emplace_back(reversed_targets[j], -i->d_end + qlen - tlen + 1, -i->d_begin + qlen - tlen + 1, i->swipe_target, qlen, nullptr, i->query_range.end_, i->subject_range.end_);
 	}
 
 	list<Hsp> out;

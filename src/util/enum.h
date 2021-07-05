@@ -66,3 +66,10 @@ bool flag_any(_t a, _t b) {
 	T c = static_cast<T>(b);
 	return (static_cast<T>(a) & c) != T(0);
 }
+
+template<typename _t>
+bool flag_only(_t a, _t b) {
+	typedef typename std::underlying_type<_t>::type T;
+	T c = static_cast<T>(b);
+	return (static_cast<T>(a) & ~c) == T(0);
+}

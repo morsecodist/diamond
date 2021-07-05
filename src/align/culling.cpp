@@ -122,7 +122,7 @@ bool filter_hsp(const Hsp& hsp, int source_query_len, const char *query_title, i
 
 void Target::apply_filters(int source_query_len, const char *query_title, const Sequence& query_seq, const Block& targets)
 {
-	const char *title = targets.ids()[block_id];
+	const char* title = config.no_self_hits ? targets.ids()[block_id] : nullptr;
 	const Sequence seq = targets.seqs()[block_id];
 	const int len = seq.length();
 	filter_score = 0;

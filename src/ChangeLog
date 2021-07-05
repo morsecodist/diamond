@@ -1,3 +1,6 @@
+[2.0.12]
+- Fixed an error when using HSP filter settings together with a BLAST database.
+
 [2.0.10]
 - Using BLAST databases now requires a preprocessing step using the command `prepdb`.
 - Improved performance of searching small query files.

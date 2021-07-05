@@ -593,9 +593,10 @@ Hsp traceback(const Sequence &query, Frame frame, _cbs bias_correction, const Ma
 	else {
 		out.query_range.end_ = target.previous_i1;
 		out.subject_range.end_ = target.previous_j1;
-		out.query_range.begin_ = (int)query.length() - 1 - i1_;
-		out.subject_range.begin_ = (int)target.seq.length() - 1 - j1_;
+		out.query_range.begin_ = (int)query.length() - i1_;
+		out.subject_range.begin_ = (int)target.seq.length() - j1_;
 	}
+	out.target_seq = target.seq;
 	return out;
 }
 
@@ -613,6 +614,7 @@ Hsp traceback(const Sequence &query, Frame frame, _cbs bias_correction, const Tr
 	out.query_range.end_ = i0 + max_col + max_band_i + 1;
 	const int j0 = i1 - (target.d_end - 1);
 	out.subject_range.end_ = j0 + max_col + 1;
+	out.target_seq = target.seq;
 	return out;
 }
 
@@ -626,6 +628,7 @@ Hsp traceback(const Sequence &query, Frame frame, _cbs bias_correction, const Tr
 	typename TracebackVectorMatrix<_sv>::TracebackIterator it(dp.traceback(max_col + 1, i0 + max_col, max_band_i, j0 + max_col, (int)query.length(), channel));
 	Hsp out;
 	out.swipe_target = target.target_idx;
+	out.target_seq = target.seq;
 	out.score = ScoreTraits<_sv>::int_score(max_score);
 	out.evalue = evalue;
 	out.transcript.reserve(size_t(out.score * config.transcript_len_estimate));
