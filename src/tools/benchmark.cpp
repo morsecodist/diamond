@@ -39,6 +39,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../dp/scan_diags.h"
 #include "../stats/cbs.h"
 #include "../util/profiler.h"
+#include "../dp/swipe/cell_update.h"
 
 void benchmark_io();
 
@@ -188,11 +189,11 @@ void swipe_cell_update() {
 
 #ifdef __SSE4_1__
 	t1 = high_resolution_clock::now();
-	RowCounter<score_vector<int8_t>> row_counter(0);
+	VectorRowCounter<score_vector<int8_t>> row_counter(0);
 	{
 		score_vector<int8_t> diagonal_cell, scores, gap_extension, gap_open, horizontal_gap, vertical_gap, best;
 		for (size_t i = 0; i < n; ++i) {
-			diagonal_cell = ::swipe_cell_update(diagonal_cell, scores, nullptr, gap_extension, gap_open, horizontal_gap, vertical_gap, best, nullptr, nullptr, nullptr, nullptr, row_counter);
+			diagonal_cell = ::swipe_cell_update(diagonal_cell, scores, nullptr, gap_extension, gap_open, horizontal_gap, vertical_gap, best, nullptr, row_counter);
 		}
 		volatile auto x = diagonal_cell.data_;
 	}

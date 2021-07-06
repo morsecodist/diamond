@@ -25,10 +25,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <numeric>
 #include <limits.h>
 #include "../dp.h"
-#include "../score_vector_int16.h"
-#include "../score_vector_int8.h"
 #include "../../util/log_stream.h"
 #include "../../data/sequence_set.h"
+#include "../score_vector.h"
+#include "../score_vector_int16.h"
+#include "../score_vector_int8.h"
+#include "cell_update.h"
+#include "banded_matrix.h"
+#include "full_matrix.h"
 #include "full_swipe.h"
 #include "banded_swipe.h"
 
@@ -37,6 +41,12 @@ using std::atomic;
 using std::thread;
 using std::array;
 using std::atomic_size_t;
+
+template<bool traceback, typename RC>
+struct SwipeConfig {
+	static constexpr bool traceback = traceback;
+	using RowCounter = RC;
+};
 
 namespace DP { namespace BandedSwipe { namespace DISPATCH_ARCH {
 
@@ -76,7 +86,7 @@ static bool reversed(const HspValues v) {
 	//return flag_any(v, HspValues::QUERY_START | HspValues::TARGET_START | HspValues::MISMATCHES | HspValues::GAP_OPENINGS) && !flag_any(v, HspValues::TRANSCRIPT);
 }
 
-template<typename Sv, typename TracebackMode, typename Cbs>
+template<typename Sv, typename Cbs, typename Cfg>
 static list<Hsp> dispatch_swipe(
 	const Sequence& query,
 	const Frame frame,
@@ -86,10 +96,10 @@ static list<Hsp> dispatch_swipe(
 	vector<DpTarget>& overflow,
 	Statistics& stat)
 {
-	return ::DP::BandedSwipe::DISPATCH_ARCH::swipe<Sv, TracebackMode, Cbs>(query, frame, subject_begin, subject_end, composition_bias, overflow, stat);
+	return ::DP::BandedSwipe::DISPATCH_ARCH::swipe<Sv, Cbs, Cfg>(query, frame, subject_begin, subject_end, composition_bias, overflow, stat);
 }
 
-template<typename Sv, typename TracebackMode, typename Cbs>
+template<typename Sv, typename Cbs, typename Cfg>
 static list<Hsp> dispatch_swipe(
 	const Sequence& query,
 	const Frame frame,
@@ -102,7 +112,7 @@ static list<Hsp> dispatch_swipe(
 	return {};
 }
 
-template<typename Sv, typename TracebackMode, typename Cbs, typename It>
+template<typename Sv, typename Cbs, typename It, typename Cfg>
 static list<Hsp> dispatch_swipe(const Sequence& query,
 	const It begin,
 	const It end,
@@ -115,16 +125,16 @@ static list<Hsp> dispatch_swipe(const Sequence& query,
 {
 	constexpr auto CHANNELS = vector<DpTarget>::const_iterator::difference_type(::DISPATCH_ARCH::ScoreTraits<Sv>::CHANNELS);
 	if (flag_any(flags, Flags::FULL_MATRIX))
-		return ::DP::Swipe::DISPATCH_ARCH::swipe<Sv, TracebackMode, Cbs, It>(query, frame, begin, end, next, composition_bias, overflow, stat);
+		return ::DP::Swipe::DISPATCH_ARCH::swipe<Sv, Cbs, It, Cfg>(query, frame, begin, end, next, composition_bias, overflow, stat);
 	else {
 		list<Hsp> out;
 		for (It i = begin; i < end; i += std::min(CHANNELS, end - i))
-			out.splice(out.end(), dispatch_swipe<Sv, TracebackMode, Cbs>(query, frame, i, i + std::min(CHANNELS, end - i), composition_bias, overflow, stat));
+			out.splice(out.end(), dispatch_swipe<Sv, Cbs, Cfg>(query, frame, i, i + std::min(CHANNELS, end - i), composition_bias, overflow, stat));
 		return out;
 	}
 }
 
-template<typename Sv, typename TracebackMode , typename It >
+template<typename Sv, typename It, typename Cfg>
 static list<Hsp> dispatch_swipe(
 	const Sequence&query,
 	const It begin,
@@ -137,9 +147,9 @@ static list<Hsp> dispatch_swipe(
 	Statistics &stat)
 {
 	if (composition_bias == nullptr)
-		return dispatch_swipe<Sv, TracebackMode, NoCBS, It>(query, begin, end, next, frame, NoCBS(), flags, overflow, stat);
+		return dispatch_swipe<Sv, NoCBS, It, Cfg>(query, begin, end, next, frame, NoCBS(), flags, overflow, stat);
 	else
-		return dispatch_swipe<Sv, TracebackMode, const int8_t*, It>(query, begin, end, next, frame, composition_bias, flags, overflow, stat);
+		return dispatch_swipe<Sv, const int8_t*, It, Cfg>(query, begin, end, next, frame, composition_bias, flags, overflow, stat);
 }
 
 template<typename Sv, typename It>
@@ -155,11 +165,11 @@ static list<Hsp> dispatch_swipe(const Sequence& query,
 	Statistics &stat)
 {
 	if (v == HspValues::NONE)
-		return dispatch_swipe<Sv, ScoreOnly, It>(query, begin, end, next, frame, composition_bias, flags, overflow, stat);
+		return dispatch_swipe<Sv, It, SwipeConfig<false, DummyRowCounter>>(query, begin, end, next, frame, composition_bias, flags, overflow, stat);
 	else if (flag_only(v, HspValues::COORDS))
-		return dispatch_swipe<Sv, ScoreWithCoords, It>(query, begin, end, next, frame, composition_bias, flags, overflow, stat);
+		return dispatch_swipe<Sv, It, SwipeConfig<false, VectorRowCounter<Sv>>>(query, begin, end, next, frame, composition_bias, flags, overflow, stat);
 	else
-		return dispatch_swipe<Sv, VectorTraceback, It>(query, begin, end, next, frame, composition_bias, flags, overflow, stat);
+		return dispatch_swipe<Sv, It, SwipeConfig<true, VectorRowCounter<Sv>>>(query, begin, end, next, frame, composition_bias, flags, overflow, stat);
 		
 }
 

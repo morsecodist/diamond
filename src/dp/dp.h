@@ -257,13 +257,10 @@ namespace DP {
 
 enum { BINS = 3};
 
-using Targets = std::array<std::vector<DpTarget>, BINS>;
-
 struct Traceback {};
-struct StatTraceback {};
-struct VectorTraceback {};
 struct ScoreOnly {};
-struct ScoreWithCoords {};
+
+using Targets = std::array<std::vector<DpTarget>, BINS>;
 
 struct NoCBS {
 	constexpr void* operator[](int i) const { return nullptr; }
