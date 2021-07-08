@@ -42,9 +42,9 @@ using std::thread;
 using std::array;
 using std::atomic_size_t;
 
-template<bool traceback, typename RC, typename C, typename IdM>
+template<bool tb, typename RC, typename C, typename IdM>
 struct SwipeConfig {
-	static constexpr bool traceback = traceback;
+	static constexpr bool traceback = tb;
 	using RowCounter = RC;
 	using Cell = C;
 	using IdMask = IdM;
