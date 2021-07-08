@@ -169,10 +169,10 @@ list<Hsp> swipe(
 	Statistics &stat)
 {
 	typedef typename ScoreTraits<_sv>::Score Score;
-	using Cell = Cfg::Cell;
-	using Matrix = SelectMatrix<Cell, Cfg::traceback>::Type;
-	using RowCounter = Cfg::RowCounter;
-	using IdMask = Cfg::IdMask;
+	using Cell = typename Cfg::Cell;
+	using Matrix = typename SelectMatrix<Cell, Cfg::traceback>::Type;
+	using RowCounter = typename Cfg::RowCounter;
+	using IdMask = typename Cfg::IdMask;
  	constexpr int CHANNELS = ScoreTraits<_sv>::CHANNELS;
 
 	assert(subject_end - subject_begin <= CHANNELS);

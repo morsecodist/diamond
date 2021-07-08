@@ -224,10 +224,10 @@ struct TracebackVectorMatrix
 	{
 		const int l = (int)hgap_.size();
 		for (int i = 0; i < l; ++i) {
-			hgap_[i] = set_channel(hgap_[i], c, ScoreTraits<_sv>::zero_score());
-			score_[i] = set_channel(score_[i], c, ScoreTraits<_sv>::zero_score());
+			hgap_[i] = set_channel(hgap_[i], c, ::DISPATCH_ARCH::ScoreTraits<_sv>::zero_score());
+			score_[i] = set_channel(score_[i], c, ::DISPATCH_ARCH::ScoreTraits<_sv>::zero_score());
 		}
-		score_[l] = set_channel(score_[l], c, ScoreTraits<_sv>::zero_score());
+		score_[l] = set_channel(score_[l], c, ::DISPATCH_ARCH::ScoreTraits<_sv>::zero_score());
 	}
 
 	int cols() const {

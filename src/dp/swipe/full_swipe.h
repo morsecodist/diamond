@@ -108,10 +108,10 @@ template<typename _sv, typename _cbs, typename It, typename Cfg>
 list<Hsp> swipe(const Sequence& query, const Frame frame, const It target_begin, const It target_end, std::atomic_size_t* const next, _cbs composition_bias, vector<DpTarget>& overflow, Statistics &stats)
 {
 	typedef typename ScoreTraits<_sv>::Score Score;
-	using Cell = Cfg::Cell;
+	using Cell = typename Cfg::Cell;
 	typedef typename SelectMatrix<Cell, Cfg::traceback>::Type Matrix;
-	using RowCounter = Cfg::RowCounter;
-	using IdMask = Cfg::IdMask;
+	using RowCounter = typename Cfg::RowCounter;
+	using IdMask = typename Cfg::IdMask;
 	constexpr int CHANNELS = ScoreTraits<_sv>::CHANNELS;
 
 	int max_col[CHANNELS], max_i[CHANNELS], max_j[CHANNELS];

@@ -166,7 +166,7 @@ struct TracebackMatrix
 		}
 		void walk_diagonal()
 		{
-			score_ -= band_ * ScoreTraits<_sv>::CHANNELS;
+			score_ -= band_ * ::DISPATCH_ARCH::ScoreTraits<_sv>::CHANNELS;
 			--i;
 			--j;
 			assert(i >= -1 && j >= -1);
