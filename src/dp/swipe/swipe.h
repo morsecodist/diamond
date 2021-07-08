@@ -32,14 +32,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../../util/memory/alignment.h"
 #include "../../util/simd/transpose.h"
 
-static inline uint8_t cmp_mask(int x, int y) {
-	return x == y;
-}
-
-static inline int blend(int v, int w, int mask) {
-	return mask ? w : v;
-}
-
 namespace DP {
 	struct NoCBS;
 }

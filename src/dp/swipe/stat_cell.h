@@ -20,6 +20,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
+static inline uint8_t cmp_mask(int x, int y) {
+	return x == y;
+}
+
+static inline int blend(int v, int w, int mask) {
+	return mask ? w : v;
+}
+
 template<typename Sv>
 struct DummyIdMask {
 	DummyIdMask(const Letter q, const Sv& t)
@@ -29,7 +37,7 @@ struct DummyIdMask {
 template<typename Sv>
 struct VectorIdMask {
 	VectorIdMask(const Letter q, const Sv& t) :
-		mask(blend(Sv(0), Sv(1), Sv(::DISPATCH_ARCH::ScoreTraits<Sv>::Score(q)) == t))
+		mask(blend(Sv(0), Sv(1), Sv(typename ::DISPATCH_ARCH::ScoreTraits<Sv>::Score(q)) == t))
 	{}
 	const Sv mask;
 };
