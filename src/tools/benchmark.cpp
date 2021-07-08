@@ -56,6 +56,10 @@ using namespace DISPATCH_ARCH;
 namespace Benchmark { namespace DISPATCH_ARCH {
 
 #ifdef __SSE4_1__
+void swipe_cell_update();
+#endif
+
+#ifdef __SSE4_1__
 void benchmark_hamming(const Sequence& s1, const Sequence& s2) {
 	static const size_t n = 100000000llu;
 	high_resolution_clock::time_point t1 = high_resolution_clock::now();
@@ -170,34 +174,6 @@ void benchmark_transpose() {
 		}
 		cout << "Matrix transpose 32x32 bytes:\t" << (double)duration_cast<std::chrono::nanoseconds>(high_resolution_clock::now() - t1).count() / (n * 32 * 32) * 1000 << " ps/Letter" << endl;
 	}
-#endif
-}
-#endif
-
-#ifdef __SSE2__
-void swipe_cell_update() {
-	static const size_t n = 1000000000llu;
-	high_resolution_clock::time_point t1 = high_resolution_clock::now();
-	/*{
-		score_vector<uint8_t> diagonal_cell, scores, gap_extension, gap_open, horizontal_gap, vertical_gap, best, vbias;
-		for (size_t i = 0; i < n; ++i) {
-			diagonal_cell = cell_update(diagonal_cell, scores, gap_extension, gap_open, horizontal_gap, vertical_gap, best, vbias);
-		}
-		volatile __m128i x = diagonal_cell.data_;
-	}
-	cout << "SWIPE cell update (uint8_t):\t" << (double)duration_cast<std::chrono::nanoseconds>(high_resolution_clock::now() - t1).count() / (n * 16) * 1000 << " ps/Cell" << endl;*/
-
-#ifdef __SSE4_1__
-	/*t1 = high_resolution_clock::now();
-	VectorRowCounter<score_vector<int8_t>> row_counter(0);
-	{
-		score_vector<int8_t> diagonal_cell, scores, gap_extension, gap_open, horizontal_gap, vertical_gap, best;
-		for (size_t i = 0; i < n; ++i) {
-			diagonal_cell = ::swipe_cell_update(diagonal_cell, scores, nullptr, gap_extension, gap_open, horizontal_gap, vertical_gap, best, nullptr, row_counter, nullptr);
-		}
-		volatile auto x = diagonal_cell.data_;
-	}
-	cout << "SWIPE cell update (int8_t):\t" << (double)duration_cast<std::chrono::nanoseconds>(high_resolution_clock::now() - t1).count() / (n * 16) * 1000 << " ps/Cell" << endl;*/
 #endif
 }
 #endif
@@ -334,7 +310,12 @@ void matrix_adjust(const Sequence& s1, const Sequence& s2) {
 }
 
 void benchmark() {
-	if (!config.type.empty()) {
+	if (config.type == "swipe") {
+#ifdef __SSE4_1__
+		swipe_cell_update();
+#endif
+		return;
+	}if (!config.type.empty()) {
 		benchmark_io();
 		return;
 	}
@@ -355,7 +336,6 @@ void benchmark() {
 #endif
 #ifdef __SSE2__
 	banded_swipe(s1, s2);
-	swipe_cell_update();
 #endif
 	evalue();
 	matrix_adjust(s1, s2);

@@ -108,6 +108,7 @@ set(DISPATCH_OBJECTS
 "src/dp/swipe/banded_3frame_swipe.cpp"
 "src/search/stage2.cpp"
 "src/tools/benchmark.cpp"
+"src/tools/benchmark_swipe.cpp"
 "src/dp/swipe/swipe_wrapper.cpp"
 "src/util/tantan.cpp"
 "src/dp/scan_diags.cpp"
