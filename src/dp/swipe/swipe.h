@@ -40,16 +40,6 @@ static inline int blend(int v, int w, int mask) {
 	return mask ? w : v;
 }
 
-template<typename _sv>
-struct TraceStat {
-	_sv length;
-	_sv gapopen;
-	_sv qstart;
-	_sv sstart;
-	_sv ident;
-	_sv mismatch;
-};
-
 namespace DP {
 	struct NoCBS;
 }
@@ -75,48 +65,6 @@ struct CBSBuffer<_sv, const int8_t*> {
 	}
 	std::vector<_sv, Util::Memory::AlignmentAllocator<_sv, 32>> data;
 };
-
-
-/*template<typename _sv>
-static inline _sv swipe_cell_update(const _sv& diagonal_cell,
-	const _sv& scores,
-	const _sv& query_bias,
-	const _sv& gap_extension,
-	const _sv& gap_open,
-	_sv& horizontal_gap,
-	_sv& vertical_gap,
-	_sv& best,
-	TraceStat<_sv> &trace_stat_diag,
-	TraceStat<_sv> &trace_stat_vertical,
-	TraceStat<_sv> &trace_stat_horizontal,
-	void*,
-	const RowCounter<_sv>&)
-{
-	typedef typename ::DISPATCH_ARCH::ScoreTraits<_sv>::Score Score;
-	using std::max;
-	_sv current_cell = diagonal_cell + (scores + query_bias);
-	current_cell = max(max(current_cell, vertical_gap), horizontal_gap);
-	::DISPATCH_ARCH::ScoreTraits<_sv>::saturate(current_cell);
-
-	const _sv one = _sv(Score(1)), zero = _sv(), zero2 = _sv(Score(0));
-	const _sv vgap_mask = current_cell == vertical_gap, hgap_mask = current_cell == horizontal_gap, zero_mask = current_cell == zero;
-
-	best = max(best, current_cell);
-	vertical_gap -= gap_extension;
-	horizontal_gap -= gap_extension;
-	const _sv open = current_cell - gap_open;
-	vertical_gap = max(vertical_gap, open);
-	horizontal_gap = max(horizontal_gap, open);
-
-	trace_stat_vertical.length += one;
-	trace_stat_horizontal.length += one;
-	trace_stat_diag.length += one;
-	trace_stat_diag.length = blend(trace_stat_diag.length, trace_stat_vertical.length, vgap_mask);
-	trace_stat_diag.length = blend(trace_stat_diag.length, trace_stat_horizontal.length, hgap_mask);
-	trace_stat_diag.length = blend(trace_stat_diag.length, zero2, zero_mask);
-	
-	return current_cell;
-}*/
 
 template<typename _sv>
 static inline _sv cell_update(const _sv &diagonal_cell,
@@ -152,21 +100,12 @@ template<typename _sv>
 struct SwipeProfile
 {
 
-#ifdef __SSSE3__
 	inline void set(typename ScoreTraits<_sv>::Vector seq)
 	{
 		assert(sizeof(data_) / sizeof(_sv) >= value_traits.alphabet_size);
 		for (unsigned j = 0; j < AMINO_ACID_COUNT; ++j)
 			data_[j] = _sv(j, seq);
 	}
-#else
-	inline void set(uint64_t seq)
-	{
-		assert(sizeof(data_) / sizeof(_sv) >= value_traits.alphabet_size);
-		for (unsigned j = 0; j < AMINO_ACID_COUNT; ++j)
-			data_[j] = _sv(j, seq);
-	}
-#endif
 
 	inline const _sv& get(Letter i) const
 	{

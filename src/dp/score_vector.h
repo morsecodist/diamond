@@ -277,9 +277,10 @@ struct ScoreTraits<int32_t>
 	{
 		return s;
 	}
-	static void saturate(int &x)
+	template<typename T>
+	static void saturate(T &x)
 	{
-		x = std::max(x, 0);
+		x = std::max((int32_t)x, 0);
 	}
 	static int max_score()
 	{
@@ -333,22 +334,10 @@ static inline void store_sv(const DISPATCH_ARCH::score_vector<_t> &sv, _p *dst)
 
 #endif
 
-template<typename _sv>
-static inline typename DISPATCH_ARCH::ScoreTraits<_sv>::Score extract_channel(const _sv &v, int i) {
-	return v[i];
-}
-
-template<>
-inline int extract_channel<int>(const int &v, int i) {
+static inline int extract_channel(const int32_t v, const int i) {
 	return v;
 }
 
-template<typename _sv>
-static inline void set_channel(_sv &v, int i, typename DISPATCH_ARCH::ScoreTraits<_sv>::Score x) {
-	v.set(i, x);
-}
-
-template<>
-inline void set_channel<int>(int &v, int i, int x) {
-	v = x;
+static inline int32_t set_channel(const int32_t v, const int i, const int32_t x) {
+	return x;
 }

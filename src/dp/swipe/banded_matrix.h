@@ -27,7 +27,6 @@ namespace DISPATCH_ARCH {
 template<typename _sv>
 struct Matrix
 {
-	typedef void* Stat;
 	struct ColumnIterator
 	{
 		ColumnIterator(_sv* hgap_front, _sv* score_front) :
@@ -82,6 +81,9 @@ struct Matrix
 	}
 	int band() const {
 		return band_;
+	}
+	_sv operator[](int i) const {
+		return score_[i];
 	}
 #ifdef __APPLE__
 	MemBuffer<_sv> hgap_, score_;
@@ -253,6 +255,10 @@ struct TracebackMatrix
 		return ColumnIterator(&hgap_[offset], &score_[col*band_ + offset], &score_[(col + 1)*band_ + offset]);
 	}
 
+	_sv operator[](int i) const {
+		return _sv();
+	}
+
 	MemBuffer<_sv> hgap_, score_;
 
 private:
@@ -367,18 +373,24 @@ struct TracebackVectorMatrix
 	{
 		hgap_.resize(band + 1);
 		score_.resize(band);
-		trace_mask_.resize((cols+1)*band);
+		trace_mask_.resize((cols + 1) * band);
 		std::fill(hgap_.begin(), hgap_.end(), _sv());
 		std::fill(score_.begin(), score_.end(), _sv());
-
 	}
+	
 	inline ColumnIterator begin(int offset, int col)
 	{
 		return ColumnIterator(&hgap_[offset], &score_[offset], &trace_mask_[size_t(col + 1)*(size_t)band_ + (size_t)offset]);
 	}
+
 	int band() const {
 		return band_;
 	}
+
+	_sv operator[](int i) const {
+		return _sv();
+	}
+
 #ifdef __APPLE__
 	MemBuffer<_sv> hgap_, score_;
 #else

@@ -19,6 +19,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ****/
 
+#include "stat_cell.h"
+
 struct DummyRowCounter {
 	DummyRowCounter() {}
 	DummyRowCounter(int) {}
@@ -49,72 +51,85 @@ struct VectorRowCounter {
 };
 
 template<typename _sv>
-MSC_INLINE static inline _sv add_cbs(const _sv& v, void*) {
+FORCE_INLINE static _sv add_cbs(const _sv& v, void*) {
 	return v;
 }
 
 template<typename _sv>
-MSC_INLINE static inline _sv add_cbs(const _sv& v, const _sv& query_bias) {
+FORCE_INLINE static _sv add_cbs(const _sv& v, const _sv& query_bias) {
 	return v + query_bias;
 }
 
 template<typename _score>
-static inline _score add_cbs_scalar(_score x, int8_t b) {
+FORCE_INLINE static _score add_cbs_scalar(_score x, int8_t b) {
 	return x + _score(b);
 }
 
 template<typename _score>
-static inline _score add_cbs_scalar(_score x, void* b) {
+FORCE_INLINE static _score add_cbs_scalar(_score x, void* b) {
 	return x;
 }
 
 template<typename _sv>
-MSC_INLINE static inline void make_gap_mask(typename ::DISPATCH_ARCH::ScoreTraits<_sv>::TraceMask* trace_mask, const _sv& current_cell, const _sv& vertical_gap, const _sv& horizontal_gap) {
+FORCE_INLINE static void make_gap_mask(typename ::DISPATCH_ARCH::ScoreTraits<_sv>::TraceMask* trace_mask, const _sv& current_cell, const _sv& vertical_gap, const _sv& horizontal_gap) {
 	trace_mask->gap = ::DISPATCH_ARCH::ScoreTraits<_sv>::TraceMask::make(cmp_mask(current_cell, vertical_gap), cmp_mask(current_cell, horizontal_gap));
 }
 
 template<typename _sv>
-MSC_INLINE static inline void make_gap_mask(std::nullptr_t, const _sv&, const _sv&, const _sv&) {
+FORCE_INLINE static void make_gap_mask(std::nullptr_t, const _sv&, const _sv&, const _sv&) {
 }
 
 template<typename _sv>
-MSC_INLINE static inline void make_open_mask(typename ::DISPATCH_ARCH::ScoreTraits<_sv>::TraceMask* trace_mask, const _sv& open, const _sv& vertical_gap, const _sv& horizontal_gap) {
+FORCE_INLINE static void make_open_mask(typename ::DISPATCH_ARCH::ScoreTraits<_sv>::TraceMask* trace_mask, const _sv& open, const _sv& vertical_gap, const _sv& horizontal_gap) {
 	trace_mask->open = ::DISPATCH_ARCH::ScoreTraits<_sv>::TraceMask::make(cmp_mask(vertical_gap, open), cmp_mask(horizontal_gap, open));
 }
 
 template<typename _sv>
-MSC_INLINE static inline void make_open_mask(std::nullptr_t, const _sv&, const _sv&, const _sv&) {
+FORCE_INLINE static void make_open_mask(std::nullptr_t, const _sv&, const _sv&, const _sv&) {
 }
 
-template<typename _sv, typename _cbs, typename _trace_mask, typename RowCounter>
-MSC_INLINE static inline _sv swipe_cell_update(const _sv& diagonal_cell,
-	const _sv& scores,
-	_cbs query_bias,
-	const _sv& gap_extension,
-	const _sv& gap_open,
-	_sv& horizontal_gap,
-	_sv& vertical_gap,
-	_sv& best,
-	_trace_mask trace_mask,
-	RowCounter& row_counter)
-{
-	using std::max;
+template<typename Sv>
+FORCE_INLINE static void set_max(Sv& v, const Sv& x) {
+	v.max(x);
+}
 
-	_sv current_cell = diagonal_cell + add_cbs(scores, query_bias);
-	current_cell = max(max(current_cell, vertical_gap), horizontal_gap);
-	::DISPATCH_ARCH::ScoreTraits<_sv>::saturate(current_cell);
+FORCE_INLINE static void set_max(int32_t& v, const int32_t x) {
+	v = std::max(v, x);
+}
+
+template<typename Sv, typename Cell, typename Cbs, typename TraceMask, typename RowCounter, typename IdMask>
+FORCE_INLINE static Cell swipe_cell_update(const Cell& diagonal_cell,
+	const Sv& scores,
+	Cbs query_bias,
+	const Sv& gap_extension,
+	const Sv& gap_open,
+	Cell& horizontal_gap,
+	Cell& vertical_gap,
+	Sv& best,
+	TraceMask trace_mask,
+	RowCounter& row_counter,
+	const IdMask& id_mask)
+{
+	Cell current_cell = diagonal_cell;
+	current_cell += add_cbs(scores, query_bias);
+	update_stats(current_cell, horizontal_gap, vertical_gap, id_mask);
+	set_max(current_cell, vertical_gap);
+	set_max(current_cell, horizontal_gap);
+	::DISPATCH_ARCH::ScoreTraits<Sv>::saturate(current_cell);
 
 	make_gap_mask(trace_mask, current_cell, vertical_gap, horizontal_gap);
 
-	best = max(best, current_cell);
+	set_max(best, static_cast<Sv>(current_cell));
 
 	row_counter.inc(best, current_cell);
 
 	vertical_gap -= gap_extension;
 	horizontal_gap -= gap_extension;
-	const _sv open = current_cell - gap_open;
-	vertical_gap = max(vertical_gap, open);
-	horizontal_gap = max(horizontal_gap, open);
+	Cell open = current_cell;
+	open -= gap_open;
+	update_open(open);
+	set_max(vertical_gap, open);
+	set_max(horizontal_gap, open);
 
 	make_open_mask(trace_mask, open, vertical_gap, horizontal_gap);
 

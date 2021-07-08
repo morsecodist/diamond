@@ -126,9 +126,10 @@ struct score_vector<int8_t>
 		return *(((uint8_t*)&data_) + i);
 	}
 
-	void set(unsigned i, uint8_t v)
+	score_vector& set(unsigned i, uint8_t v)
 	{
 		*(((uint8_t*)&data_) + i) = v;
+		return *this;
 	}
 
 	score_vector& max(const score_vector& rhs)
@@ -316,9 +317,10 @@ struct score_vector<int8_t>
 		return *(((uint8_t*)&data_) + i);
 	}
 
-	void set(unsigned i, uint8_t v)
+	score_vector& set(unsigned i, uint8_t v)
 	{
 		*(((uint8_t*)&data_) + i) = v;
+		return *this;
 	}
 
 	score_vector& max(const score_vector &rhs)
@@ -419,6 +421,14 @@ static inline DISPATCH_ARCH::score_vector<int8_t> load_sv(const uint8_t *x) {
 
 static inline DISPATCH_ARCH::score_vector<int8_t> load_sv(int8_t a, int8_t b, uint32_t mask) {
 	return DISPATCH_ARCH::score_vector<int8_t>(a, b, mask);
+}
+
+static inline int8_t extract_channel(const DISPATCH_ARCH::score_vector<int8_t>& v, int i) {
+	return v[i];
+}
+
+static inline DISPATCH_ARCH::score_vector<int8_t> set_channel(const DISPATCH_ARCH::score_vector<int8_t>& v, const int i, const int8_t x) {
+	return DISPATCH_ARCH::score_vector<int8_t>(v).set(i, x);
 }
 
 #endif

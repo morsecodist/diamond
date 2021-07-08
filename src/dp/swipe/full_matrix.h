@@ -60,8 +60,9 @@ struct Matrix
 	{
 		hgap_.resize(rows);
 		score_.resize(rows + 1);
-		std::fill(hgap_.begin(), hgap_.end(), ScoreTraits<_sv>::zero());
-		std::fill(score_.begin(), score_.end(), ScoreTraits<_sv>::zero());
+		const auto z = _sv();
+		std::fill(hgap_.begin(), hgap_.end(), z);
+		std::fill(score_.begin(), score_.end(), z);
 	}
 	inline ColumnIterator begin(int)
 	{
@@ -70,11 +71,12 @@ struct Matrix
 	void set_zero(int c)
 	{
 		const int l = (int)hgap_.size();
+		const auto z = extract_channel(_sv(), 0);
 		for (int i = 0; i < l; ++i) {
-			set_channel(hgap_[i], c, ScoreTraits<_sv>::zero_score());
-			set_channel(score_[i], c, ScoreTraits<_sv>::zero_score());
+			hgap_[i] = set_channel(hgap_[i], c, z);
+			score_[i] = set_channel(score_[i], c, z);
 		}
-		set_channel(score_[l], c, ScoreTraits<_sv>::zero_score());
+		score_[l] = set_channel(score_[l], c, z);
 	}
 	constexpr int cols() const {
 		return 1;
@@ -222,10 +224,10 @@ struct TracebackVectorMatrix
 	{
 		const int l = (int)hgap_.size();
 		for (int i = 0; i < l; ++i) {
-			set_channel(hgap_[i], c, ScoreTraits<_sv>::zero_score());
-			set_channel(score_[i], c, ScoreTraits<_sv>::zero_score());
+			hgap_[i] = set_channel(hgap_[i], c, ScoreTraits<_sv>::zero_score());
+			score_[i] = set_channel(score_[i], c, ScoreTraits<_sv>::zero_score());
 		}
-		set_channel(score_[l], c, ScoreTraits<_sv>::zero_score());
+		score_[l] = set_channel(score_[l], c, ScoreTraits<_sv>::zero_score());
 	}
 
 	int cols() const {

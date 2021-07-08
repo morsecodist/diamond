@@ -33,8 +33,8 @@ using namespace DISPATCH_ARCH;
 namespace DP { namespace Swipe {
 namespace DISPATCH_ARCH {
 
-template<typename _sv, typename _cbs>
-Hsp traceback(const Sequence& query, Frame frame, _cbs bias_correction, const Matrix<_sv>& dp, const DpTarget& target, typename ScoreTraits<_sv>::Score max_score, double evalue, int max_col, int max_i, int max_j, int channel)
+template<typename _sv, typename Cell, typename _cbs>
+Hsp traceback(const Sequence& query, Frame frame, _cbs bias_correction, const Matrix<Cell>& dp, const DpTarget& target, typename ScoreTraits<_sv>::Score max_score, double evalue, int max_col, int max_i, int max_j, int channel)
 {
 	Hsp out;
 	out.swipe_target = target.target_idx;
@@ -108,8 +108,10 @@ template<typename _sv, typename _cbs, typename It, typename Cfg>
 list<Hsp> swipe(const Sequence& query, const Frame frame, const It target_begin, const It target_end, std::atomic_size_t* const next, _cbs composition_bias, vector<DpTarget>& overflow, Statistics &stats)
 {
 	typedef typename ScoreTraits<_sv>::Score Score;
-	typedef typename SelectMatrix<_sv, Cfg::traceback>::Type Matrix;
+	using Cell = Cfg::Cell;
+	typedef typename SelectMatrix<Cell, Cfg::traceback>::Type Matrix;
 	using RowCounter = Cfg::RowCounter;
+	using IdMask = Cfg::IdMask;
 	constexpr int CHANNELS = ScoreTraits<_sv>::CHANNELS;
 
 	int max_col[CHANNELS], max_i[CHANNELS], max_j[CHANNELS];
@@ -137,24 +139,29 @@ list<Hsp> swipe(const Sequence& query, const Frame frame, const It target_begin,
 	while (targets.active.size() > 0) {
 		typename Matrix::ColumnIterator it(dp.begin(col));
 		RowCounter row_counter(0);
-		_sv vgap, hgap, last, col_best;
+		Cell vgap, hgap, last;
+		_sv col_best;
 		vgap = hgap = last = col_best = _sv();
 
+		_sv target_seq;
 		if (targets.cbs_mask() != 0) {
 			if (targets.custom_matrix_16bit)
 				profile.set(targets.get32().data());
 			else
 				profile.set(targets.get(target_scores.data()));
 		}
-		else
-			profile.set(targets.seq_vector());
+		else {
+			const auto t = targets.seq_vector();;
+			target_seq = _sv(t);
+			profile.set(t);
+		}
 
 #ifdef DP_STAT
 		stats.inc(Statistics::GROSS_DP_CELLS, uint64_t(qlen) * CHANNELS);
 #endif
 		for (int i = 0; i < qlen; ++i) {
 			hgap = it.hgap();
-			const _sv next = swipe_cell_update<_sv>(it.diag(), profile.get(query[i]), cbs_buf(i), extend_penalty, open_penalty, hgap, vgap, col_best, it.trace_mask(), row_counter);
+			const Cell next = swipe_cell_update(it.diag(), profile.get(query[i]), cbs_buf(i), extend_penalty, open_penalty, hgap, vgap, col_best, it.trace_mask(), row_counter, IdMask(query[i], target_seq));
 			it.set_hgap(hgap);
 			it.set_score(last);
 			last = next;

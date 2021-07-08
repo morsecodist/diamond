@@ -188,16 +188,16 @@ void swipe_cell_update() {
 	cout << "SWIPE cell update (uint8_t):\t" << (double)duration_cast<std::chrono::nanoseconds>(high_resolution_clock::now() - t1).count() / (n * 16) * 1000 << " ps/Cell" << endl;*/
 
 #ifdef __SSE4_1__
-	t1 = high_resolution_clock::now();
+	/*t1 = high_resolution_clock::now();
 	VectorRowCounter<score_vector<int8_t>> row_counter(0);
 	{
 		score_vector<int8_t> diagonal_cell, scores, gap_extension, gap_open, horizontal_gap, vertical_gap, best;
 		for (size_t i = 0; i < n; ++i) {
-			diagonal_cell = ::swipe_cell_update(diagonal_cell, scores, nullptr, gap_extension, gap_open, horizontal_gap, vertical_gap, best, nullptr, row_counter);
+			diagonal_cell = ::swipe_cell_update(diagonal_cell, scores, nullptr, gap_extension, gap_open, horizontal_gap, vertical_gap, best, nullptr, row_counter, nullptr);
 		}
 		volatile auto x = diagonal_cell.data_;
 	}
-	cout << "SWIPE cell update (int8_t):\t" << (double)duration_cast<std::chrono::nanoseconds>(high_resolution_clock::now() - t1).count() / (n * 16) * 1000 << " ps/Cell" << endl;
+	cout << "SWIPE cell update (int8_t):\t" << (double)duration_cast<std::chrono::nanoseconds>(high_resolution_clock::now() - t1).count() / (n * 16) * 1000 << " ps/Cell" << endl;*/
 #endif
 }
 #endif
@@ -213,24 +213,31 @@ void swipe(const Sequence&s1, const Sequence&s2) {
 	Statistics stat;
 	Sequence query = s1;
 	query.len_ = std::min(query.len_, (size_t)255);
+	auto dp_size = (n * query.length() * s2.length() * CHANNELS);
 
 	high_resolution_clock::time_point t1 = high_resolution_clock::now();
 	for (size_t i = 0; i < n; ++i) {
-		volatile list<Hsp> v = ::DP::BandedSwipe::swipe(query, targets, Frame(0), nullptr, DP::Flags::FULL_MATRIX, HspValues(), stat);
+		volatile list<Hsp> v = ::DP::BandedSwipe::swipe(query, targets, Frame(0), nullptr, DP::Flags::FULL_MATRIX, HspValues::NONE, stat);
 	}
-	cout << "SWIPE (int8_t):\t\t\t" << (double)duration_cast<std::chrono::nanoseconds>(high_resolution_clock::now() - t1).count() / (n * query.length() * s2.length() * CHANNELS) * 1000 << " ps/Cell" << endl;
+	cout << "SWIPE (int8_t):\t\t\t" << (double)duration_cast<std::chrono::nanoseconds>(high_resolution_clock::now() - t1).count() / dp_size * 1000 << " ps/Cell" << endl;
 
 	t1 = high_resolution_clock::now();
 	for (size_t i = 0; i < n; ++i) {
-		volatile list<Hsp> v = ::DP::BandedSwipe::swipe(query, targets, Frame(0), &cbs, DP::Flags::FULL_MATRIX, HspValues(), stat);
+		volatile list<Hsp> v = ::DP::BandedSwipe::swipe(query, targets, Frame(0), nullptr, DP::Flags::FULL_MATRIX, HspValues::COORDS, stat);
 	}
-	cout << "SWIPE (int8_t, CBS):\t\t" << (double)duration_cast<std::chrono::nanoseconds>(high_resolution_clock::now() - t1).count() / (n * query.length() * s2.length() * CHANNELS) * 1000 << " ps/Cell" << endl;
+	cout << "SWIPE (int8_t, Stats):\t\t" << (double)duration_cast<std::chrono::nanoseconds>(high_resolution_clock::now() - t1).count() / dp_size * 1000 << " ps/Cell" << endl;
+
+	t1 = high_resolution_clock::now();
+	for (size_t i = 0; i < n; ++i) {
+		volatile list<Hsp> v = ::DP::BandedSwipe::swipe(query, targets, Frame(0), &cbs, DP::Flags::FULL_MATRIX, HspValues::NONE, stat);
+	}
+	cout << "SWIPE (int8_t, CBS):\t\t" << (double)duration_cast<std::chrono::nanoseconds>(high_resolution_clock::now() - t1).count() / dp_size * 1000 << " ps/Cell" << endl;
 
 	t1 = high_resolution_clock::now();
 	for (size_t i = 0; i < n; ++i) {
 		volatile list<Hsp> v = ::DP::BandedSwipe::swipe(query, targets, Frame(0), nullptr, DP::Flags::FULL_MATRIX, HspValues::TRANSCRIPT, stat);
 	}
-	cout << "SWIPE (int8_t, TB):\t\t" << (double)duration_cast<std::chrono::nanoseconds>(high_resolution_clock::now() - t1).count() / (n * query.length() * s2.length() * CHANNELS) * 1000 << " ps/Cell" << endl;
+	cout << "SWIPE (int8_t, TB):\t\t" << (double)duration_cast<std::chrono::nanoseconds>(high_resolution_clock::now() - t1).count() / dp_size * 1000 << " ps/Cell" << endl;
 }
 #endif
 
@@ -342,8 +349,6 @@ void benchmark() {
 	Sequence ss1 = Sequence(s1).subseq(34, s1.size());
 	Sequence ss2 = Sequence(s2).subseq(33, s2.size());
 
-	matrix_adjust(s1, s2);
-
 #ifdef __SSE4_1__
 	swipe(s3, s4);
 	diag_scores(s1, s2);
@@ -353,6 +358,7 @@ void benchmark() {
 	swipe_cell_update();
 #endif
 	evalue();
+	matrix_adjust(s1, s2);
 #ifdef __SSE4_1__
 	benchmark_hamming(s1, s2);
 #endif

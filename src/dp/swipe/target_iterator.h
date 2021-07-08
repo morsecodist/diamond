@@ -111,7 +111,6 @@ struct TargetIterator
 	}
 
 
-#ifdef __SSSE3__
 	SeqVector get() const
 	{
 		alignas(32) _t s[CHANNELS];
@@ -122,17 +121,6 @@ struct TargetIterator
 		}
 		return SeqVector(s);
 	}
-#else
-	uint64_t get() const
-	{
-		uint64_t dst = 0;
-		for (int i = 0; i < active.size(); ++i) {
-			const int channel = active[i];
-			dst |= uint64_t((*this)[channel]) << (8 * channel);
-		}
-		return dst;
-	}
-#endif
 
 	const int8_t** get(const int8_t** target_scores) const {
 		static const int8_t blank[32] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
@@ -205,7 +193,7 @@ struct AsyncTargetBuffer
 		next(next),
 		custom_matrix_16bit(false)
 	{
-		for (int i = 0; i < CHANNELS; ++i) {
+		for (size_t i = 0; i < std::min((size_t)CHANNELS, target_count); ++i) {
 			const DpTarget t = begin[(*next)++];
 			if (t.blank())
 				return;
@@ -231,7 +219,6 @@ struct AsyncTargetBuffer
 			return SUPER_HARD_MASK;
 	}
 
-#ifdef __SSSE3__
 	SeqVector seq_vector() const
 	{
 		alignas(32) T s[CHANNELS];
@@ -242,17 +229,6 @@ struct AsyncTargetBuffer
 		}
 		return SeqVector(s);
 	}
-#else
-	uint64_t seq_vector()
-	{
-		uint64_t dst = 0;
-		for (int i = 0; i < active.size(); ++i) {
-			const int channel = active[i];
-			dst |= uint64_t((*this)[channel]) << (8 * channel);
-		}
-		return dst;
-	}
-#endif
 
 	const int8_t** get(const int8_t** target_scores) const {
 		static const int8_t blank[32] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
@@ -281,14 +257,19 @@ struct AsyncTargetBuffer
 
 	bool init_target(int i, int channel)
 	{
-		DpTarget t = begin[(*next)++];
-		if (!t.blank()) {
-			pos[channel] = 0;
-			dp_targets[channel] = t;
-			return true;
+		const size_t n = (*next)++;
+		if (n >= target_count) {
+			active.erase(i);
+			return false;
 		}
-		active.erase(i);
-		return false;
+		DpTarget t = begin[n];
+		if (t.blank()) {
+			active.erase(i);
+			return false;
+		}
+		pos[channel] = 0;
+		dp_targets[channel] = t;
+		return true;
 	}
 
 	bool inc(int channel)

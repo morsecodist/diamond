@@ -152,11 +152,12 @@ struct score_vector<int16_t>
 		return d[i];
 	}
 
-	void set(int i, int16_t x) {
+	score_vector& set(int i, int16_t x) {
 		alignas(32) int16_t d[16];
 		store(d);
 		d[i] = x;
 		data_ = _mm256_load_si256((__m256i*)d);
+		return *this;
 	}
 
 	void expand_from_8bit() {
@@ -335,11 +336,12 @@ struct score_vector<int16_t>
 		return d[i];
 	}
 
-	void set(int i, int16_t x) {
+	score_vector& set(int i, int16_t x) {
 		int16_t d[8];
 		store(d);
 		d[i] = x;
 		data_ = _mm_loadu_si128((__m128i*)d);
+		return *this;
 	}
 
 	void expand_from_8bit() {
@@ -446,6 +448,14 @@ static inline DISPATCH_ARCH::score_vector<int16_t> load_sv(const uint16_t *x) {
 
 static inline DISPATCH_ARCH::score_vector<int16_t> load_sv(int16_t a, int16_t b, uint32_t mask) {
 	return DISPATCH_ARCH::score_vector<int16_t>(a, b, mask);
+}
+
+static inline int16_t extract_channel(const DISPATCH_ARCH::score_vector<int16_t>& v, int i) {
+	return v[i];
+}
+
+static inline DISPATCH_ARCH::score_vector<int16_t> set_channel(const DISPATCH_ARCH::score_vector<int16_t>& v, const int i, const int16_t x) {
+	return DISPATCH_ARCH::score_vector<int16_t>(v).set(i, x);
 }
 
 #endif

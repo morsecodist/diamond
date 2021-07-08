@@ -80,8 +80,8 @@ Hsp traceback(const Sequence &query, Frame frame, _cbs bias_correction, const Tr
 	return out;
 }
 
-template<typename _sv, typename _cbs>
-Hsp traceback(const Sequence &query, Frame frame, _cbs bias_correction, const Matrix<_sv> &dp, const DpTarget &target, int d_begin, typename ScoreTraits<_sv>::Score max_score, double evalue, int max_col, int channel, int i0, int i1, int max_band_i)
+template<typename _sv, typename Cell, typename _cbs>
+Hsp traceback(const Sequence &query, Frame frame, _cbs bias_correction, const Matrix<Cell> &dp, const DpTarget &target, int d_begin, typename ScoreTraits<_sv>::Score max_score, double evalue, int max_col, int channel, int i0, int i1, int max_band_i)
 {
 	Hsp out;
 	out.swipe_target = target.target_idx;
@@ -169,8 +169,10 @@ list<Hsp> swipe(
 	Statistics &stat)
 {
 	typedef typename ScoreTraits<_sv>::Score Score;
-	using Matrix = SelectMatrix<_sv, Cfg::traceback>::Type;
+	using Cell = Cfg::Cell;
+	using Matrix = SelectMatrix<Cell, Cfg::traceback>::Type;
 	using RowCounter = Cfg::RowCounter;
+	using IdMask = Cfg::IdMask;
  	constexpr int CHANNELS = ScoreTraits<_sv>::CHANNELS;
 
 	assert(subject_end - subject_begin <= CHANNELS);
@@ -212,7 +214,7 @@ list<Hsp> swipe(
 	array<const int8_t*, 32> target_scores;
 
 	Score best[CHANNELS];
-	int max_col[CHANNELS], max_band_row[CHANNELS];
+	int max_col[CHANNELS], max_band_row[CHANNELS], stats[CHANNELS];
 	std::fill(best, best + CHANNELS, ScoreTraits<_sv>::zero_score());
 	std::fill(max_col, max_col + CHANNELS, 0);
 	std::fill(max_band_row, max_band_row + CHANNELS, 0);
@@ -224,20 +226,25 @@ list<Hsp> swipe(
 		if (i0_ >= i1_)
 			break;
 		typename Matrix::ColumnIterator it(dp.begin(band_offset, j));
-		_sv vgap = _sv(), hgap = _sv(), col_best = _sv();
+		Cell vgap = Cell(), hgap = Cell();
+		_sv col_best = _sv();
 		RowCounter row_counter(band_offset);
 
 		if (band_offset > 0)
 			it.set_zero();
 
+		_sv target_seq;
 		if (cbs_mask != 0) {
 			if (targets.custom_matrix_16bit)
 				profile.set(targets.get32().data());
 			else
 				profile.set(targets.get(target_scores.data()));
 		}
-		else
-			profile.set(targets.get());
+		else {
+			const auto t = targets.get();
+			target_seq = _sv(t);
+			profile.set(t);
+		}
 #ifdef DP_STAT
 		const uint64_t live = targets.live();
 #endif
@@ -257,12 +264,14 @@ list<Hsp> swipe(
 #endif
 				hgap = it.hgap();
 				auto stat_h = it.hstat();
-				_sv next;
 				_sv match_scores = profile.get(query[i]);
 #ifdef STRICT_BAND
 				match_scores += target_mask;
 #endif
-				next = swipe_cell_update<_sv>(it.diag(), match_scores, cbs_buf(i), extend_penalty, open_penalty, hgap, vgap, col_best, it.trace_mask(), row_counter);
+				const Cell next = swipe_cell_update(it.diag(), match_scores, cbs_buf(i), extend_penalty, open_penalty, hgap, vgap, col_best, it.trace_mask(), row_counter, IdMask(query[i], target_seq));
+
+				/*std::cout << "j=" << j << " i=" << i << " score=" << ScoreTraits<_sv>::int_score(extract_channel(next, 0)) <<
+					" q=" << value_traits.alphabet[query[i]] << " t=" << value_traits.alphabet[extract_channel(target_seq, 0)] << std::endl;*/
 
 				it.set_hgap(hgap);
 				it.set_score(next);
@@ -285,6 +294,8 @@ list<Hsp> swipe(
 				best[channel] = col_best_[channel];
 				max_col[channel] = j;
 				max_band_row[channel] = ScoreTraits<_sv>::int_score(i_max[channel]);
+				stats[channel] = extract_stats(dp[max_band_row[channel]], channel);
+				//std::cout << "stats[" << channel << "]=" << stats[channel] << std::endl;
 			}
 		}
 		++i0;

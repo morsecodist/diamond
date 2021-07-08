@@ -42,10 +42,12 @@ using std::thread;
 using std::array;
 using std::atomic_size_t;
 
-template<bool traceback, typename RC>
+template<bool traceback, typename RC, typename C, typename IdM>
 struct SwipeConfig {
 	static constexpr bool traceback = traceback;
 	using RowCounter = RC;
+	using Cell = C;
+	using IdMask = IdM;
 };
 
 namespace DP { namespace BandedSwipe { namespace DISPATCH_ARCH {
@@ -165,11 +167,11 @@ static list<Hsp> dispatch_swipe(const Sequence& query,
 	Statistics &stat)
 {
 	if (v == HspValues::NONE)
-		return dispatch_swipe<Sv, It, SwipeConfig<false, DummyRowCounter>>(query, begin, end, next, frame, composition_bias, flags, overflow, stat);
+		return dispatch_swipe<Sv, It, SwipeConfig<false, DummyRowCounter, Sv, DummyIdMask<Sv>>>(query, begin, end, next, frame, composition_bias, flags, overflow, stat);
 	else if (flag_only(v, HspValues::COORDS))
-		return dispatch_swipe<Sv, It, SwipeConfig<false, VectorRowCounter<Sv>>>(query, begin, end, next, frame, composition_bias, flags, overflow, stat);
+		return dispatch_swipe<Sv, It, SwipeConfig<false, VectorRowCounter<Sv>, ForwardCell<Sv>, VectorIdMask<Sv>>>(query, begin, end, next, frame, composition_bias, flags, overflow, stat);
 	else
-		return dispatch_swipe<Sv, It, SwipeConfig<true, VectorRowCounter<Sv>>>(query, begin, end, next, frame, composition_bias, flags, overflow, stat);
+		return dispatch_swipe<Sv, It, SwipeConfig<true, VectorRowCounter<Sv>, Sv, DummyIdMask<Sv>>>(query, begin, end, next, frame, composition_bias, flags, overflow, stat);
 		
 }
 
