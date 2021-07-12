@@ -33,6 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../util/system/system.h"
 #include "../util/data_structures/deque.h"
 #include "../util/util.h"
+#include "../util/async_buffer.h"
 
 using std::vector;
 using std::atomic;

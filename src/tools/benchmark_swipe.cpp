@@ -18,7 +18,7 @@ namespace Benchmark { namespace DISPATCH_ARCH {
 
 static const size_t N = 256;
 using Sv = score_vector<int8_t>;
-using Cell = ForwardCell<Sv>;	
+using Cell = ForwardCell<Sv>;
 //using Cell = Sv;
 static Cell diagonal_cell[N], horizontal_gap[N];
 static char query[N];

@@ -83,9 +83,11 @@ unsigned bin(HspValues v, int query_len, int score, int ungapped_score, size_t d
 #endif
 }
 
+static const HspValues NO_TRACEBACK = HspValues::COORDS | HspValues::IDENT | HspValues::LENGTH | HspValues::MISMATCHES | HspValues::GAP_OPENINGS;
+
 static bool reversed(const HspValues v) {
-	return flag_only(v, HspValues::COORDS) && v != HspValues::NONE;
-	//return flag_any(v, HspValues::QUERY_START | HspValues::TARGET_START | HspValues::MISMATCHES | HspValues::GAP_OPENINGS) && !flag_any(v, HspValues::TRANSCRIPT);
+	return flag_only(v, NO_TRACEBACK)
+		&& flag_any(v, HspValues::QUERY_START | HspValues::TARGET_START | HspValues::MISMATCHES | HspValues::GAP_OPENINGS);
 }
 
 template<typename Sv, typename Cbs, typename Cfg>
@@ -164,15 +166,38 @@ static list<Hsp> dispatch_swipe(const Sequence& query,
 	const Flags flags,
 	const HspValues v,
 	vector<DpTarget> &overflow,
-	Statistics &stat)
+	Statistics &stat,
+	const int round)
 {
-	if (v == HspValues::NONE)
-		return dispatch_swipe<Sv, It, SwipeConfig<false, DummyRowCounter, Sv, DummyIdMask<Sv>>>(query, begin, end, next, frame, composition_bias, flags, overflow, stat);
-	else if (flag_only(v, HspValues::COORDS))
-		return dispatch_swipe<Sv, It, SwipeConfig<false, VectorRowCounter<Sv>, ForwardCell<Sv>, VectorIdMask<Sv>>>(query, begin, end, next, frame, composition_bias, flags, overflow, stat);
-	else
-		return dispatch_swipe<Sv, It, SwipeConfig<true, VectorRowCounter<Sv>, Sv, DummyIdMask<Sv>>>(query, begin, end, next, frame, composition_bias, flags, overflow, stat);
-		
+	if (v == HspValues::NONE) {
+		using Cfg = SwipeConfig<false, DummyRowCounter, Sv, DummyIdMask<Sv>>;
+		return dispatch_swipe<Sv, It, Cfg>(query, begin, end, next, frame, composition_bias, flags, overflow, stat);
+	}
+	else if (!flag_only(v, NO_TRACEBACK)) {
+		using Cfg = SwipeConfig<true, VectorRowCounter<Sv>, Sv, DummyIdMask<Sv>>;
+		return dispatch_swipe<Sv, It, Cfg>(query, begin, end, next, frame, composition_bias, flags, overflow, stat);
+	}
+	else if (round == 0) {
+		if (!flag_any(v, HspValues::IDENT | HspValues::LENGTH)) {
+			using Cfg = SwipeConfig<false, VectorRowCounter<Sv>, Sv, DummyIdMask<Sv>>;
+			return dispatch_swipe<Sv, It, Cfg>(query, begin, end, next, frame, composition_bias, flags, overflow, stat);
+		}
+		else {
+			using Cfg = SwipeConfig<false, VectorRowCounter<Sv>, ForwardCell<Sv>, VectorIdMask<Sv>>;
+			return dispatch_swipe<Sv, It, Cfg>(query, begin, end, next, frame, composition_bias, flags, overflow, stat);
+		}
+	}
+	else if (round == 1) {
+		if (!flag_any(v, HspValues::MISMATCHES | HspValues::GAP_OPENINGS)) {
+			using Cfg = SwipeConfig<false, VectorRowCounter<Sv>, Sv, DummyIdMask<Sv>>;
+			return dispatch_swipe<Sv, It, Cfg>(query, begin, end, next, frame, composition_bias, flags, overflow, stat);
+		}
+		else {
+			using Cfg = SwipeConfig<false, VectorRowCounter<Sv>, BackwardCell<Sv>, VectorIdMask<Sv>>;
+			return dispatch_swipe<Sv, It, Cfg>(query, begin, end, next, frame, composition_bias, flags, overflow, stat);
+		}
+	}
+	throw std::runtime_error("Unreachable");
 }
 
 template<typename _sv, typename It>
@@ -186,17 +211,18 @@ static void swipe_worker(const Sequence* query,
 	const HspValues v,
 	list<Hsp> *out,
 	vector<DpTarget> *overflow,
-	Statistics *stat)
+	Statistics *stat,
+	const int round)
 {
 	const size_t CHANNELS = ::DISPATCH_ARCH::ScoreTraits<_sv>::CHANNELS;
 	Statistics stat2;
 	size_t pos;
 	vector<DpTarget> of;
 	if (flag_any(flags, Flags::FULL_MATRIX))
-		*out = dispatch_swipe<_sv, It>(*query, begin, end, next, frame, composition_bias, flags, v, of, stat2);
+		*out = dispatch_swipe<_sv, It>(*query, begin, end, next, frame, composition_bias, flags, v, of, stat2, round);
 	else
 		while (begin + (pos = next->fetch_add(CHANNELS)) < end)
-			out->splice(out->end(), dispatch_swipe<_sv, It>(*query, begin + pos, std::min(begin + pos + CHANNELS, end), next, frame, composition_bias, flags, v, of, stat2));
+			out->splice(out->end(), dispatch_swipe<_sv, It>(*query, begin + pos, std::min(begin + pos + CHANNELS, end), next, frame, composition_bias, flags, v, of, stat2, round));
 		
 	*overflow = std::move(of);
 	*stat += stat2;
@@ -211,7 +237,8 @@ static list<Hsp> swipe_threads(const Sequence& query,
 	const Flags flags,
 	const HspValues v,
 	vector<DpTarget> &overflow,
-	Statistics &stat) {
+	Statistics &stat,
+	const int round) {
 	if (begin == end)
 		return {};
 
@@ -235,7 +262,8 @@ static list<Hsp> swipe_threads(const Sequence& query,
 				v,
 				&thread_out[i],
 				&thread_overflow[i],
-				&stat);
+				&stat,
+				round);
 		for (auto &t : threads)
 			t.join();
 		timer.go("Banded swipe (merge)");
@@ -248,11 +276,11 @@ static list<Hsp> swipe_threads(const Sequence& query,
 		return out;
 	}
 	else
-		return dispatch_swipe<_sv, It>(query, begin, end, &next, frame, composition_bias, flags, v, overflow, stat);
+		return dispatch_swipe<_sv, It>(query, begin, end, &next, frame, composition_bias, flags, v, overflow, stat, round);
 }
 
 template<typename It>
-static pair<list<Hsp>, vector<DpTarget>> swipe_bin(const unsigned bin, const Sequence &query, const It begin, const It end, Frame frame, const int8_t* composition_bias, const Flags flags, const HspValues v, Statistics &stat) {
+static pair<list<Hsp>, vector<DpTarget>> swipe_bin(const unsigned bin, const Sequence &query, const It begin, const It end, Frame frame, const int8_t* composition_bias, const Flags flags, const HspValues v, Statistics &stat, const int round) {
 	if (end - begin == 0)
 		return { {},{} };
 	vector<DpTarget> overflow;
@@ -265,16 +293,16 @@ static pair<list<Hsp>, vector<DpTarget>> swipe_bin(const unsigned bin, const Seq
 	switch (bin) {
 #ifdef __SSE4_1__
 	case 0:
-		out = swipe_threads<::DISPATCH_ARCH::score_vector<int8_t>, It>(query, begin, end, frame, composition_bias, flags, v, overflow, stat);
+		out = swipe_threads<::DISPATCH_ARCH::score_vector<int8_t>, It>(query, begin, end, frame, composition_bias, flags, v, overflow, stat, round);
 		break;
 #endif
 #ifdef __SSE2__
 	case 1:
-		out = swipe_threads<::DISPATCH_ARCH::score_vector<int16_t>, It>(query, begin, end, frame, composition_bias, flags, v, overflow, stat);
+		out = swipe_threads<::DISPATCH_ARCH::score_vector<int16_t>, It>(query, begin, end, frame, composition_bias, flags, v, overflow, stat, round);
 		break;
 #endif
 	case 2:
-		out = swipe_threads<int32_t, It>(query, begin, end, frame, composition_bias, flags, v, overflow, stat);
+		out = swipe_threads<int32_t, It>(query, begin, end, frame, composition_bias, flags, v, overflow, stat, round);
 		break;
 	default:
 		throw std::runtime_error("Invalid SWIPE bin.");
@@ -282,7 +310,6 @@ static pair<list<Hsp>, vector<DpTarget>> swipe_bin(const unsigned bin, const Seq
 	if (!flag_any(flags, Flags::PARALLEL)) stat.inc(time_stat, timer.microseconds());
 	return { out, overflow };
 }
-
 
 static list<Hsp> recompute_reversed(const Sequence& query, Frame frame, const Bias_correction* composition_bias, Flags flags, HspValues v, Statistics& stat, list<Hsp>::const_iterator begin, list<Hsp>::const_iterator end) {
 	Targets dp_targets;
@@ -297,8 +324,11 @@ static list<Hsp> recompute_reversed(const Sequence& query, Frame frame, const Bi
 	size_t j = 0;
 	for (auto i = begin; i != end; ++i, ++j) {
 		std::reverse_copy(i->target_seq.data(), i->target_seq.end(), reversed_targets.ptr(j));
-		const int band = flag_any(flags, Flags::FULL_MATRIX) ? qlen : i->d_end - i->d_begin, tlen = (int)i->target_seq.length();
-		dp_targets[bin(v, band, i->score, 0, 0, 0)].emplace_back(reversed_targets[j], -i->d_end + qlen - tlen + 1, -i->d_begin + qlen - tlen + 1, i->swipe_target, qlen, nullptr, i->query_range.end_, i->subject_range.end_);
+		const int band = flag_any(flags, Flags::FULL_MATRIX) ? qlen : i->d_end - i->d_begin,
+			tlen = (int)i->target_seq.length(),
+			b = bin(v, band, i->score, 0, 0, 0);
+		const DpTarget::CarryOver carry_over{ i->query_range.end_, i->subject_range.end_, i->identities, i->length };
+		dp_targets[b].emplace_back(reversed_targets[j], -i->d_end + qlen - tlen + 1, -i->d_begin + qlen - tlen + 1, i->swipe_target, qlen, nullptr, carry_over);
 	}
 
 	list<Hsp> out;
@@ -306,7 +336,7 @@ static list<Hsp> recompute_reversed(const Sequence& query, Frame frame, const Bi
 	Bias_correction rev_cbs = composition_bias ? composition_bias->reverse() : Bias_correction();
 	const int8_t* cbs = composition_bias ? rev_cbs.int8.data() : nullptr;
 	for (unsigned bin = 0; bin < BINS; ++bin)
-		out.splice(out.end(), swipe_bin(bin, Sequence(reversed), dp_targets[bin].begin(), dp_targets[bin].end(), frame, cbs, flags, v, stat).first);
+		out.splice(out.end(), swipe_bin(bin, Sequence(reversed), dp_targets[bin].begin(), dp_targets[bin].end(), frame, cbs, flags, v, stat, 1).first);
 	return out;
 }
 
@@ -320,27 +350,25 @@ list<Hsp> swipe(const Sequence &query, const array<vector<DpTarget>, BINS> &targ
 		round_targets.reserve(targets[bin].size() + result.second.size());
 		round_targets.insert(round_targets.end(), targets[bin].begin(), targets[bin].end());
 		round_targets.insert(round_targets.end(), result.second.begin(), result.second.end());
-		result = swipe_bin(bin, query, round_targets.begin(), round_targets.end(), frame, cbs, flags, v, stat);
+		result = swipe_bin(bin, query, round_targets.begin(), round_targets.end(), frame, cbs, flags, v, stat, 0);
 		out.splice(out.end(), result.first);
 	}
-	assert(result.second.empty());	
+	assert(result.second.empty());
 	return reversed(v) ? recompute_reversed(query, frame, composition_bias, flags, v, stat, out.begin(), out.end()) : out;
 }
 
 list<Hsp> swipe_set(const Sequence& query, const SequenceSet::ConstIterator begin, const SequenceSet::ConstIterator end, const Frame frame, const Bias_correction* composition_bias, const DP::Flags flags, const HspValues v, Statistics& stat) {
 	const auto cbs = composition_bias ? composition_bias->int8.data() : nullptr;
 	const unsigned b = bin(v, 0, 0, 0, 0, 0);
-	pair<list<Hsp>, vector<DpTarget>> result = swipe_bin(b, query, begin, end, frame, cbs, flags, v, stat);
+	pair<list<Hsp>, vector<DpTarget>> result = swipe_bin(b, query, begin, end, frame, cbs, flags, v, stat, 0);
 	if (reversed(v))
 		result.first = recompute_reversed(query, frame, composition_bias, flags, v, stat, result.first.begin(), result.first.end());
 	if (b < BINS - 1 && !result.second.empty()) {
 		array<vector<DpTarget>, BINS> targets;
 		targets[b + 1] = std::move(result.second);
 		result.first.splice(result.first.end(), swipe(query, targets, frame, composition_bias, flags, v, stat));
-		return result.first;
 	}
-	else
-		return result.first;
+	return result.first;
 }
 
 }}}

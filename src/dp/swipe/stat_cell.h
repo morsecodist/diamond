@@ -19,6 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ****/
 
 #pragma once
+#include <ostream>
+#include "../../basic/match.h"
 
 static inline uint8_t cmp_mask(int x, int y) {
 	return x == y;
@@ -84,6 +86,13 @@ struct ForwardCell<int32_t> {
 	void max(const ForwardCell& x) {
 		v = std::max(v, x.v);
 	}
+	struct Stats {
+		int ident, len;
+		friend std::ostream& operator<<(std::ostream& s, const Stats& c) {
+			s << " ident=" << c.ident << " len=" << c.len;
+			return s;
+		}
+	};
 };
 
 template<typename Sv>
@@ -128,16 +137,49 @@ struct BackwardCell<int32_t> {
 	void max(const BackwardCell& x) {
 		v = std::max(v, x.v);
 	}
+	struct Stats {
+		int mismatch, gap_open;
+		friend std::ostream& operator<<(std::ostream& s, const Stats& c) {
+			s << " mismatch=" << c.mismatch << " gapopen=" << c.gap_open;
+			return s;
+		}
+	};
+};
+
+struct Void {
+	friend std::ostream& operator<<(std::ostream& s, const Void&) {
+		return s;
+	}
 };
 
 template<typename Sv>
-FORCE_INLINE static int extract_stats(const Sv&, int) {
-	return 0;
+static inline Void extract_stats(const Sv&, int) {
+	return Void();
 }
 
 template<typename Sv>
-FORCE_INLINE static int extract_stats(const BackwardCell<Sv>& v, int channel) {
-	return ::DISPATCH_ARCH::ScoreTraits<Sv>::int_score(extract_channel(v.gapopen, channel));
+static inline ForwardCell<int32_t>::Stats extract_stats(const ForwardCell<Sv>& v, int channel) {
+	const auto s = ::DISPATCH_ARCH::ScoreTraits<Sv>::int_score;
+	return { s(extract_channel(v.ident, channel)), s(extract_channel(v.len, channel)) };
+}
+
+template<typename Sv>
+static inline BackwardCell<int32_t>::Stats extract_stats(const BackwardCell<Sv>& v, int channel) {
+	const auto s = ::DISPATCH_ARCH::ScoreTraits<Sv>::int_score;
+	return { s(extract_channel(v.mismatch, channel)), s(extract_channel(v.gapopen, channel)) };
+}
+
+static inline void assign_stats(Hsp& hsp, Void) {}
+
+static inline void assign_stats(Hsp& hsp, const ForwardCell<int32_t>::Stats& v) {
+	hsp.identities = v.ident;
+	hsp.length = v.len;
+}
+
+static inline void assign_stats(Hsp& hsp, const BackwardCell<int32_t>::Stats& v) {
+	hsp.gap_openings = v.gap_open;
+	hsp.mismatches = v.mismatch;
+	hsp.gaps = hsp.length - hsp.identities - hsp.mismatches;
 }
 
 template<typename Sv>
@@ -146,30 +188,35 @@ FORCE_INLINE static void update_stats(const Sv&, const Sv&, const Sv&, const Dum
 
 template<typename Sv>
 FORCE_INLINE static void update_stats(ForwardCell<Sv>& current_cell, ForwardCell<Sv>& horizontal_gap, ForwardCell<Sv>& vertical_gap, const VectorIdMask<Sv>& id_mask) {
-	const Sv zero = Sv(), one = Sv(1), zero_mask = current_cell == zero;
+	const Sv one = Sv(1);
 	current_cell.ident += id_mask.mask;
-	current_cell.ident = blend(current_cell.ident, zero, zero_mask);
 	current_cell.len += one;
-	current_cell.len = blend(current_cell.len, zero, zero_mask);
 	horizontal_gap.len += one;
 	vertical_gap.len += one;
 }
 
 template<typename Sv>
 FORCE_INLINE static void update_stats(BackwardCell<Sv>& current_cell, BackwardCell<Sv>& horizontal_gap, BackwardCell<Sv>& vertical_gap, const VectorIdMask<Sv>& id_mask) {
-	const Sv zero = Sv(), one = Sv(1), zero_mask = current_cell == zero;
-	current_cell.mismatch += one - id_mask.mask;
-	current_cell.mismatch = blend(current_cell.mismatch, zero, zero_mask);
-	current_cell.gapopen = blend(current_cell.gapopen, zero, zero_mask);
+	current_cell.mismatch += Sv(1) - id_mask.mask;
 }
 
 template<typename Sv>
-FORCE_INLINE static void update_open(const Sv&) {
+FORCE_INLINE static void update_open(const Sv&, const Sv&) {
 }
 
 template<typename Sv>
-FORCE_INLINE static void update_open(BackwardCell<Sv>& v) {
-	v.gapopen += Sv(1);
+FORCE_INLINE static void update_open(ForwardCell<Sv>& open, ForwardCell<Sv>& current) {
+	const Sv zero = Sv(), zero_mask = current == zero;
+	current.ident = blend(current.ident, zero, zero_mask);
+	current.len = blend(current.len, zero, zero_mask);
+}
+
+template<typename Sv>
+FORCE_INLINE static void update_open(BackwardCell<Sv>& open, BackwardCell<Sv>& current) {
+	open.gapopen += Sv(1);
+	const Sv zero = Sv(), zero_mask = current == zero;
+	current.mismatch = blend(current.mismatch, zero, zero_mask);
+	current.gapopen = blend(current.gapopen, zero, zero_mask);
 }
 
 template<typename Sv>

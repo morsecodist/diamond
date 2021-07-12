@@ -19,7 +19,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ****/
 
+#include <utility>
 #include "../../util/data_structures/mem_buffer.h"
+
+using std::pair;
 
 namespace DP { namespace BandedSwipe {
 namespace DISPATCH_ARCH {

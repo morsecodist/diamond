@@ -22,9 +22,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 #include <stdint.h>
-#include "../util/io/deserializer.h"
 #include "../basic/packed_loc.h"
 #include "../basic/value.h"
+#include "../util/io/input_file.h"
 #include "../util/io/serialize.h"
 
 // #define HIT_KEEP_TARGET_ID

@@ -72,7 +72,7 @@ HspContext& HspContext::parse()
 			break;
 		case op_substitution:
 			++hsp_.mismatches;
-			if (i.score() > 0)
+			if (score_matrix(i.query(), i.subject()) > 0)
 				++hsp_.positives;
 			d = 0;
 			break;

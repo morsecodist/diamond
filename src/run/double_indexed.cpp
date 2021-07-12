@@ -52,6 +52,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../util/data_structures/deque.h"
 #include "../align/global_ranking/global_ranking.h"
 #include "../align/align.h"
+#include "../util/async_buffer.h"
 #include "config.h"
 
 using std::unique_ptr;

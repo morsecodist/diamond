@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../util/queue.h"
 #include "../output/output.h"
 #include "legacy/query_mapper.h"
+#include "../util/async_buffer.h"
 #if _MSC_FULL_VER == 191627042
 #include "../util/algo/merge_sort.h"
 #endif

@@ -127,7 +127,7 @@ FORCE_INLINE static Cell swipe_cell_update(const Cell& diagonal_cell,
 	horizontal_gap -= gap_extension;
 	Cell open = current_cell;
 	open -= gap_open;
-	update_open(open);
+	update_open(open, current_cell);
 	set_max(vertical_gap, open);
 	set_max(horizontal_gap, open);
 

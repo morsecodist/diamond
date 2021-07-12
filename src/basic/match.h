@@ -25,12 +25,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <limits>
 #include <list>
 #include "sequence.h"
-#include "../util/async_buffer.h"
 #include "packed_loc.h"
-#include "../util/system.h"
 #include "value.h"
 #include "packed_transcript.h"
-#include "../stats/score_matrix.h"
 #include "translated_position.h"
 #include "diagonal_segment.h"
 
@@ -223,7 +220,7 @@ struct Hsp
 	std::pair<int, int> diagonal_bounds() const;
 	int score, frame, length, identities, mismatches, positives, gap_openings, gaps, swipe_target, d_begin, d_end;
 	interval query_source_range, query_range, subject_range;
-	double evalue;
+	double evalue, bit_score;
 	Sequence target_seq;
 	Packed_transcript transcript;
 };
@@ -299,20 +296,16 @@ struct HspContext
 				return value_traits.alphabet[(long)subject()];
 			}
 		}
-		char midline_char() const
+		char midline_char(int score) const
 		{
 			switch (op()) {
 			case op_match:
 				return value_traits.alphabet[(long)query()];
 			case op_substitution:
-				return score() > 0 ? '+' : ' ';
+				return score > 0 ? '+' : ' ';
 			default:
 				return ' ';
 			}
-		}
-		int score() const
-		{
-			return score_matrix(query(), subject());
 		}
 	private:
 		const HspContext &parent_;
@@ -331,9 +324,8 @@ struct HspContext
 	{
 		return hsp_.evalue;
 	}
-	double bit_score() const
-	{
-		return score_matrix.bitscore(score());
+	double bit_score() const {
+		return hsp_.bit_score;
 	}
 	unsigned frame() const
 	{ return hsp_.frame; }

@@ -153,6 +153,15 @@ extern size_t cells;
 
 struct DpTarget
 {
+	struct CarryOver {
+		CarryOver() :
+			i1(0), j1(0), ident(0), len(0)
+		{}
+		CarryOver(int i1, int j1, int ident, int len) :
+			i1(i1), j1(j1), ident(ident), len(len)
+		{}
+		int i1, j1, ident, len;
+	};
 	enum { BLANK = -1 };
 	int get_cols(int qlen) const {
 		int pos = std::max(d_end - 1, 0) - (d_end - 1);
@@ -165,29 +174,25 @@ struct DpTarget
 		d_end(),
 		target_idx(BLANK),
 		cols(),
-		previous_i1(0),
-		previous_j1(0),
 		matrix(nullptr)
 	{}
-	DpTarget(const Sequence &seq, int d_begin, int d_end, int target_idx, int qlen, const Stats::TargetMatrix* matrix = nullptr, int previous_i1 = 0, int previous_j1 = 0) :
+	DpTarget(const Sequence &seq, int d_begin, int d_end, int target_idx, int qlen, const Stats::TargetMatrix* matrix = nullptr, const CarryOver& carry_over = CarryOver()) :
 		seq(seq),
 		d_begin(d_begin),
 		d_end(d_end),
 		target_idx(target_idx),
 		cols(get_cols(qlen)),
-		previous_i1(previous_i1),
-		previous_j1(previous_j1),
+		carry_over(carry_over),
 		matrix(matrix)
 	{
 	}
-	DpTarget(const Sequence& seq, int target_idx, const Stats::TargetMatrix* matrix = nullptr, int previous_i1 = 0, int previous_j1 = 0):
+	DpTarget(const Sequence& seq, int target_idx, const Stats::TargetMatrix* matrix = nullptr, const CarryOver& carry_over = CarryOver()):
 		seq(seq),
 		d_begin(),
 		d_end(),
 		target_idx(target_idx),
 		cols(),
-		previous_i1(previous_i1),
-		previous_j1(previous_j1),
+		carry_over(carry_over),
 		matrix()
 	{}
 	DpTarget(const std::pair<const Letter*, size_t> seq) :
@@ -196,8 +201,6 @@ struct DpTarget
 		d_end(),
 		target_idx(BLANK),
 		cols(),
-		previous_i1(0),
-		previous_j1(0),
 		matrix(nullptr)
 	{
 	}
@@ -225,7 +228,8 @@ struct DpTarget
 		return adjusted_matrix() ? config.cbs_matrix_scale : 1;
 	}
 	Sequence seq;
-	int d_begin, d_end, target_idx, cols, previous_i1, previous_j1;
+	int d_begin, d_end, target_idx, cols;
+	CarryOver carry_over;
 	const Stats::TargetMatrix* matrix;
 };
 

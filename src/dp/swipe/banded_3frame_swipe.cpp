@@ -30,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 using std::list;
 using std::thread;
 using std::atomic;
+using std::pair;
 
 namespace DISPATCH_ARCH {
 
