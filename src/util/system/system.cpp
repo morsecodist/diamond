@@ -190,3 +190,12 @@ void unmap_file(char* ptr, size_t size, int fd) {
 	close(fd);
 #endif
 }
+
+size_t l3_cache_size() {
+#if defined(_MSC_VER) || defined(__APPLE__) || defined(__FreeBSD__)
+	return 0;
+#else
+	const auto s = sysconf(_SC_LEVEL3_CACHE_SIZE);
+	return s == -1 ? 0 : s;
+#endif
+}

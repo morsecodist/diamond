@@ -77,6 +77,9 @@ static const string stack_join_wip = label_join + "_wip";
 static const string stack_join_redo = label_join + "_redo";
 static const string stack_join_done = label_join + "_done";
 
+static bool use_query_index(const size_t table_size) {
+	return table_size <= std::max(MAX_HASH_SET_SIZE, l3_cache_size());
+}
 
 string get_ref_part_file_name(const string & prefix, size_t query, string suffix="") {
 	if (suffix.size() > 0)
@@ -99,7 +102,6 @@ void run_ref_chunk(SequenceFile &db_file,
 	Config& cfg)
 {
 	log_rss();
-	const bool lazy_masking = config.algo == ::Config::Algo::QUERY_INDEXED;
 	auto& ref_seqs = cfg.target->seqs();
 	auto& query_seqs = cfg.query->seqs();
 
@@ -107,7 +109,7 @@ void run_ref_chunk(SequenceFile &db_file,
 		cfg.target->unmasked_seqs() = ref_seqs;
 
 	task_timer timer;
-	if (config.masking == 1 && !config.no_ref_masking && !lazy_masking) {
+	if (config.masking == 1 && !config.no_ref_masking && !cfg.lazy_masking) {
 		timer.go("Masking reference");
 		size_t n = mask_seqs(ref_seqs, Masking::get());
 		timer.finish();
@@ -135,10 +137,12 @@ void run_ref_chunk(SequenceFile &db_file,
 
 	if (!config.swipe_all) {
 		timer.go("Building reference histograms");
-		if (query_seeds_hashed.get())
-			cfg.target->hst() = Partitioned_histogram(ref_seqs, true, query_seeds_hashed.get(), true, nullptr);
+		if(query_seeds_bitset.get())
+			cfg.target->hst() = Partitioned_histogram(ref_seqs, true, query_seeds_bitset.get(), cfg.seed_encoding, nullptr);
+		else if (query_seeds_hashed.get())
+			cfg.target->hst() = Partitioned_histogram(ref_seqs, true, query_seeds_hashed.get(), cfg.seed_encoding, nullptr);
 		else
-			cfg.target->hst() = Partitioned_histogram(ref_seqs, false, &no_filter, config.target_indexed, nullptr);
+			cfg.target->hst() = Partitioned_histogram(ref_seqs, false, &no_filter, cfg.seed_encoding, nullptr);
 
 		timer.go("Allocating buffers");
 		char *ref_buffer = SeedArray::alloc_buffer(cfg.target->hst(), cfg.index_chunks);
@@ -182,7 +186,7 @@ void run_ref_chunk(SequenceFile &db_file,
 	else
 		out = &master_out;
 
-	if (config.target_seg == 1 && !lazy_masking) {
+	if (config.target_seg == 1 && !cfg.lazy_masking) {
 		timer.go("SEG masking targets");
 		mask_seqs(ref_seqs, Masking::get(), true, Masking::Algo::SEG);
 	}
@@ -221,24 +225,36 @@ void run_query_iteration(const unsigned query_chunk,
 	auto& query_ids = options.query->ids();
 	auto& db_file = *options.db;
 	if (query_iteration > 0)
-		options.query_skip = std::make_unique<vector<bool>>(query_aligned);
+		options.query_skip.reset(new vector<bool> (query_aligned));
 
 	if (config.algo == ::Config::Algo::AUTO &&
 		(!sensitivity_traits.at(config.sensitivity).support_query_indexed
 			|| query_seqs.letters() > MAX_INDEX_QUERY_SIZE
-			|| options.db->letters() < MIN_QUERY_INDEXED_DB_SIZE))
+			|| options.db->letters() < MIN_QUERY_INDEXED_DB_SIZE
+			|| config.target_indexed))
 		config.algo = ::Config::Algo::DOUBLE_INDEXED;
 	if (config.algo == ::Config::Algo::AUTO || config.algo == ::Config::Algo::QUERY_INDEXED) {
 		timer.go("Building query seed set");
 		query_seeds_hashed.reset(new HashedSeedSet(query_seqs, options.query_skip.get()));
-		if (config.algo == ::Config::Algo::AUTO && query_seeds_hashed->max_table_size() > MAX_HASH_SET_SIZE) {
+		if (config.algo == ::Config::Algo::AUTO && !use_query_index(query_seeds_hashed->max_table_size())) {
 			config.algo = ::Config::Algo::DOUBLE_INDEXED;
 			query_seeds_hashed.reset();
 		}
-		else
+		else {
 			config.algo = ::Config::Algo::QUERY_INDEXED;
+			options.seed_encoding = SeedEncoding::HASHED;
+		}
 		timer.finish();
 	}
+	if (config.algo == ::Config::Algo::CTG_SEED) {
+		timer.go("Building query seed set");
+		query_seeds_bitset.reset(new SeedSet(query_seqs, 1.0, options.query_skip.get()));
+		options.seed_encoding = SeedEncoding::CONTIGUOUS;
+		timer.finish();
+	}
+
+	::Config::set_option(options.index_chunks, config.lowmem_, 0u, config.algo == ::Config::Algo::DOUBLE_INDEXED ? sensitivity_traits.at(options.sensitivity[query_iteration]).index_chunks : 1u);
+	options.lazy_masking = config.algo != ::Config::Algo::DOUBLE_INDEXED && (config.masking == 1 || config.target_seg == 1) && config.frame_shift == 0;
 
 	options.cutoff_gapped1 = { config.gapped_filter_evalue1 };
 	options.cutoff_gapped2 = { options.gapped_filter_evalue };
@@ -246,7 +262,7 @@ void run_query_iteration(const unsigned query_chunk,
 	options.cutoff_gapped2_new = { options.gapped_filter_evalue };
 
 	if (current_query_chunk == 0 && query_iteration == 0) {
-		message_stream << "Algorithm: " << (config.algo == ::Config::Algo::DOUBLE_INDEXED ? "Double-indexed" : "Query-indexed") << endl;
+		message_stream << "Algorithm: " << to_string(config.algo) << endl;
 		verbose_stream << "Seed frequency SD: " << options.freq_sd << endl;
 		verbose_stream << "Shape configuration: " << ::shapes << endl;
 	}	
@@ -259,7 +275,7 @@ void run_query_iteration(const unsigned query_chunk,
 	char* query_buffer = nullptr;
 	if (!config.swipe_all && !config.target_indexed) {
 		timer.go("Building query histograms");
-		options.query->hst() = Partitioned_histogram(query_seqs, false, &no_filter, query_seeds_hashed.get(), options.query_skip.get());
+		options.query->hst() = Partitioned_histogram(query_seqs, false, &no_filter, options.seed_encoding, options.query_skip.get());
 
 		timer.go("Allocating buffers");
 		query_buffer = SeedArray::alloc_buffer(options.query->hst(), options.index_chunks);
@@ -269,7 +285,7 @@ void run_query_iteration(const unsigned query_chunk,
 	log_rss();
 	db_file.set_seqinfo_ptr(0);
 	bool mp_last_chunk = false;
-	const bool lazy_masking = config.algo == ::Config::Algo::QUERY_INDEXED && (config.masking == 1 || config.target_seg == 1) && (config.global_ranking_targets == 0);
+	//const bool lazy_masking = config.algo == ::Config::Algo::QUERY_INDEXED && (config.masking == 1 || config.target_seg == 1) && (config.global_ranking_targets == 0);
 	const bool load_titles = db_file.load_titles() == SequenceFile::LoadTitles::SINGLE_PASS || config.no_self_hits;
 
 	if (config.multiprocessing) {
@@ -291,7 +307,7 @@ void run_query_iteration(const unsigned query_chunk,
 
 			P->log("SEARCH BEGIN " + std::to_string(query_chunk) + " " + std::to_string(chunk.i));
 
-			options.target.reset(db_file.load_seqs((size_t)(0), load_titles, options.db_filter.get(), true, lazy_masking, chunk));
+			options.target.reset(db_file.load_seqs((size_t)(0), load_titles, options.db_filter.get(), true, options.lazy_masking, chunk));
 			run_ref_chunk(db_file, query_chunk, query_iteration, query_buffer, master_out, tmp_file, options);
 
 			tmp_file.back().close();
@@ -314,7 +330,7 @@ void run_query_iteration(const unsigned query_chunk,
 	}
 	else {
 		for (current_ref_block = 0; ; ++current_ref_block) {
-			options.target.reset(db_file.load_seqs((size_t)(config.chunk_size * 1e9), load_titles, options.db_filter.get(), true, lazy_masking));
+			options.target.reset(db_file.load_seqs((size_t)(config.chunk_size * 1e9), load_titles, options.db_filter.get(), true, options.lazy_masking));
 			if (options.target->empty()) break;
 			run_ref_chunk(db_file, query_chunk, query_iteration, query_buffer, master_out, tmp_file, options);
 		}
@@ -324,6 +340,7 @@ void run_query_iteration(const unsigned query_chunk,
 	timer.go("Deallocating buffers");
 	delete[] query_buffer;
 	query_seeds_hashed.reset();
+	query_seeds_bitset.reset();
 	options.query_skip.reset();
 	delete Extension::memory;
 

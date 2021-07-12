@@ -1,6 +1,13 @@
 [2.0.12]
 - Fixed an error when using HSP filter settings together with a BLAST database.
 
+[2.0.11]
+- Fixed a bug that could cause invalid output when using `--masking 0` combined with
+  the global ranking mode.
+- Enabled lazy repeat masking in the query-indexed and contiguous seed modes when
+  using global ranking.
+- Added detection of cache size to auto-enable query-indexed mode.
+
 [2.0.10]
 - Using BLAST databases now requires a preprocessing step using the command `prepdb`.
 - Improved performance of searching small query files.
@@ -8,10 +15,13 @@
   increasing sensitivity, only searching queries at the target sensitivity that fail
   to align at a lower sensitivity search.
 - Added the "global ranking" mode (option `-g`) to set a limit on the number of
-  Smith Waterman extensions per target, ranked by their ungapped extension scores.
+  Smith Waterman extensions per query, with the target sequences ranked by their
+  ungapped extension scores.
 - Added the `--fast` sensitivity mode that is faster and less sensitive than the
   default mode.
 - Reduced the time for loading target sequences from BLAST databases.
+- Added the contiguous-seed mode (option `--algo ctg`) to improve performance for
+  small query files.
 - Added support for using `--comp-based-stats (3,4)` in combination with `--ext full`.
 - Fixed a bug that could cause a `Traceback error` when using `--comp-based-stats (3,4)`
   in rare cases.
