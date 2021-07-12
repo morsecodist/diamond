@@ -81,6 +81,9 @@ struct Matrix
 	constexpr int cols() const {
 		return 1;
 	}
+	_sv operator[](int i) const {
+		return score_[i + 1];
+	}
 private:
 #ifdef __APPLE__
 	MemBuffer<_sv> hgap_, score_;
@@ -232,6 +235,10 @@ struct TracebackVectorMatrix
 
 	int cols() const {
 		return cols_;
+	}
+
+	_sv operator[](int i) const {
+		return _sv();
 	}
 
 #ifdef __APPLE__

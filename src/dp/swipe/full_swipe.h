@@ -33,13 +33,14 @@ using namespace DISPATCH_ARCH;
 namespace DP { namespace Swipe {
 namespace DISPATCH_ARCH {
 
-template<typename _sv, typename Cell, typename _cbs>
-Hsp traceback(const Sequence& query, Frame frame, _cbs bias_correction, const Matrix<Cell>& dp, const DpTarget& target, typename ScoreTraits<_sv>::Score max_score, double evalue, int max_col, int max_i, int max_j, int channel)
+template<typename _sv, typename Cell, typename _cbs, typename StatType>
+Hsp traceback(const Sequence& query, Frame frame, _cbs bias_correction, const Matrix<Cell>& dp, const DpTarget& target, typename ScoreTraits<_sv>::Score max_score, double evalue, int max_col, int max_i, int max_j, int channel, const StatType &stats)
 {
 	Hsp out;
 	out.swipe_target = target.target_idx;
 	out.score = ScoreTraits<_sv>::int_score(max_score) * config.cbs_matrix_scale;
 	out.evalue = evalue;
+	out.bit_score = score_matrix.bitscore(out.score);
 	out.frame = frame.index();
 	if (target.carry_over.i1 == 0) {
 		out.query_range.end_ = max_i + 1;
@@ -54,11 +55,12 @@ Hsp traceback(const Sequence& query, Frame frame, _cbs bias_correction, const Ma
 		out.subject_range.begin_ = (int)target.seq.length() - 1 - max_j;
 	}
 	out.target_seq = target.seq;
+	assign_stats(out, stats);
 	return out;
 }
 
 template<typename _sv, typename _cbs>
-Hsp traceback(const Sequence &query, Frame frame, _cbs bias_correction, const TracebackVectorMatrix<_sv> &dp, const DpTarget &target, typename ScoreTraits<_sv>::Score max_score, double evalue, int max_col, int max_i, int max_j, int channel)
+Hsp traceback(const Sequence &query, Frame frame, _cbs bias_correction, const TracebackVectorMatrix<_sv> &dp, const DpTarget &target, typename ScoreTraits<_sv>::Score max_score, double evalue, int max_col, int max_i, int max_j, int channel, Void)
 {
 	typedef typename ScoreTraits<_sv>::Score Score;
 	typedef typename ScoreTraits<_sv>::TraceMask TraceMask;
@@ -68,6 +70,7 @@ Hsp traceback(const Sequence &query, Frame frame, _cbs bias_correction, const Tr
 	out.swipe_target = target.target_idx;
 	out.score = ScoreTraits<_sv>::int_score(max_score);
 	out.evalue = evalue;
+	out.bit_score = score_matrix.bitscore(out.score);
 	out.transcript.reserve(size_t(out.score * config.transcript_len_estimate));
 
 	out.frame = frame.index();
@@ -114,6 +117,7 @@ list<Hsp> swipe(const Sequence& query, const Frame frame, const It target_begin,
 	typedef typename SelectMatrix<Cell, Cfg::traceback>::Type Matrix;
 	using RowCounter = typename Cfg::RowCounter;
 	using IdMask = typename Cfg::IdMask;
+	using StatType = decltype(extract_stats<_sv>(Cell(), int()));
 	constexpr int CHANNELS = ScoreTraits<_sv>::CHANNELS;
 
 	int max_col[CHANNELS], max_i[CHANNELS], max_j[CHANNELS];
@@ -129,6 +133,7 @@ list<Hsp> swipe(const Sequence& query, const Frame frame, const It target_begin,
 		extend_penalty(static_cast<Score>(score_matrix.gap_extend()));
 	//_sv best = _sv();
 	Score best[CHANNELS];
+	StatType hsp_stats[CHANNELS];
 	std::fill(best, best + CHANNELS, ScoreTraits<_sv>::zero_score());
 	SwipeProfile<_sv> profile;
 	std::array<const int8_t*, 32> target_scores;
@@ -153,7 +158,7 @@ list<Hsp> swipe(const Sequence& query, const Frame frame, const It target_begin,
 				profile.set(targets.get(target_scores.data()));
 		}
 		else {
-			const auto t = targets.seq_vector();;
+			const auto t = targets.seq_vector();
 			target_seq = _sv(t);
 			profile.set(t);
 		}
@@ -182,6 +187,7 @@ list<Hsp> swipe(const Sequence& query, const Frame frame, const It target_begin,
 				max_col[c] = col;
 				max_i[c] = ScoreTraits<_sv>::int_score(i_max[c]);
 				max_j[c] = targets.pos[c];
+				hsp_stats[c] = extract_stats(dp[max_i[c]], c);
 			}
 			bool reinit = false;
 			if (col_best_[c] == ScoreTraits<_sv>::max_score()) {
@@ -191,7 +197,7 @@ list<Hsp> swipe(const Sequence& query, const Frame frame, const It target_begin,
 				const int s = ScoreTraits<_sv>::int_score(best[c]) * config.cbs_matrix_scale;
 				const double evalue = score_matrix.evalue(s, qlen, (unsigned)targets.dp_targets[c].seq.length());
 				if (score_matrix.report_cutoff(s, evalue))
-					out.push_back(traceback<_sv>(query, frame, composition_bias, dp, targets.dp_targets[c], best[c], evalue, max_col[c], max_i[c], max_j[c], c));
+					out.push_back(traceback<_sv>(query, frame, composition_bias, dp, targets.dp_targets[c], best[c], evalue, max_col[c], max_i[c], max_j[c], c, hsp_stats[c]));
 				reinit = true;				
 			}
 			if (reinit) {
