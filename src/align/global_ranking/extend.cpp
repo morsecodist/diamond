@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <mutex>
 #include <memory>
 #include <thread>
+#include <atomic>
 #include "global_ranking.h"
 #include "../output/output.h"
 #include "../target.h"
