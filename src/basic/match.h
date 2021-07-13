@@ -43,7 +43,8 @@ struct IntermediateRecord;
 struct Hsp
 {
 
-	Hsp() :
+	Hsp(const bool backtraced) :
+		backtraced(backtraced),
 		score(0),
 		frame(0),
 		length(0),
@@ -57,7 +58,8 @@ struct Hsp
 		d_end(0)
 	{}
 
-	Hsp(int score, int swipe_target = 0) :
+	Hsp(const bool backtraced, int score, int swipe_target = 0) :
+		backtraced(backtraced),
 		score(score),
 		frame(0),
 		length(0),
@@ -218,6 +220,7 @@ struct Hsp
 
 	bool is_weakly_enveloped(const Hsp &j) const;
 	std::pair<int, int> diagonal_bounds() const;
+	const bool backtraced;
 	int score, frame, length, identities, mismatches, positives, gap_openings, gaps, swipe_target, d_begin, d_end;
 	interval query_source_range, query_range, subject_range;
 	double evalue, bit_score;

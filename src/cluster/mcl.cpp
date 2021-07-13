@@ -763,7 +763,7 @@ void MCL::run(){
 	vector<Letter> seq;
 	string id;
 	db->init_seq_access();
-	Hsp hsp;
+	//Hsp hsp;
 	size_t n;
 	out->precision(3);
 	for (int i = 0; i < (int)db->sequence_count(); ++i) {

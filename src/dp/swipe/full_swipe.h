@@ -36,7 +36,7 @@ namespace DISPATCH_ARCH {
 template<typename _sv, typename Cell, typename _cbs, typename StatType>
 Hsp traceback(const Sequence& query, Frame frame, _cbs bias_correction, const Matrix<Cell>& dp, const DpTarget& target, typename ScoreTraits<_sv>::Score max_score, double evalue, int max_col, int max_i, int max_j, int channel, const StatType &stats)
 {
-	Hsp out;
+	Hsp out(false);
 	out.swipe_target = target.target_idx;
 	out.score = ScoreTraits<_sv>::int_score(max_score) * config.cbs_matrix_scale;
 	out.evalue = evalue;
@@ -66,7 +66,7 @@ Hsp traceback(const Sequence &query, Frame frame, _cbs bias_correction, const Tr
 	typedef typename ScoreTraits<_sv>::TraceMask TraceMask;
 	const auto channel_mask = TraceMask::vmask(channel) | TraceMask::hmask(channel);
 	typename TracebackVectorMatrix<_sv>::TracebackIterator it(dp.traceback(max_col, max_i, max_j, channel));
-	Hsp out;
+	Hsp out(true);
 	out.swipe_target = target.target_idx;
 	out.score = ScoreTraits<_sv>::int_score(max_score);
 	out.evalue = evalue;

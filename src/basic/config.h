@@ -265,6 +265,7 @@ struct Config
 	bool ignore_warnings;
 	bool short_seqids;
 	bool no_reextend;
+	size_t max_traceback_matrix_size;
 
 	Sensitivity sensitivity;
 

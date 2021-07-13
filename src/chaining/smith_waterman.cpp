@@ -33,7 +33,7 @@ void print_diag(int i0, int j0, int l, int score, const Diag_graph &diags, const
 
 void smith_waterman(Sequence q, Sequence s, const Diag_graph &diags)
 {
-	Hsp hsp;
+	Hsp hsp(true);
 	smith_waterman(q, s, hsp);
 	Hsp::Iterator i = hsp.begin();
 	int i0 = -1, j0 = -1, l = 0, score = 0;

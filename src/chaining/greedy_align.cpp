@@ -496,7 +496,7 @@ struct Greedy_aligner2
 		unsigned next;
 		int max_score = 0, max_j = (int)subject.length();
 		do {
-			Hsp *hsp = log ? new Hsp : 0;
+			Hsp *hsp = log ? new Hsp(true) : 0;
 			Hsp_traits t(frame);
 			next = std::numeric_limits<unsigned>::max();
 			backtrace(top_node, hsp, t, max_shift, next, max_j);

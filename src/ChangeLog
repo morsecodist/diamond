@@ -1,5 +1,8 @@
 [2.0.12]
 - Fixed an error when using HSP filter settings together with a BLAST database.
+- Optimized the performance of alignment traceback.
+- A non-default setting of `--max-hsps` will always recompute the Smith Waterman
+  alignment with the ranges of the primary HSP masked.
 
 [2.0.11]
 - Fixed a bug that could cause invalid output when using `--masking 0` combined with

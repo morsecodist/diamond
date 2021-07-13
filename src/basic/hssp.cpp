@@ -266,6 +266,7 @@ void Hsp::push_gap(Edit_operation op, int length, const Letter *subject)
 }
 
 Hsp::Hsp(const IntermediateRecord &r, unsigned query_source_len) :
+	backtraced(!IntermediateRecord::stats_mode(output_format->hsp_values) && output_format->hsp_values != HspValues::NONE),
 	score(r.score),
 	evalue(r.evalue),
 	transcript(r.transcript)

@@ -50,7 +50,7 @@ Hsp traceback(const Sequence &query, Frame frame, _cbs bias_correction, const Tr
 	const int j0 = i1 - (target.d_end - 1), d1 = target.d_end;
 	typename TracebackMatrix<_sv>::TracebackIterator it(dp.traceback(max_col + 1, i0 + max_col, j0 + max_col, (int)query.length(), channel, max_score));
 	
-	Hsp out;
+	Hsp out(true);
 	out.swipe_target = target.target_idx;
 	out.score = ScoreTraits<_sv>::int_score(max_score);
 	out.evalue = evalue;
@@ -84,7 +84,7 @@ Hsp traceback(const Sequence &query, Frame frame, _cbs bias_correction, const Tr
 template<typename _sv, typename Cell, typename _cbs, typename StatType>
 Hsp traceback(const Sequence &query, Frame frame, _cbs bias_correction, const Matrix<Cell> &dp, const DpTarget &target, int d_begin, typename ScoreTraits<_sv>::Score max_score, double evalue, int max_col, int channel, int i0, int i1, int max_band_i, const StatType& stats)
 {
-	Hsp out;
+	Hsp out(false);
 	out.swipe_target = target.target_idx;
 	out.score = ScoreTraits<_sv>::int_score(max_score);
 	if (!target.adjusted_matrix())
@@ -120,7 +120,7 @@ Hsp traceback(const Sequence &query, Frame frame, _cbs bias_correction, const Tr
 	const auto channel_mask = TraceMask::vmask(channel) | TraceMask::hmask(channel);
 	const int j0 = i1 - (target.d_end - 1), d1 = target.d_end;
 	typename TracebackVectorMatrix<_sv>::TracebackIterator it(dp.traceback(max_col + 1, i0 + max_col, max_band_i, j0 + max_col, (int)query.length(), channel));
-	Hsp out;
+	Hsp out(true);
 	out.swipe_target = target.target_idx;
 	out.target_seq = target.seq;
 	out.score = ScoreTraits<_sv>::int_score(max_score);

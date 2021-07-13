@@ -83,6 +83,19 @@ unsigned bin(HspValues v, int query_len, int score, int ungapped_score, size_t d
 #endif
 }
 
+template<typename Sv>
+static size_t matrix_size(const int query_len, const vector<DpTarget>::const_iterator begin, const vector<DpTarget>::const_iterator end) {
+	size_t s = 0;
+	for (auto i = begin; i != end; ++i)
+		s = std::max(s, i->seq.length());
+	return (size_t)query_len * s * ::DISPATCH_ARCH::ScoreTraits<Sv>::CHANNELS / 2;
+}
+
+template<typename Sv>
+static size_t matrix_size(const int query_len, const SequenceSet::ConstIterator begin, const SequenceSet::ConstIterator end) {
+	return 0;
+}
+
 static const HspValues NO_TRACEBACK = HspValues::COORDS | HspValues::IDENT | HspValues::LENGTH | HspValues::MISMATCHES | HspValues::GAP_OPENINGS;
 
 static bool reversed(const HspValues v) {
@@ -173,7 +186,8 @@ static list<Hsp> dispatch_swipe(const Sequence& query,
 		using Cfg = SwipeConfig<false, DummyRowCounter, Sv, DummyIdMask<Sv>>;
 		return dispatch_swipe<Sv, It, Cfg>(query, begin, end, next, frame, composition_bias, flags, overflow, stat);
 	}
-	else if (!flag_only(v, NO_TRACEBACK)) {
+	const size_t s = round == 0 ? matrix_size<Sv>((int)query.length(), begin, end) : SIZE_MAX;
+	if (!flag_only(v, NO_TRACEBACK) || s <= config.max_traceback_matrix_size) {
 		using Cfg = SwipeConfig<true, VectorRowCounter<Sv>, Sv, DummyIdMask<Sv>>;
 		return dispatch_swipe<Sv, It, Cfg>(query, begin, end, next, frame, composition_bias, flags, overflow, stat);
 	}
@@ -311,27 +325,35 @@ static pair<list<Hsp>, vector<DpTarget>> swipe_bin(const unsigned bin, const Seq
 	return { out, overflow };
 }
 
-static list<Hsp> recompute_reversed(const Sequence& query, Frame frame, const Bias_correction* composition_bias, Flags flags, HspValues v, Statistics& stat, list<Hsp>::const_iterator begin, list<Hsp>::const_iterator end) {
+static list<Hsp> recompute_reversed(const Sequence& query, Frame frame, const Bias_correction* composition_bias, Flags flags, HspValues v, Statistics& stat, list<Hsp> &hsps) {
 	Targets dp_targets;
 	vector<DpTarget> overflow;
 	SequenceSet reversed_targets;
 	const int qlen = (int)query.length();
 
-	for (auto i = begin; i != end; ++i)
-		reversed_targets.reserve(i->target_seq.length());
+	for (const auto& h : hsps)
+		if (!h.backtraced)
+			reversed_targets.reserve(h.target_seq.length());
 	reversed_targets.finish_reserve();
 
 	size_t j = 0;
-	for (auto i = begin; i != end; ++i, ++j) {
+	list<Hsp> out;
+	for (auto i = hsps.begin(); i != hsps.end(); ) {
+		if (i->backtraced) {
+			auto k = i++;
+			out.splice(out.end(), hsps, k);
+			continue;
+		}
 		std::reverse_copy(i->target_seq.data(), i->target_seq.end(), reversed_targets.ptr(j));
 		const int band = flag_any(flags, Flags::FULL_MATRIX) ? qlen : i->d_end - i->d_begin,
 			tlen = (int)i->target_seq.length(),
 			b = bin(v, band, i->score, 0, 0, 0);
 		const DpTarget::CarryOver carry_over{ i->query_range.end_, i->subject_range.end_, i->identities, i->length };
 		dp_targets[b].emplace_back(reversed_targets[j], -i->d_end + qlen - tlen + 1, -i->d_begin + qlen - tlen + 1, i->swipe_target, qlen, nullptr, carry_over);
+		++i;
+		++j;
 	}
 
-	list<Hsp> out;
 	vector<Letter> reversed = query.reverse();
 	Bias_correction rev_cbs = composition_bias ? composition_bias->reverse() : Bias_correction();
 	const int8_t* cbs = composition_bias ? rev_cbs.int8.data() : nullptr;
@@ -354,7 +376,7 @@ list<Hsp> swipe(const Sequence &query, const array<vector<DpTarget>, BINS> &targ
 		out.splice(out.end(), result.first);
 	}
 	assert(result.second.empty());
-	return reversed(v) ? recompute_reversed(query, frame, composition_bias, flags, v, stat, out.begin(), out.end()) : out;
+	return reversed(v) ? recompute_reversed(query, frame, composition_bias, flags, v, stat, out) : out;
 }
 
 list<Hsp> swipe_set(const Sequence& query, const SequenceSet::ConstIterator begin, const SequenceSet::ConstIterator end, const Frame frame, const Bias_correction* composition_bias, const DP::Flags flags, const HspValues v, Statistics& stat) {
@@ -362,7 +384,7 @@ list<Hsp> swipe_set(const Sequence& query, const SequenceSet::ConstIterator begi
 	const unsigned b = bin(v, 0, 0, 0, 0, 0);
 	pair<list<Hsp>, vector<DpTarget>> result = swipe_bin(b, query, begin, end, frame, cbs, flags, v, stat, 0);
 	if (reversed(v))
-		result.first = recompute_reversed(query, frame, composition_bias, flags, v, stat, result.first.begin(), result.first.end());
+		result.first = recompute_reversed(query, frame, composition_bias, flags, v, stat, result.first);
 	if (b < BINS - 1 && !result.second.empty()) {
 		array<vector<DpTarget>, BINS> targets;
 		targets[b + 1] = std::move(result.second);

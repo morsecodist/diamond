@@ -334,7 +334,7 @@ Hsp traceback(Sequence *query, Strand strand, int dna_len, const Banded3FrameSwi
 	const int j0 = i1 - (target.d_end - 1), d1 = target.d_end;
 	typename Banded3FrameSwipeTracebackMatrix<_sv>::TracebackIterator it(dp.traceback(max_col + 1, i0 + max_col, j0 + max_col, dna_len, channel, max_score));
 	
-	Hsp out;
+	Hsp out(true);
 	out.swipe_target = target.target_idx;
 	out.score = ScoreTraits<_sv>::int_score(max_score) * config.cbs_matrix_scale;
 	out.evalue = evalue;
@@ -374,7 +374,7 @@ Hsp traceback(Sequence *query, Strand strand, int dna_len, const Banded3FrameSwi
 template<typename _sv>
 Hsp traceback(Sequence *query, Strand strand, int dna_len, const Banded3FrameSwipeMatrix<_sv> &dp, const DpTarget &target, int d_begin, typename ScoreTraits<_sv>::Score max_score, double evalue, int max_col, int channel, int i0, int i1)
 {
-	Hsp out;
+	Hsp out(false);
 	const int j0 = i1 - (target.d_end - 1);
 	out.swipe_target = target.target_idx;
 	out.score = ScoreTraits<_sv>::int_score(max_score) * config.cbs_matrix_scale;

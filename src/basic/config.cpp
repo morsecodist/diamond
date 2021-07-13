@@ -523,7 +523,8 @@ Config::Config(int argc, const char **argv, bool check_io)
 		("length-ratio-threshold", 0, "", length_ratio_threshold, -1.0)
 		("max-swipe-dp", 0, "", max_swipe_dp, (size_t)4000000)
 		("short-seqids", 0, "", short_seqids)
-		("no-reextend", 0, "", no_reextend);
+		("no-reextend", 0, "", no_reextend)
+		("max-traceback-matrix-size", 0, "", max_traceback_matrix_size, 512 * KILOBYTES);
 
 	parser.add(general).add(makedb).add(cluster).add(aligner).add(advanced).add(view_options).add(getseq_options).add(hidden_options).add(deprecated_options);
 	parser.store(argc, argv, command);

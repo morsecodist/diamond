@@ -234,7 +234,7 @@ void pairwise_worker(TextInputFile *in, std::mutex *input_lock, std::mutex *outp
 		}
 		input_lock->unlock();
 		const string ir = Util::Seq::seqid(id_r.c_str(), false), iq = Util::Seq::seqid(id_q.c_str(), false);
-		Hsp hsp;
+		Hsp hsp(true);
 		smith_waterman(Sequence(query), Sequence(ref), hsp);
 		HspContext context(hsp, 0, TranslatedSequence(query), "", 0, 0, nullptr, 0, 0, Sequence());
 		HspContext::Iterator it = context.begin();
