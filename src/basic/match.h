@@ -220,7 +220,7 @@ struct Hsp
 
 	bool is_weakly_enveloped(const Hsp &j) const;
 	std::pair<int, int> diagonal_bounds() const;
-	const bool backtraced;
+	bool backtraced;
 	int score, frame, length, identities, mismatches, positives, gap_openings, gaps, swipe_target, d_begin, d_end;
 	interval query_source_range, query_range, subject_range;
 	double evalue, bit_score;
