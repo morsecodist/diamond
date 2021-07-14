@@ -84,7 +84,7 @@ Match::Match(size_t target_block_id, std::array<std::list<Hsp>, MAX_CONTEXT> &hs
 		max_hsp_culling();
 }
 
-void add_dp_targets(const WorkTarget& target, int target_idx, const Sequence* query_seq, array<array<vector<DpTarget>, 3>, MAX_CONTEXT>& dp_targets, DP::Flags flags, const HspValues hsp_values) {
+void add_dp_targets(const WorkTarget& target, int target_idx, const Sequence* query_seq, array<DP::Targets, MAX_CONTEXT>& dp_targets, DP::Flags flags, const HspValues hsp_values) {
 	const int band = Extension::band((int)query_seq->length()),
 		slen = (int)target.seq.length();
 	const size_t qlen = query_seq[0].length();

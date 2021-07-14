@@ -190,6 +190,8 @@ void swipe(const Sequence&s1, const Sequence&s2) {
 	Sequence query = s1;
 	query.len_ = std::min(query.len_, (size_t)255);
 	auto dp_size = (n * query.length() * s2.length() * CHANNELS);
+	config.comp_based_stats = 4;
+	Stats::TargetMatrix matrix(Stats::composition(s1), s1.length(), s2);
 
 	high_resolution_clock::time_point t1 = high_resolution_clock::now();
 	for (size_t i = 0; i < n; ++i) {
@@ -202,6 +204,14 @@ void swipe(const Sequence&s1, const Sequence&s2) {
 		volatile list<Hsp> v = ::DP::BandedSwipe::swipe(query, targets, Frame(0), nullptr, DP::Flags::FULL_MATRIX, HspValues::COORDS, stat);
 	}
 	cout << "SWIPE (int8_t, Stats):\t\t" << (double)duration_cast<std::chrono::nanoseconds>(high_resolution_clock::now() - t1).count() / dp_size * 1000 << " ps/Cell" << endl;
+
+	t1 = high_resolution_clock::now();
+	for (size_t i = 0; i < 32; ++i)
+		targets[0][i].matrix = &matrix;
+	for (size_t i = 0; i < n; ++i) {
+		volatile list<Hsp> v = ::DP::BandedSwipe::swipe(query, targets, Frame(0), nullptr, DP::Flags::FULL_MATRIX, HspValues::NONE, stat);
+	}
+	cout << "SWIPE (int8_t, MatrixAdjust):\t" << (double)duration_cast<std::chrono::nanoseconds>(high_resolution_clock::now() - t1).count() / dp_size * 1000 << " ps/Cell" << endl;
 
 	t1 = high_resolution_clock::now();
 	for (size_t i = 0; i < n; ++i) {
