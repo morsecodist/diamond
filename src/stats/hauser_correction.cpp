@@ -19,9 +19,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ****/
 
-
+#include <array>
 #include <algorithm>
 #include "../dp/dp.h"
+
+using std::array;
 
 double background_scores[20];
 const double background_freq[] = { 0.0844581,0.0581912,0.0421072,0.0546748,0.0146359,0.040118,0.0621211,0.0669379,0.0225159,0.0547866,0.0957934,0.0523275,0.0218629,0.038769,0.0505311,
@@ -142,4 +144,36 @@ Bias_correction Bias_correction::reverse() const {
 	r.int8.reserve(int8.size());
 	std::reverse_copy(int8.begin(), int8.end(), std::back_inserter(r.int8));
 	return r;
+}
+
+namespace Stats {
+
+vector<int> hauser_global(const Composition& query_comp, const Composition& target_comp) {
+	array<double, TRUE_AA> qscores, tscores;
+	qscores.fill(0.0);
+	tscores.fill(0.0);
+	for (size_t i = 0; i < TRUE_AA; ++i)
+		for (size_t j = 0; j < TRUE_AA; ++j) {
+			qscores[i] += query_comp[j] * (double)score_matrix(i, j);
+			tscores[i] += target_comp[j] * (double)score_matrix(i, j);
+		}
+
+	for (size_t i = 0; i < TRUE_AA; ++i) {
+		qscores[i] = (background_scores[i] - qscores[i]) / 2;
+		tscores[i] = (background_scores[i] - tscores[i]) / 2;
+	}
+
+	vector<int> m(AMINO_ACID_COUNT * AMINO_ACID_COUNT);
+	for (size_t i = 0; i < AMINO_ACID_COUNT; ++i)
+		for (size_t j = 0; j < AMINO_ACID_COUNT; ++j) {
+			double s = (double)score_matrix(i, j);
+			if (i < TRUE_AA)
+				s += qscores[i];
+			if (j < TRUE_AA)
+				s += tscores[j];
+			m[i * AMINO_ACID_COUNT + j] = std::round(s);
+		}
+	return m;
+}
+
 }

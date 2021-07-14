@@ -113,6 +113,8 @@ TargetMatrix::TargetMatrix(const Composition& query_comp, int query_len, const S
     
     if (config.comp_based_stats == CBS::COMP_BASED_STATS || rule == eCompoScaleOldMatrix)
         s = CompositionBasedStats(score_matrix.matrix32_scaled_pointers().data(), query_comp, c, score_matrix.ungapped_lambda(), score_matrix.freq_ratios());
+    else if (config.comp_based_stats == CBS::HAUSER_GLOBAL)
+        s = hauser_global(query_comp, c);
     else
         s = CompositionMatrixAdjust(query_len, count_true_aa(target), query_comp.data(), c.data(), config.cbs_matrix_scale, score_matrix.ideal_lambda(), score_matrix.joint_probs(), score_matrix.background_freqs());
     
