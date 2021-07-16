@@ -24,7 +24,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../util/tantan.h"
 #include "../lib/blast/blast_filter.h"
 
-using namespace std;
+using std::unique_ptr;
+using std::atomic;
+using std::thread;
+
+const EMap<MaskingAlgo> EnumTraits<MaskingAlgo>::to_string{ {MaskingAlgo::NONE, "None"}, {MaskingAlgo::SEG, "SEG"}, {MaskingAlgo::TANTAN, "tantan"} };
+const SEMap<MaskingAlgo> EnumTraits<MaskingAlgo>::from_string{
+	{"0", MaskingAlgo::NONE}
+};
+const SEMap<MaskingMode> EnumTraits<MaskingMode>::from_string{
+	{"0", {MaskingMode::NONE, false}},
+	{"none", MaskingMode::NONE},
+	{"1", {MaskingMode::TANTAN, false}},
+	{"tantan", MaskingMode::TANTAN},
+	{"seg", MaskingMode::BLAST_SEG}
+};
 
 unique_ptr<Masking> Masking::instance;
 const int8_t Masking::bit_mask = (int8_t)128;
@@ -58,9 +72,9 @@ Masking::~Masking() {
 	SegParametersFree(blast_seg_);
 }
 
-void Masking::operator()(Letter *seq, size_t len, Algo algo) const
+void Masking::operator()(Letter *seq, size_t len, MaskingAlgo algo) const
 {
-	if(algo == Algo::TANTAN)
+	if(algo == MaskingAlgo::TANTAN)
 		Util::tantan::mask(seq, (int)len, (const float**)probMatrixPointersf_, 0.005f, 0.05f, 1.0f / 0.9f, (float)config.tantan_minMaskProb, mask_table_x_);
 	else {
 		BlastSeqLoc* seg_locs;
@@ -101,7 +115,7 @@ void Masking::remove_bit_mask(Letter *seq, size_t len) const
 			seq[i] &= ~bit_mask;
 }
 
-void mask_worker(atomic<size_t> *next, SequenceSet *seqs, const Masking *masking, bool hard_mask, Masking::Algo algo)
+void mask_worker(atomic<size_t> *next, SequenceSet *seqs, const Masking *masking, bool hard_mask, const MaskingAlgo algo)
 {
 	size_t i;
 	while ((i = (*next)++) < seqs->size()) {
@@ -113,7 +127,7 @@ void mask_worker(atomic<size_t> *next, SequenceSet *seqs, const Masking *masking
 	}
 }
 
-size_t mask_seqs(SequenceSet &seqs, const Masking &masking, bool hard_mask, Masking::Algo algo)
+size_t mask_seqs(SequenceSet &seqs, const Masking &masking, bool hard_mask, const MaskingAlgo algo)
 {
 	vector<thread> threads;
 	atomic<size_t> next(0);

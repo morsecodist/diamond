@@ -134,7 +134,7 @@ struct Config
 	string prot_accession2taxid;
 	int superblock;
 	unsigned max_cells;
-	int masking;
+	string masking;
 	bool log_query;
 	bool log_subject;
 	unsigned threads_align;
@@ -247,7 +247,6 @@ struct Config
 	int family_cap;
 	int cbs_matrix_scale;
 	size_t query_count;
-	int target_seg;
 	double cbs_err_tolerance;
 	int cbs_it_limit;
 	double query_match_distance_threshold;

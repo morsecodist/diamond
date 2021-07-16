@@ -109,9 +109,9 @@ void run_ref_chunk(SequenceFile &db_file,
 		cfg.target->unmasked_seqs() = ref_seqs;
 
 	task_timer timer;
-	if (config.masking == 1 && !config.no_ref_masking && !cfg.lazy_masking) {
+	if (cfg.target_masking != MaskingAlgo::NONE && !cfg.lazy_masking) {
 		timer.go("Masking reference");
-		size_t n = mask_seqs(ref_seqs, Masking::get());
+		size_t n = mask_seqs(ref_seqs, Masking::get(), true, cfg.target_masking);
 		timer.finish();
 		log_stream << "Masked letters: " << n << endl;
 	}
@@ -186,11 +186,6 @@ void run_ref_chunk(SequenceFile &db_file,
 	else
 		out = &master_out;
 
-	if (config.target_seg == 1 && !cfg.lazy_masking) {
-		timer.go("SEG masking targets");
-		mask_seqs(ref_seqs, Masking::get(), true, Masking::Algo::SEG);
-	}
-
 	if (config.global_ranking_targets) {
 		/*timer.go("Updating ranking table");
 		Extension::GlobalRanking::update_table(cfg);
@@ -254,7 +249,7 @@ void run_query_iteration(const unsigned query_chunk,
 	}
 
 	::Config::set_option(options.index_chunks, config.lowmem_, 0u, config.algo == ::Config::Algo::DOUBLE_INDEXED ? sensitivity_traits.at(options.sensitivity[query_iteration]).index_chunks : 1u);
-	options.lazy_masking = config.algo != ::Config::Algo::DOUBLE_INDEXED && (config.masking == 1 || config.target_seg == 1) && config.frame_shift == 0;
+	options.lazy_masking = config.algo != ::Config::Algo::DOUBLE_INDEXED && options.target_masking != MaskingAlgo::NONE && config.frame_shift == 0;
 
 	options.cutoff_gapped1 = { config.gapped_filter_evalue1 };
 	options.cutoff_gapped2 = { options.gapped_filter_evalue };
@@ -611,9 +606,9 @@ void master_thread(task_timer &total_timer, Config &options)
 			output_format->print_header(*options.out, align_mode.mode, config.matrix.c_str(), score_matrix.gap_open(), score_matrix.gap_extend(), config.max_evalue, options.query->ids()[0],
 				unsigned(align_mode.query_translated ? options.query->source_seqs()[0].length() : options.query->seqs()[0].length()));
 
-		if (config.masking == 1 && !options.self) {
+		if (options.query_masking != MaskingAlgo::NONE && !options.self) {
 			timer.go("Masking queries");
-			mask_seqs(options.query->seqs(), Masking::get());
+			mask_seqs(options.query->seqs(), Masking::get(), true, options.query_masking);
 			timer.finish();
 		}
 

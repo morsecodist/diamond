@@ -103,7 +103,7 @@ int get_acc2idx(const string& acc, const map<string, size_t>& acc2idx) {
 
 void get_medoids_from_tree() {
 	const size_t CLUSTER_COUNT = 1000;
-	config.masking = false;
+	//config.masking = false;
 	shared_ptr<SequenceFile> db(SequenceFile::auto_create());
 	message_stream << "#Sequences: " << db->sequence_count() << endl;
 	size_t n = db->sequence_count();

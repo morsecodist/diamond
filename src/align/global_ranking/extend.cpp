@@ -106,9 +106,9 @@ void extend(SequenceFile& db, TempFile& merged_query_list, BitVector& ranking_db
 	timer.finish();
 	verbose_stream << "#Ranked database sequences: " << cfg.target->seqs().size() << endl;
 
-	if (config.masking == 1) {
+	if (cfg.target_masking != MaskingAlgo::NONE) {
 		timer.go("Masking reference");
-		size_t n = mask_seqs(cfg.target->seqs(), Masking::get());
+		size_t n = mask_seqs(cfg.target->seqs(), Masking::get(), true, cfg.target_masking);
 		timer.finish();
 		log_stream << "Masked letters: " << n << endl;
 	}
@@ -201,13 +201,10 @@ void extend(Search::Config& cfg, Consumer& out) {
 	timer.finish();
 	verbose_stream << "#Ranked database sequences: " << db_count << endl;
 
-	if (config.masking == 1 || config.target_seg == 1) {
+	if (cfg.target_masking != MaskingAlgo::NONE) {
 		timer.go("Masking reference");
 		size_t n;
-		if (config.target_seg == 1)
-			n = mask_seqs(cfg.target->seqs(), Masking::get(), true, Masking::Algo::SEG);
-		else
-			n = mask_seqs(cfg.target->seqs(), Masking::get());
+		n = mask_seqs(cfg.target->seqs(), Masking::get(), true, cfg.target_masking);
 		timer.finish();
 		log_stream << "Masked letters: " << n << endl;
 	}

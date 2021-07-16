@@ -319,7 +319,7 @@ Config::Config(int argc, const char **argv, bool check_io)
 		("matrix", 0, "score matrix for protein alignment (default=BLOSUM62)", matrix, string("blosum62"))
 		("custom-matrix", 0, "file containing custom scoring matrix", matrix_file)
 		("comp-based-stats", 0, "composition based statistics mode (0-4)", comp_based_stats, 1u)
-		("masking", 0, "enable tantan masking of repeat regions (0/1=default)", masking, -1)
+		("masking", 0, "masking algorithm (none, seg=default, tantan)", masking, string("seg"))
 		("query-gencode", 0, "genetic code to use to translate query (see user manual)", query_gencode, 1u)
 		("salltitles", 0, "include full subject titles in DAA file", salltitles)
 		("sallseqid", 0, "include all subject ids in DAA file", sallseqid)
@@ -514,7 +514,6 @@ Config::Config(int argc, const char **argv, bool check_io)
 		("cbs-matrix-scale", 0, "", cbs_matrix_scale, 1)
 		("query-count", 0, "", query_count, (size_t)1)
 		("cbs-angle", 0, "", cbs_angle, -1.0)
-		("target-seg", 0, "", target_seg, -1)
 		("cbs-err-tolerance", 0, "", cbs_err_tolerance, 0.00000001)
 		("cbs-it-limit", 0, "", cbs_it_limit, 2000)
 		("hash_join_swap", 0, "", hash_join_swap)
@@ -559,12 +558,6 @@ Config::Config(int argc, const char **argv, bool check_io)
 #endif
 		throw std::runtime_error("Invalid value for --comp-based-stats. Permitted values: 0, 1, 2, 3, 4.");
 
-	if (masking == -1)
-		masking = Stats::CBS::tantan(comp_based_stats);
-
-	if (target_seg == -1)
-		target_seg = Stats::CBS::target_seg(comp_based_stats);
-
 	Stats::comp_based_stats = Stats::CBS(comp_based_stats, query_match_distance_threshold, length_ratio_threshold, cbs_angle);
 
 	if (command == blastx && !Stats::CBS::support_translated(comp_based_stats))
@@ -575,12 +568,6 @@ Config::Config(int argc, const char **argv, bool check_io)
 
 	if (max_hsps > 1 && ext == "full")
 		throw std::runtime_error("--max-hsps > 1 is not supported for full matrix extension.");
-
-	if (target_seg < 0 || target_seg > 1)
-		throw std::runtime_error("Permitted values for --target-seg: 0, 1");
-
-	if (masking < 0 || masking > 1)
-		throw std::runtime_error("Permitted values for --masking: 0, 1");
 
 	if (frame_shift > 0 && ext == "full")
 		throw std::runtime_error("Frameshift alignment does not support full matrix extension.");

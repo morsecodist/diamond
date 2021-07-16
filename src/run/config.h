@@ -32,6 +32,7 @@ struct Block;
 struct TaxonomyNodes;
 enum class Sensitivity;
 enum class SeedEncoding;
+enum class MaskingAlgo;
 template<typename T> struct AsyncBuffer;
 
 struct Async;
@@ -57,6 +58,8 @@ struct Config {
 	bool                                       self;
 	std::vector<Sensitivity>                   sensitivity;
 	SeedEncoding                               seed_encoding;
+	MaskingAlgo                                query_masking;
+	MaskingAlgo                                target_masking;
 	bool                                       lazy_masking;
 	bool                                       track_aligned_queries;
 	double                                     freq_sd;
