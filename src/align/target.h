@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <list>
 #include <mutex>
 #include <float.h>
+#include <atomic>
 #include "../basic/diagonal_segment.h"
 #include "../basic/const.h"
 #include "../dp/hsp_traits.h"
