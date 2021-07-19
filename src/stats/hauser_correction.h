@@ -26,8 +26,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../basic/diagonal_segment.h"
 #include "../basic/match.h"
 
-void init_cbs();
-
 struct No_score_correction
 {
 	void operator()(int &score, int i, int query_anchor, int mult) const

@@ -193,6 +193,10 @@ struct Score_matrix
 		return standard_matrix_->freq_ratios;
 	}
 
+	const std::array<double, TRUE_AA>& background_scores() const {
+		return background_scores_;
+	}
+
 	double avg_id_score() const;
 	bool report_cutoff(int score, double evalue) const;
 
@@ -226,6 +230,8 @@ private:
 		alignas(32) _t data[32 * 32];
 	};
 
+	void init_background_scores();
+
 	const Stats::StandardMatrix* standard_matrix_;
 	const int8_t* score_array_;
 	int gap_open_, gap_extend_, frame_shift_;
@@ -241,6 +247,7 @@ private:
 	Scores<int8_t> matrix8u_low_;
 	Scores<int8_t> matrix8u_high_;
 	Scores<int16_t> matrix16_;
+	std::array<double, TRUE_AA> background_scores_;
 	Sls::AlignmentEvaluer evaluer;
 
 };

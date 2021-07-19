@@ -62,6 +62,7 @@ Score_matrix::Score_matrix(const string & matrix, int gap_open, int gap_extend, 
 	Sls::AlignmentEvaluerParameters params{ p.Lambda, p.K, p.alpha, b, p.alpha, b, p.alpha_v, beta, p.alpha_v, beta, p.sigma, 2.0 * G * (u.alpha_v - p.sigma) };
 	evaluer.initParameters(params);
 	ln_k_ = std::log(evaluer.parameters().K);
+	init_background_scores();
 }
 
 int8_t Score_matrix::low_score() const
@@ -178,6 +179,7 @@ Score_matrix::Score_matrix(const string& matrix_file, int gap_open, int gap_exte
 		throw std::runtime_error("The ALP library failed to compute the statistical parameters for this matrix. It may help to adjust the gap penalty settings.");
 	}
 	ln_k_ = std::log(evaluer.parameters().K);
+	init_background_scores();
 }
 
 template<typename _t>
@@ -219,4 +221,13 @@ bool Score_matrix::report_cutoff(int score, double evalue) const {
 		return bitscore(score) >= config.min_bit_score;
 	else
 		return evalue <= config.max_evalue;
+}
+
+void Score_matrix::init_background_scores()
+{
+	for (size_t i = 0; i < 20; ++i) {
+		background_scores_[i] = 0;
+		for (size_t j = 0; j < 20; ++j)
+			background_scores_[i] += Stats::blosum62.background_freqs[j] * (*this)(i, j);
+	}
 }

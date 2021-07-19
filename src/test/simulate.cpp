@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../util/seq_file_format.h"
 #include "../util/sequence/sequence.h"
 #include "../util/io/output_file.h"
+#include "../stats/score_matrix.h"
 
 using std::vector;
 using std::cout;
@@ -62,7 +63,7 @@ vector<Letter> generate_random_seq(size_t length, std::minstd_rand0 &random_engi
 	vector<Letter> seq;
 	seq.reserve(length);
 	for (size_t i = 0; i < length; ++i)
-		seq.push_back(get_distribution<20>(background_freq, random_engine));
+		seq.push_back(get_distribution<20>(score_matrix.background_freqs(), random_engine));
 	return seq;
 }
 

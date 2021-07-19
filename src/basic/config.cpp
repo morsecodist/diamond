@@ -742,7 +742,6 @@ Config::Config(int argc, const char **argv, bool check_io)
 		if (tmpdir == "")
 			tmpdir = extract_dir(output_file);
 
-		init_cbs();
 		raw_ungapped_xdrop = score_matrix.rawscore(ungapped_xdrop);
 		verbose_stream << "CPU features detected: " << SIMD::features() << endl;
 #if defined(RUNTIME_DISPATCH) && defined(__SSE__)

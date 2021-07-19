@@ -311,7 +311,6 @@ void reverse() {
 
 void show_cbs() {
 	score_matrix = Score_matrix("BLOSUM62", config.gap_open, config.gap_extend, config.frame_shift, 1);
-	init_cbs();
 	TextInputFile in(config.single_query_file());
 	string id;
 	vector<Letter> seq;

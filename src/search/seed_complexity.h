@@ -16,9 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ****/
 
-#ifndef SEED_COMPLEXITY_H_
-#define SEED_COMPLEXITY_H_
-
+#pragma once
 #include <math.h>
 #include <stddef.h>
 #include "../basic/value.h"
@@ -35,7 +33,7 @@ struct SeedComplexity
 		for (size_t i = 0; i < 20; ++i)
 			p[i] = 0;
 		for (size_t i = 0; i < 20; ++i)
-			p[r(i)] += background_freq[i];
+			p[r(i)] += score_matrix.background_freqs()[i];
 		for (size_t i = 0; i < 20; ++i)
 			prob_[i] = log(p[r(i)]);
 		for (size_t i = 20; i < AMINO_ACID_COUNT; ++i)
@@ -55,5 +53,3 @@ private:
 	static double prob_[AMINO_ACID_COUNT];
 
 };
-
-#endif
