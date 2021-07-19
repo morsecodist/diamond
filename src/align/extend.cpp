@@ -65,6 +65,8 @@ size_t chunk_size_multiplier(const FlatArray<SeedHit>& seed_hits, int query_len)
 }
 
 static size_t lazy_masking(const vector<uint32_t>& target_block_ids, Block& targets, const MaskingAlgo algo) {
+	if (algo == MaskingAlgo::NONE)
+		return 0;
 	vector<Letter> seq;
 	const Masking& masking = Masking::get();
 	size_t n = 0;
