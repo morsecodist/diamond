@@ -183,7 +183,7 @@ static list<Hsp> dispatch_swipe(const Sequence& query,
 	const int round)
 {
 	if (v == HspValues::NONE) {
-		using Cfg = SwipeConfig<false, DummyRowCounter, Sv, DummyIdMask<Sv>>;
+		using Cfg = SwipeConfig<false, DummyRowCounter<Sv>, Sv, DummyIdMask<Sv>>;
 		return dispatch_swipe<Sv, It, Cfg>(query, begin, end, next, frame, composition_bias, flags, overflow, stat);
 	}
 	const size_t s = round == 0 ? matrix_size<Sv>((int)query.length(), begin, end) : SIZE_MAX;

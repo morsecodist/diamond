@@ -290,10 +290,10 @@ void DatabaseFile::make_db(TempFile **tmp_out, list<TextInputFile> *input_file)
 				break;
 			}
 			n = block->seqs().size();
-			if (config.masking == 1) {
-				timer.go("Masking sequences");
-				mask_seqs(block->seqs(), Masking::get(), false);
-			}
+
+			timer.go("Masking sequences");
+			mask_seqs(block->seqs(), Masking::get(), false, MaskingAlgo::SEG);
+
 			timer.go("Writing sequences");
 			for (size_t i = 0; i < n; ++i) {
 				Sequence seq = block->seqs()[i];

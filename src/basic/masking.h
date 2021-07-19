@@ -24,13 +24,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../data/sequence_set.h"
 #include "../lib/blast/blast_seg.h"
 
+enum struct MaskingAlgo { NONE, TANTAN, SEG };
+
 struct Masking
 {
-	enum struct Algo { TANTAN, SEG };
-
 	Masking(const Score_matrix &score_matrix);
 	~Masking();
-	void operator()(Letter *seq, size_t len, Algo algo = Algo::TANTAN) const;
+	void operator()(Letter *seq, size_t len, const MaskingAlgo algo) const;
 	void mask_bit(Letter *seq, size_t len) const;
 	void bit_to_hard_mask(Letter *seq, size_t len, size_t &n) const;
 	void remove_bit_mask(Letter *seq, size_t len) const;
@@ -47,4 +47,17 @@ private:
 	SegParameters* blast_seg_;
 };
 
-size_t mask_seqs(SequenceSet &seqs, const Masking &masking, bool hard_mask = true, Masking::Algo algo = Masking::Algo::TANTAN);
+size_t mask_seqs(SequenceSet &seqs, const Masking &masking, bool hard_mask, const MaskingAlgo algo);
+
+template<>
+struct EnumTraits<MaskingAlgo> {
+	static const EMap<MaskingAlgo> to_string;
+	static const SEMap<MaskingAlgo> from_string;
+};
+
+enum class MaskingMode { NONE, TANTAN, BLAST_SEG };
+
+template<>
+struct EnumTraits<MaskingMode> {
+	static const SEMap<MaskingMode> from_string;
+};

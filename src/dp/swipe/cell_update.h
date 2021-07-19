@@ -21,10 +21,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "stat_cell.h"
 
+template<typename Sv>
 struct DummyRowCounter {
+	typedef typename ::DISPATCH_ARCH::ScoreTraits<Sv>::Score Score;
 	DummyRowCounter() {}
 	DummyRowCounter(int) {}
-	void store(void*) {}
+	void store(Score* ptr) {
+		std::fill(ptr, ptr + ::DISPATCH_ARCH::ScoreTraits<Sv>::CHANNELS, ::DISPATCH_ARCH::ScoreTraits<Sv>::zero_score());
+	}
 	template<typename _sv>
 	FORCE_INLINE void inc(const _sv&, const _sv&) {}
 	enum { MAX_LEN = INT_MAX };

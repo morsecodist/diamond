@@ -193,13 +193,15 @@ struct AsyncTargetBuffer
 		next(next),
 		custom_matrix_16bit(false)
 	{
-		for (size_t i = 0; i < std::min((size_t)CHANNELS, target_count); ++i) {
-			const DpTarget t = begin[(*next)++];
+		size_t n, i = 0;
+		while (i < CHANNELS && (n = (*next)++) < target_count) {
+			const DpTarget t = begin[n];
 			if (t.blank())
 				return;
 			pos[i] = 0;
 			dp_targets[i] = t;
 			active.push_back(i);
+			++i;
 		}
 	}
 
