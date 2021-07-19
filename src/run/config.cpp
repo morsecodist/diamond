@@ -73,6 +73,8 @@ Config::Config() :
 		query_masking = MaskingAlgo::TANTAN;
 		target_masking = MaskingAlgo::TANTAN;
 	}
+
+	seed_complexity_cut = config.seed_cut_;
 }
 
 Config::~Config() {

@@ -267,6 +267,7 @@ set(OBJECTS
   src/data/sequence_set.cpp
   src/align/global_ranking/table.cpp
   src/output/daa/daa_write.cpp
+  src/search/seed_complexity.cpp
 )
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")

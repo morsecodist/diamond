@@ -60,6 +60,7 @@ struct Config {
 	SeedEncoding                               seed_encoding;
 	MaskingAlgo                                query_masking;
 	MaskingAlgo                                target_masking;
+	double                                     seed_complexity_cut;
 	bool                                       lazy_masking;
 	bool                                       track_aligned_queries;
 	double                                     freq_sd;

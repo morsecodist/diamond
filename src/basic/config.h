@@ -265,6 +265,8 @@ struct Config
 	bool short_seqids;
 	bool no_reextend;
 	size_t max_traceback_matrix_size;
+	bool cmask;
+	double seed_cut_;
 
 	Sensitivity sensitivity;
 

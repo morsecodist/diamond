@@ -1,6 +1,9 @@
 /****
 DIAMOND protein aligner
-Copyright (C) 2013-2018 Benjamin Buchfink <buchfink@gmail.com>
+Copyright (C) 2016-2021 Max Planck Society for the Advancement of Science e.V.
+                        Benjamin Buchfink
+						
+Code developed by Benjamin Buchfink <benjamin.buchfink@tue.mpg.de>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -23,6 +26,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../basic/shape.h"
 #include "../basic/reduction.h"
 #include "../basic/config.h"
+#include "../data/seed_array.h"
+#include "../util/data_structures/double_array.h"
+#include "../run/config.h"
 
 struct SeedComplexity
 {
@@ -53,3 +59,10 @@ private:
 	static double prob_[AMINO_ACID_COUNT];
 
 };
+
+namespace Search {
+
+bool seed_is_complex(const Letter* seq, const Shape& shape, const double cut);
+void mask_seeds(const Shape& shape, const SeedPartitionRange& range, DoubleArray<SeedArray::Entry::Value>* query_seed_hits, DoubleArray<SeedArray::Entry::Value>* ref_seed_hits, Search::Config& cfg);
+
+}

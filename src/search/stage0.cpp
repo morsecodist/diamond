@@ -34,6 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../util/data_structures/deque.h"
 #include "../util/util.h"
 #include "../util/async_buffer.h"
+#include "seed_complexity.h"
 
 using std::vector;
 using std::atomic;
@@ -129,9 +130,14 @@ void search_shape(unsigned sid, unsigned query_block, unsigned query_iteration, 
 			threads.emplace_back(seed_join_worker, query_idx, ref_idx, &seedp, &range, query_seed_hits, ref_seed_hits);
 		for (auto &t : threads)
 			t.join();
+		timer.finish();
 
-		timer.go("Building seed filter");
-		frequent_seeds.build(sid, range, query_seed_hits, ref_seed_hits, cfg);
+		if (config.cmask)
+			Search::mask_seeds(shapes[sid], range, query_seed_hits, ref_seed_hits, cfg);
+		else {
+			timer.go("Building seed filter");
+			frequent_seeds.build(sid, range, query_seed_hits, ref_seed_hits, cfg);
+		}
 
 		Search::Context* context = nullptr;
 		const vector<uint32_t> patterns = shapes.patterns(0, sid + 1);
