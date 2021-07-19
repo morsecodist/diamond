@@ -79,6 +79,17 @@ static size_t lazy_masking(const vector<uint32_t>& target_block_ids, Block& targ
 	return n;
 }
 
+static HspValues first_round_hspv() {
+	HspValues first_round = HspValues::NONE;
+	if (config.min_id > 0)
+		first_round |= HspValues::IDENT | HspValues::LENGTH;
+	if (config.query_cover > 0)
+		first_round |= HspValues::QUERY_COORDS;
+	if (config.subject_cover > 0)
+		first_round |= HspValues::TARGET_COORDS;
+	return first_round;
+}
+
 vector<Target> extend(size_t query_id,
 	const Sequence *query_seq,
 	int source_query_len,
@@ -163,14 +174,7 @@ vector<Match> extend(
 	const size_t previous_count = config.query_memory ? memory->count(query_id) : 0;
 
 
-	HspValues first_round = HspValues::NONE;
-
-	if (config.min_id > 0)
-		first_round |= HspValues::IDENT | HspValues::LENGTH;
-	if (config.query_cover > 0)
-		first_round |= HspValues::QUERY_COORDS;
-	if (config.subject_cover > 0)
-		first_round |= HspValues::TARGET_COORDS;
+	const HspValues first_round = first_round_hspv();
 
 	//size_t multiplier = 1;
 	int tail_score = 0;

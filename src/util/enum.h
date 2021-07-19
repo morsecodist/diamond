@@ -51,7 +51,7 @@ template<typename T>
 T from_string(const std::string& s) {
 	auto it = EnumTraits<T>::from_string.find(s);
 	if (it == EnumTraits<T>::from_string.end()) {
-		string p;
+		std::string p;
 		size_t n = 0;
 		for (const auto& i : EnumTraits<T>::from_string) {
 			if (!i.second.primary)
