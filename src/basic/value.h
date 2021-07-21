@@ -134,3 +134,13 @@ extern const Letter IUPACAA_TO_STD[32];
 extern const Letter NCBI_TO_STD[28];
 
 enum class Alphabet { STD, NCBI };
+
+template<typename It>
+void alph_ncbi_to_std(const It begin, const It end) {
+	for (It i = begin; i != end; ++i) {
+		const char l = *i;
+		if (l == 0 || (size_t)l >= sizeof(NCBI_TO_STD))
+			throw std::runtime_error("Unrecognized sequence character in BLAST database");
+		*i = NCBI_TO_STD[(int)l];
+	}
+}

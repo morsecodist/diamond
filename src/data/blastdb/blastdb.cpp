@@ -411,6 +411,13 @@ void BlastDB::end_random_access(bool dictionary)
 		free_dictionary();
 }
 
+std::vector<int> BlastDB::accession_to_oid(const std::string& acc) const
+{
+	vector<int> out;
+	db_->AccessionToOids(acc, out);
+	return out;
+}
+
 SequenceFile::LoadTitles BlastDB::load_titles()
 {
 	return LoadTitles::LAZY;

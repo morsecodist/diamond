@@ -45,7 +45,7 @@ using std::chrono::duration_cast;
 
 void get_seq()
 {
-	SequenceFile* db_file = SequenceFile::auto_create();
+	SequenceFile* db_file = SequenceFile::auto_create(config.database);
 	db_file->get_seq();
 	delete db_file;
 }

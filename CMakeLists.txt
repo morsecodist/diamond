@@ -167,7 +167,7 @@ set(OBJECTS
   src/data/seed_set.cpp
   src/util/simd.cpp
   src/output/taxon_format.cpp
-  src/output/view.cpp
+  src/output/daa/view.cpp
   src/output/output_sink.cpp
   src/output/target_culling.cpp
   src/align/legacy/banded_swipe_pipeline.cpp
@@ -268,6 +268,8 @@ set(OBJECTS
   src/align/global_ranking/table.cpp
   src/output/daa/daa_write.cpp
   src/search/seed_complexity.cpp
+  src/tools/view.cpp
+  src/util/string/tsv.cpp
 )
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")

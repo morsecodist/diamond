@@ -692,7 +692,7 @@ void run(const shared_ptr<SequenceFile>& db, const shared_ptr<std::list<TextInpu
 			cfg.self = true;
 	}
 	else
-		cfg.db.reset(SequenceFile::auto_create(flags, metadata_flags));
+		cfg.db.reset(SequenceFile::auto_create(config.database, flags, metadata_flags));
 	cfg.query_file = query;
 	cfg.db_filter = db_filter;
 	cfg.out = out;

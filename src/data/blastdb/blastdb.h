@@ -49,6 +49,7 @@ struct BlastDB : public SequenceFile {
 	virtual size_t seq_length(size_t oid) const override;
 	virtual void init_random_access(const size_t query_block, const size_t ref_blocks, bool dictionary = true) override;
 	virtual void end_random_access(bool dictionary = true) override;
+	virtual std::vector<int> accession_to_oid(const std::string& acc) const override;
 	virtual LoadTitles load_titles() override;
 	virtual ~BlastDB();
 

@@ -545,7 +545,7 @@ void MCL::run(){
 	// return;
 
 	if (config.database == "") throw runtime_error("Missing parameter: database file (--db/-d)");
-	shared_ptr<SequenceFile> db(SequenceFile::auto_create());
+	shared_ptr<SequenceFile> db(SequenceFile::auto_create(config.database));
 	statistics.reset();
 	shared_ptr<SparseMatrixStream<float>> ms(get_graph_handle(db));
 	task_timer timer;

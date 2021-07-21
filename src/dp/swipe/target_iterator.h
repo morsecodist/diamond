@@ -195,9 +195,9 @@ struct AsyncTargetBuffer
 	{
 		size_t n, i = 0;
 		while (i < CHANNELS && (n = (*next)++) < target_count) {
-			const DpTarget t = begin[n];
+			DpTarget t = begin[n];
 			if (t.blank())
-				return;
+				t.target_idx = n;
 			pos[i] = 0;
 			dp_targets[i] = t;
 			active.push_back(i);

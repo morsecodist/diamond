@@ -600,9 +600,6 @@ Config::Config(int argc, const char **argv, bool check_io)
 					auto_append_extension(output_file, ".daa");
 			}
 			break;
-		case Config::view:
-			if (daa_file == "")
-				throw std::runtime_error("Missing parameter: DAA file (--daa/-a)");
 		default:
 			;
 		}

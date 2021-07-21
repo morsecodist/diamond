@@ -120,6 +120,7 @@ struct SequenceFile {
 	virtual size_t seq_length(size_t oid) const = 0;
 	virtual void init_random_access(const size_t query_block, const size_t ref_blocks, bool dictionary = true) = 0;
 	virtual void end_random_access(bool dictionary = true) = 0;
+	virtual std::vector<int> accession_to_oid(const std::string& acc) const = 0;
 	virtual LoadTitles load_titles() = 0;
 	virtual ~SequenceFile();
 
@@ -133,6 +134,9 @@ struct SequenceFile {
 		const Chunk& chunk = Chunk());
 	void get_seq();
 	size_t total_blocks() const;
+	SequenceSet seqs_by_accession(const std::vector<std::string>::const_iterator begin, const std::vector<std::string>::const_iterator end) const;
+	std::vector<Letter> seq_by_accession(const std::string& acc) const;
+
 	void init_dict(const size_t query_block, const size_t target_block);
 	void init_dict_block(size_t block, size_t seq_count, bool persist);
 	void close_dict_block(bool persist);
@@ -142,7 +146,7 @@ struct SequenceFile {
 		return next_dict_id_;
 	}
 
-	static SequenceFile* auto_create(Flags flags = Flags::NONE, Metadata metadata = Metadata());
+	static SequenceFile* auto_create(string& path, Flags flags = Flags::NONE, Metadata metadata = Metadata());
 
 protected:
 

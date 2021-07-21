@@ -45,6 +45,15 @@ static string dict_file_name(const size_t query_block, const size_t target_block
 	return join_path(config.parallel_tmpdir, file_name);
 }
 
+static size_t single_oid(const SequenceFile* f, const string& acc) {
+	const vector<int> oid = f->accession_to_oid(acc);
+	if (oid.empty())
+		throw std::runtime_error("No oid for target accession: " + acc);
+	if (oid.size() > 1)
+		throw std::runtime_error("Multiple oids for target accession: " + acc);
+	return oid.front();
+}
+
 void SequenceFile::load_block(size_t block_id_begin, size_t block_id_end, size_t pos, bool use_filter, const vector<uint64_t>* filtered_pos, bool load_ids, Block* block) {
 	static const size_t MAX_LOAD_SIZE = 2 * GIGABYTES;
 	seek_offset(pos);
@@ -233,19 +242,19 @@ SequenceFile::~SequenceFile()
 	}
 }
 
-SequenceFile* SequenceFile::auto_create(Flags flags, Metadata metadata) {
-	if (exists(config.database + ".pin") || exists(config.database + ".pal")) {
+SequenceFile* SequenceFile::auto_create(string& path, Flags flags, Metadata metadata) {
+	if (exists(path + ".pin") || exists(path + ".pal")) {
 #ifdef WITH_BLASTDB
 		if (config.multiprocessing)
 			throw std::runtime_error("--multiprocessing is not compatible with BLAST databases.");
 		if (config.target_indexed)
 			throw std::runtime_error("--target-indexed is not compatible with BLAST databases.");
-		return new BlastDB(config.database, metadata, flags);
+		return new BlastDB(path, metadata, flags);
 #else
 		throw std::runtime_error("This executable was not compiled with support for BLAST databases.");
 #endif
 	}
-	config.database = auto_append_extension_if_exists(config.database, DatabaseFile::FILE_EXTENSION);
+	path = auto_append_extension_if_exists(path, DatabaseFile::FILE_EXTENSION);
 	if (DatabaseFile::is_diamond_db(config.database)) {
 		return new DatabaseFile(config.database, metadata, flags);
 	}
@@ -305,6 +314,35 @@ void SequenceFile::free_dictionary()
 size_t SequenceFile::total_blocks() const {
 	const size_t c = config.chunk_size * 1e9;
 	return (this->letters() + c - 1) / c;
+}
+
+SequenceSet SequenceFile::seqs_by_accession(const std::vector<std::string>::const_iterator begin, const std::vector<std::string>::const_iterator end) const
+{
+	SequenceSet out(Alphabet::NCBI);
+	vector<size_t> oids;
+	oids.reserve(end - begin);
+	for (auto it = begin; it != end; ++it) {
+		const size_t oid = single_oid(this, *it);
+		oids.push_back(oid);
+		out.reserve(seq_length(oid));
+	}
+	out.finish_reserve();
+	vector<Letter> seq;
+	for (size_t i = 0; i < oids.size(); ++i) {
+		seq_data(oids[i], seq);
+		out.assign(i, seq.begin(), seq.end());
+		out.convert_to_std_alph(i);
+	}
+	return out;
+}
+
+std::vector<Letter> SequenceFile::seq_by_accession(const std::string& acc) const
+{
+	const size_t oid = single_oid(this, acc);
+	vector<Letter> seq;
+	seq_data(oid, seq);
+	alph_ncbi_to_std(seq.begin(), seq.end());
+	return seq;
 }
 
 void SequenceFile::init_dict(const size_t query_block, const size_t target_block)
@@ -373,7 +411,7 @@ SequenceFile::SequenceFile(Type type, Alphabet alphabet, Flags flags):
 void db_info() {
 	if (config.database.empty())
 		throw std::runtime_error("Missing option for database file: --db/-d.");
-	SequenceFile* db = SequenceFile::auto_create(SequenceFile::Flags::NO_FASTA | SequenceFile::Flags::NO_COMPATIBILITY_CHECK);
+	SequenceFile* db = SequenceFile::auto_create(config.database, SequenceFile::Flags::NO_FASTA | SequenceFile::Flags::NO_COMPATIBILITY_CHECK);
 	const std::streamsize w = 25;
 	cout << setw(w) << "Database type  " << to_string(db->type()) << endl;
 	cout << setw(w) << "Database format version  " << db->db_version() << endl;

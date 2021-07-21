@@ -702,6 +702,11 @@ void DatabaseFile::end_random_access(bool dictionary)
 	dict_seq_.shrink_to_fit();
 }
 
+std::vector<int> DatabaseFile::accession_to_oid(const std::string& acc) const
+{
+	throw std::runtime_error("Operation not supported.");
+}
+
 SequenceFile::LoadTitles DatabaseFile::load_titles()
 {
 	return LoadTitles::SINGLE_PASS;

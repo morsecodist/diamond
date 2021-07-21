@@ -34,7 +34,8 @@ void model_seqs();
 void opt();
 void run_masker();
 void fastq2fasta();
-void view();
+void view_daa();
+void view_tsv();
 void db_info();
 void test_main();
 void benchmark_sw();
@@ -86,7 +87,12 @@ int main(int ac, const char* av[])
 			Search::run();
 			break;
 		case Config::view:
-			view();
+			if (!config.daa_file.empty())
+				view_daa();
+			else if (!config.input_ref_file.empty())
+				view_tsv();
+			else
+				throw std::runtime_error("The view command requires either a text (option --in) or DAA (option -a) input file.");
 			break;
 		case Config::getseq:
 			get_seq();

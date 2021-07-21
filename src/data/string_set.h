@@ -75,6 +75,11 @@ struct StringSetBase
 		data_.insert(data_.end(), _padding, _pchar);
 	}
 
+	template<typename It>
+	void assign(const size_t i, const It begin, const It end) {
+		std::copy(begin, end, ptr(i));
+	}
+
 	void fill(size_t n, T v)
 	{
 		limits_.push_back(raw_len() + n + _padding);
@@ -183,7 +188,7 @@ struct StringSetBase
 		}
 
 		std::pair<const T*, size_t> operator[](const ptrdiff_t i) const {
-			return { data_ + limits_[i] - limits_[0], limits_[i + 1] - limits_[i] };
+			return { data_ + limits_[i] - limits_[0], limits_[i + 1] - limits_[i] - _padding };
 		}
 
 	private:
