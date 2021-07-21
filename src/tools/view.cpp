@@ -6,6 +6,7 @@
 #include "../dp/dp.h"
 #include "../output/output_format.h"
 #include "../output/output.h"
+#include "../basic/masking.h"
 
 using std::unique_ptr;
 using std::endl;
@@ -16,8 +17,14 @@ using std::list;
 
 static TextBuffer* view_query(const string& query_acc, const string& buf, SequenceFile& query_file, SequenceFile& target_file, Search::Config& cfg, Statistics& stats) {
 	const vector<string> target_acc = Util::Tsv::extract_column(buf, 1);
-	const SequenceSet targets = target_file.seqs_by_accession(target_acc.begin(), target_acc.end());
-	const vector<Letter> query = query_file.seq_by_accession(query_acc);
+	SequenceSet targets = target_file.seqs_by_accession(target_acc.begin(), target_acc.end());
+	vector<Letter> query = query_file.seq_by_accession(query_acc);
+	if (cfg.query_masking != MaskingAlgo::NONE)
+		Masking::get()(query.data(), query.size(), cfg.query_masking);
+	if (cfg.target_masking != MaskingAlgo::NONE)
+		for (size_t i = 0; i < targets.size(); ++i)
+			Masking::get()(targets.ptr(i), targets.length(i), cfg.target_masking);
+
 	const HspValues v = HspValues::COORDS | HspValues::IDENT | HspValues::LENGTH;
 	DP::Targets dp_targets;
 	for (size_t i = 0; i < target_acc.size(); ++i)
@@ -59,6 +66,7 @@ void view_tsv() {
 	unique_ptr<SequenceFile> db(SequenceFile::auto_create(config.database, SequenceFile::Flags::NO_FASTA));
 	score_matrix = Score_matrix("blosum62", -1, -1, 1, 0);
 	score_matrix.set_db_letters(config.db_size ? config.db_size : db->letters());
+	Masking::instance = unique_ptr<Masking>(new Masking(score_matrix));
 
 	timer.go("Opening the query file");
 	unique_ptr<SequenceFile> query_file(SequenceFile::auto_create(config.query_file.front(), SequenceFile::Flags::NO_FASTA));

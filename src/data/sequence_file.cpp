@@ -333,6 +333,7 @@ SequenceSet SequenceFile::seqs_by_accession(const std::vector<std::string>::cons
 		out.assign(i, seq.begin(), seq.end());
 		out.convert_to_std_alph(i);
 	}
+	out.alphabet() = Alphabet::STD;
 	return out;
 }
 

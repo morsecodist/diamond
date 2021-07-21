@@ -133,6 +133,8 @@ void mask_worker(atomic<size_t> *next, SequenceSet *seqs, const Masking *masking
 
 size_t mask_seqs(SequenceSet &seqs, const Masking &masking, bool hard_mask, const MaskingAlgo algo)
 {
+	if (algo == MaskingAlgo::NONE)
+		return 0;
 	vector<thread> threads;
 	atomic<size_t> next(0);
 	for (size_t i = 0; i < config.threads_; ++i)
