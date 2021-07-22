@@ -96,6 +96,14 @@ struct ForwardCell<int32_t> {
 };
 
 template<typename Sv>
+static inline ForwardCell<Sv> set_channel(const ForwardCell<Sv>& v, const int i, const typename ::DISPATCH_ARCH::ScoreTraits<Sv>::Score x) {
+	ForwardCell<Sv> c = set_channel(static_cast<Sv>(v), i, x);
+	c.ident = set_channel(v.ident, i, x);
+	c.len = set_channel(v.len, i, x);
+	return c;
+}
+
+template<typename Sv>
 struct BackwardCell : public Sv {
 	BackwardCell() :
 		Sv(),
@@ -145,6 +153,14 @@ struct BackwardCell<int32_t> {
 		}
 	};
 };
+
+template<typename Sv>
+static inline BackwardCell<Sv> set_channel(const BackwardCell<Sv>& v, const int i, const typename ::DISPATCH_ARCH::ScoreTraits<Sv>::Score x) {
+	BackwardCell<Sv> c = set_channel(static_cast<Sv>(v), i, x);
+	c.mismatch = set_channel(v.mismatch, i, x);
+	c.gapopen = set_channel(v.gapopen, i, x);
+	return c;
+}
 
 struct Void {
 	friend std::ostream& operator<<(std::ostream& s, const Void&) {
