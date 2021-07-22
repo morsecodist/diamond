@@ -174,6 +174,10 @@ struct Hsp
 		return score > rhs.score || (score == rhs.score && query_source_range.begin_ < rhs.query_source_range.begin_);
 	}
 
+	static bool cmp_evalue(const Hsp& a, const Hsp& b) {
+		return a.evalue < b.evalue;
+	}
+
 	double id_percent() const
 	{
 		return (double)identities * 100.0 / (double)length;

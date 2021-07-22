@@ -31,7 +31,7 @@ static TextBuffer* view_query(const string& query_acc, const string& buf, Sequen
 		dp_targets[DP::BandedSwipe::bin(v, query.size(), 0, 0, 0, 0)].emplace_back(targets[i], i);
 
 	list<Hsp> hsp = DP::BandedSwipe::swipe(Sequence(query), dp_targets, Frame(0), nullptr, DP::Flags::FULL_MATRIX, v, stats);
-	hsp.sort();
+	hsp.sort(Hsp::cmp_evalue);
 
 	Blast_tab_format fmt;
 	TranslatedSequence query_seq;
