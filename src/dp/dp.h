@@ -193,7 +193,7 @@ struct DpTarget
 		target_idx(target_idx),
 		cols(),
 		carry_over(carry_over),
-		matrix()
+		matrix(matrix)
 	{}
 	DpTarget(const std::pair<const Letter*, size_t> seq) :
 		seq(seq.first, seq.second),

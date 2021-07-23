@@ -25,10 +25,16 @@ static TextBuffer* view_query(const string& query_acc, const string& buf, Sequen
 		for (size_t i = 0; i < targets.size(); ++i)
 			Masking::get()(targets.ptr(i), targets.length(i), cfg.target_masking);
 
+	const auto query_comp = Stats::composition(Sequence(query));
+	const int query_len = (int)query.size();
+	vector<Stats::TargetMatrix> matrices;
+	for (size_t i = 0; i < target_acc.size(); ++i)
+		matrices.emplace_back(query_comp, query_len, targets[i]);
+
 	const HspValues v = HspValues::COORDS | HspValues::IDENT | HspValues::LENGTH;
 	DP::Targets dp_targets;
 	for (size_t i = 0; i < target_acc.size(); ++i)
-		dp_targets[DP::BandedSwipe::bin(v, query.size(), 0, 0, 0, 0)].emplace_back(targets[i], i);
+		dp_targets[DP::BandedSwipe::bin(v, query.size(), 0, 0, 0, 0)].emplace_back(targets[i], i, &matrices[i]);
 
 	list<Hsp> hsp = DP::BandedSwipe::swipe(Sequence(query), dp_targets, Frame(0), nullptr, DP::Flags::FULL_MATRIX, v, stats);
 	hsp.sort(Hsp::cmp_evalue);

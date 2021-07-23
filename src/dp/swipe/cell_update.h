@@ -117,8 +117,8 @@ FORCE_INLINE static Cell swipe_cell_update(const Cell& diagonal_cell,
 	Cell current_cell = diagonal_cell;
 	current_cell += add_cbs(scores, query_bias);
 	update_stats(current_cell, horizontal_gap, vertical_gap, id_mask);
-	set_max(current_cell, vertical_gap);
 	set_max(current_cell, horizontal_gap);
+	set_max(current_cell, vertical_gap);
 	::DISPATCH_ARCH::ScoreTraits<Sv>::saturate(current_cell);
 
 	make_gap_mask(trace_mask, current_cell, vertical_gap, horizontal_gap);
@@ -132,8 +132,8 @@ FORCE_INLINE static Cell swipe_cell_update(const Cell& diagonal_cell,
 	Cell open = current_cell;
 	open -= gap_open;
 	update_open(open, current_cell);
-	set_max(vertical_gap, open);
 	set_max(horizontal_gap, open);
+	set_max(vertical_gap, open);
 
 	make_open_mask(trace_mask, open, vertical_gap, horizontal_gap);
 

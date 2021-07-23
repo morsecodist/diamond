@@ -40,6 +40,10 @@ inline interval normalized_range(unsigned pos, int len, Strand strand)
 
 struct IntermediateRecord;
 
+namespace Stats {
+struct TargetMatrix;
+}
+
 struct Hsp
 {
 
@@ -55,7 +59,8 @@ struct Hsp
 		gaps(0),
 		swipe_target(0),
 		d_begin(0),
-		d_end(0)
+		d_end(0),
+		matrix(nullptr)
 	{}
 
 	Hsp(const bool backtraced, int score, int swipe_target = 0) :
@@ -70,7 +75,8 @@ struct Hsp
 		gaps(0),
 		swipe_target(swipe_target),
 		d_begin(0),
-		d_end(0)
+		d_end(0),
+		matrix(nullptr)
 	{}
 
 	Hsp(const IntermediateRecord &r, unsigned query_source_len);
@@ -229,6 +235,7 @@ struct Hsp
 	interval query_source_range, query_range, subject_range;
 	double evalue, bit_score;
 	Sequence target_seq;
+	const Stats::TargetMatrix* matrix;
 	Packed_transcript transcript;
 };
 

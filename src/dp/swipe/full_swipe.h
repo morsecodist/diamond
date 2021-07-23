@@ -55,6 +55,7 @@ Hsp traceback(const Sequence& query, Frame frame, _cbs bias_correction, const Ma
 		out.subject_range.begin_ = (int)target.seq.length() - 1 - max_j;
 	}
 	out.target_seq = target.seq;
+	out.matrix = target.matrix;
 	assign_stats(out, stats);
 	return out;
 }
@@ -150,7 +151,8 @@ list<Hsp> swipe(const Sequence& query, const Frame frame, const It target_begin,
 		_sv col_best;
 		vgap = hgap = last = col_best = _sv();
 
-		_sv target_seq;
+		const auto target_seq_vector = targets.seq_vector();
+		const _sv target_seq(target_seq_vector);
 		if (targets.cbs_mask() != 0) {
 			if (targets.custom_matrix_16bit)
 				profile.set(targets.get32().data());
@@ -158,9 +160,7 @@ list<Hsp> swipe(const Sequence& query, const Frame frame, const It target_begin,
 				profile.set(targets.get(target_scores.data()));
 		}
 		else {
-			const auto t = targets.seq_vector();
-			target_seq = _sv(t);
-			profile.set(t);
+			profile.set(target_seq_vector);
 		}
 
 #ifdef DP_STAT

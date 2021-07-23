@@ -349,7 +349,7 @@ static list<Hsp> recompute_reversed(const Sequence& query, Frame frame, const Bi
 			tlen = (int)i->target_seq.length(),
 			b = bin(v, band, i->score, 0, 0, 0);
 		const DpTarget::CarryOver carry_over{ i->query_range.end_, i->subject_range.end_, i->identities, i->length };
-		dp_targets[b].emplace_back(reversed_targets[j], -i->d_end + qlen - tlen + 1, -i->d_begin + qlen - tlen + 1, i->swipe_target, qlen, nullptr, carry_over);
+		dp_targets[b].emplace_back(reversed_targets[j], -i->d_end + qlen - tlen + 1, -i->d_begin + qlen - tlen + 1, i->swipe_target, qlen, i->matrix, carry_over);
 		++i;
 		++j;
 	}
