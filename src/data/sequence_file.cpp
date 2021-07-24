@@ -255,12 +255,12 @@ SequenceFile* SequenceFile::auto_create(string& path, Flags flags, Metadata meta
 #endif
 	}
 	path = auto_append_extension_if_exists(path, DatabaseFile::FILE_EXTENSION);
-	if (DatabaseFile::is_diamond_db(config.database)) {
-		return new DatabaseFile(config.database, metadata, flags);
+	if (DatabaseFile::is_diamond_db(path)) {
+		return new DatabaseFile(path, metadata, flags);
 	}
 	else if (!flag_any(flags, Flags::NO_FASTA)) {
 		message_stream << "Database file is not a DIAMOND or BLAST database, treating as FASTA." << std::endl;
-		config.input_ref_file = { config.database };
+		config.input_ref_file = { path };
 		TempFile* db;
 		DatabaseFile::make_db(&db);
 		DatabaseFile* r(new DatabaseFile(*db));
