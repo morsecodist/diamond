@@ -47,6 +47,7 @@ static SequenceSet get_seqs(const vector<string>& accs) {
 }
 
 static TextBuffer* view_query(const string& query_acc, const string& buf, SequenceFile& query_file, SequenceFile& target_file, Search::Config& cfg, Statistics& stats) {
+	static const size_t BATCH_SIZE = 1024;
 	const vector<string> target_acc = Util::Tsv::extract_column(buf, 1);
 	//SequenceSet targets = target_file.seqs_by_accession(target_acc.begin(), target_acc.end());
 	//vector<Letter> query = query_file.seq_by_accession(query_acc);
@@ -66,19 +67,25 @@ static TextBuffer* view_query(const string& query_acc, const string& buf, Sequen
 
 	const auto query_comp = Stats::composition(Sequence(query));
 	const int query_len = Stats::count_true_aa(Sequence(query));
-	vector<Stats::TargetMatrix> matrices;
-	for (size_t i = 0; i < target_acc.size(); ++i)
-		matrices.emplace_back(query_comp, query_len, targets[i]);
+	list<Hsp> hsp;
 
-	const HspValues v = HspValues::COORDS | HspValues::IDENT | HspValues::LENGTH;
-	DP::Targets dp_targets;
-	for (size_t i = 0; i < target_acc.size(); ++i)
-		if (targets.length(i) > 0)
-			dp_targets[DP::BandedSwipe::bin(v, query.size(), 0, 0, 0, 0)].emplace_back(targets[i], i, &matrices[i]);
+	for (size_t t = 0; t < target_acc.size(); t += BATCH_SIZE) {
+		const size_t t1 = std::min(t + BATCH_SIZE, target_acc.size());
 
-	list<Hsp> hsp = DP::BandedSwipe::swipe(Sequence(query), dp_targets, Frame(0), nullptr, DP::Flags::FULL_MATRIX, v, stats);
+		vector<Stats::TargetMatrix> matrices;
+		for (size_t i = t; i < t1; ++i)
+			matrices.emplace_back(query_comp, query_len, targets[i]);
+
+		const HspValues v = HspValues::COORDS | HspValues::IDENT | HspValues::LENGTH;
+		DP::Targets dp_targets;
+		for (size_t i = t; i < t1; ++i)
+			if (targets.length(i) > 0)
+				dp_targets[DP::BandedSwipe::bin(v, query.size(), 0, 0, 0, 0)].emplace_back(targets[i], i, &matrices[i - t]);
+
+		hsp.splice(hsp.end(), DP::BandedSwipe::swipe(Sequence(query), dp_targets, Frame(0), nullptr, DP::Flags::FULL_MATRIX, v, stats));
+	}
+
 	hsp.sort(Hsp::cmp_evalue);
-
 	Blast_tab_format fmt;
 	TranslatedSequence query_seq;
 	TextBuffer* out = new TextBuffer();
@@ -95,6 +102,7 @@ static TextBuffer* view_query(const string& query_acc, const string& buf, Sequen
 			0,
 			Sequence()), cfg, *out);
 	}
+
 	return out;
 }
 
@@ -150,10 +158,11 @@ void view_tsv() {
 
 	auto worker = [&] {
 		try {
-			string query, buf;
+			string query;
 			size_t q;
 			Statistics stats;
 			for (;;) {
+				string buf;
 				{
 					lock_guard<mutex> lock(mtx);
 					query = Util::Tsv::fetch_block(in, buf);
@@ -165,8 +174,10 @@ void view_tsv() {
 					return;
 				TextBuffer* out = view_query(query, buf, *db, *db, cfg, stats);
 				if (config.no_reorder) {
-					lock_guard<mutex> lock(mtx_out);
-					output_file.write(out->data(), out->size());
+					{
+						lock_guard<mutex> lock(mtx_out);
+						output_file.write(out->data(), out->size());
+					}
 					delete out;
 				}
 				else
