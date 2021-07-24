@@ -1,4 +1,5 @@
 #include <mutex>
+#include <unordered_map>
 #include "../basic/config.h"
 #include "../data/sequence_file.h"
 #include "../util/string/tokenizer.h"
@@ -7,6 +8,7 @@
 #include "../output/output_format.h"
 #include "../output/output.h"
 #include "../basic/masking.h"
+#include "../util/sequence/sequence.h"
 
 using std::unique_ptr;
 using std::endl;
@@ -15,10 +17,31 @@ using std::lock_guard;
 using std::thread;
 using std::list;
 
+static Block* block;
+static std::unordered_map<string, unsigned> acc2oid;
+
+static Sequence get_seq(const string& acc) {
+	return block->seqs()[acc2oid.at(acc)];
+}
+
+static SequenceSet get_seqs(const vector<string>& accs) {
+	SequenceSet out;
+	for (const string& s : accs)
+		out.reserve(get_seq(s).length());
+	out.finish_reserve();
+	for (size_t i = 0; i < accs.size(); ++i) {
+		Sequence s = get_seq(accs[i]);
+		out.assign(i, s.data(), s.end());
+	}
+	return out;
+}
+
 static TextBuffer* view_query(const string& query_acc, const string& buf, SequenceFile& query_file, SequenceFile& target_file, Search::Config& cfg, Statistics& stats) {
 	const vector<string> target_acc = Util::Tsv::extract_column(buf, 1);
-	SequenceSet targets = target_file.seqs_by_accession(target_acc.begin(), target_acc.end());
-	vector<Letter> query = query_file.seq_by_accession(query_acc);
+	//SequenceSet targets = target_file.seqs_by_accession(target_acc.begin(), target_acc.end());
+	//vector<Letter> query = query_file.seq_by_accession(query_acc);
+	SequenceSet targets = get_seqs(target_acc);
+	vector<Letter> query = get_seq(query_acc).copy();
 	if (cfg.query_masking != MaskingAlgo::NONE)
 		Masking::get()(query.data(), query.size(), cfg.query_masking);
 	if (cfg.target_masking != MaskingAlgo::NONE)
@@ -78,8 +101,8 @@ void view_tsv() {
 	/*timer.go("Opening the query file");
 	unique_ptr<SequenceFile> query_file(SequenceFile::auto_create(config.query_file.front(), SequenceFile::Flags::NO_FASTA));*/
 
-	if (db->type() != SequenceFile::Type::BLAST) // || query_file->type() != SequenceFile::Type::BLAST)
-		throw std::runtime_error("BLAST database required.");
+	/*if (db->type() != SequenceFile::Type::BLAST) // || query_file->type() != SequenceFile::Type::BLAST)
+		throw std::runtime_error("BLAST database required.");*/
 
 	timer.go("Opening the input file");
 	TextInputFile in(config.input_ref_file.front());
@@ -87,6 +110,15 @@ void view_tsv() {
 	timer.go("Opening the output file");
 	OutputFile output_file(config.output_file);
 	OutputSink::instance = unique_ptr<OutputSink>(new OutputSink(0, &output_file));
+
+	timer.go("Loading database");
+	block = db->load_seqs(SIZE_MAX, true, nullptr, true, false);
+
+	timer.go("Building accession mapping");
+	const unsigned n = block->ids().size();
+	acc2oid.reserve(n);
+	for (unsigned i = 0; i < n; ++i)
+		acc2oid[Util::Seq::seqid(block->ids()[i], false)] = i;
 
 	timer.go("Computing alignments");
 	size_t query_idx = 0;
@@ -120,4 +152,5 @@ void view_tsv() {
 
 	timer.go("Closing the output file");
 	output_file.close();
+	delete block;
 }
