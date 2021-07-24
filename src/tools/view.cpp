@@ -26,8 +26,14 @@ static Sequence get_seq(const string& acc) {
 
 static SequenceSet get_seqs(const vector<string>& accs) {
 	SequenceSet out;
-	for (const string& s : accs)
-		out.reserve(get_seq(s).length());
+	for (const string& s : accs) {
+		try {
+			out.reserve(get_seq(s).length());
+		}
+		catch (std::out_of_range&) {
+			throw std::runtime_error("Target accession not found: " + s);
+		}
+	}
 	out.finish_reserve();
 	for (size_t i = 0; i < accs.size(); ++i) {
 		Sequence s = get_seq(accs[i]);
@@ -41,7 +47,13 @@ static TextBuffer* view_query(const string& query_acc, const string& buf, Sequen
 	//SequenceSet targets = target_file.seqs_by_accession(target_acc.begin(), target_acc.end());
 	//vector<Letter> query = query_file.seq_by_accession(query_acc);
 	SequenceSet targets = get_seqs(target_acc);
-	vector<Letter> query = get_seq(query_acc).copy();
+	vector<Letter> query;
+	try {
+		query = get_seq(query_acc).copy();
+	}
+	catch (std::out_of_range&) {
+		throw std::runtime_error("Query accession not found: " + query_acc);
+	}
 	if (cfg.query_masking != MaskingAlgo::NONE)
 		Masking::get()(query.data(), query.size(), cfg.query_masking);
 	if (cfg.target_masking != MaskingAlgo::NONE)
@@ -126,21 +138,26 @@ void view_tsv() {
 	Search::Config cfg;
 
 	auto worker = [&] {
-		string query, buf;
-		size_t q;
-		Statistics stats;
-		for (;;) {
-			{
-				lock_guard<mutex> lock(mtx);
-				query = Util::Tsv::fetch_block(in, buf);
-				q = query_idx++;
+		try {
+			string query, buf;
+			size_t q;
+			Statistics stats;
+			for (;;) {
+				{
+					lock_guard<mutex> lock(mtx);
+					query = Util::Tsv::fetch_block(in, buf);
+					q = query_idx++;
+				}
+				if (q % 1000 == 0)
+					std::cout << "#Query = " << q << endl;
+				if (query.empty())
+					return;
+				TextBuffer* out = view_query(query, buf, *db, *db, cfg, stats);
+				OutputSink::instance->push(q, out);
 			}
-			if (q % 1000 == 0)
-				std::cout << "#Query = " << q << endl;
-			if (query.empty())
-				return;
-			TextBuffer* out = view_query(query, buf, *db, *db, cfg, stats);
-			OutputSink::instance->push(q, out);
+		}
+		catch (std::exception& e) {
+			exit_with_error(e);
 		}
 	};
 
