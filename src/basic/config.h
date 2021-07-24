@@ -267,6 +267,7 @@ struct Config
 	size_t max_traceback_matrix_size;
 	bool cmask;
 	double seed_cut_;
+	bool no_reorder;
 
 	Sensitivity sensitivity;
 

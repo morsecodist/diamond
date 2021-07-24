@@ -145,7 +145,7 @@ void view_tsv() {
 
 	timer.go("Computing alignments");
 	size_t query_idx = 0;
-	mutex mtx;
+	mutex mtx, mtx_out;
 	Search::Config cfg;
 
 	auto worker = [&] {
@@ -160,11 +160,17 @@ void view_tsv() {
 					q = query_idx++;
 				}
 				if (q % 1000 == 0)
-					std::cout << "#Query = " << q << endl;
+					std::cout << "#Query = " << q << " time = " << timer.seconds() << endl;
 				if (query.empty())
 					return;
 				TextBuffer* out = view_query(query, buf, *db, *db, cfg, stats);
-				OutputSink::instance->push(q, out);
+				if (config.no_reorder) {
+					lock_guard<mutex> lock(mtx_out);
+					output_file.write(out->data(), out->size());
+					delete out;
+				}
+				else
+					OutputSink::instance->push(q, out);
 			}
 		}
 		catch (std::exception& e) {

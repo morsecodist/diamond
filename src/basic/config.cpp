@@ -525,7 +525,8 @@ Config::Config(int argc, const char **argv, bool check_io)
 		("no-reextend", 0, "", no_reextend)
 		("max-traceback-matrix-size", 0, "", max_traceback_matrix_size, 512 * KILOBYTES)
 		("cmask", 0, "", cmask)
-		("seed-cut", 0, "", seed_cut_);
+		("seed-cut", 0, "", seed_cut_)
+		("no-reorder", 0, "", no_reorder);
 
 	parser.add(general).add(makedb).add(cluster).add(aligner).add(advanced).add(view_options).add(getseq_options).add(hidden_options).add(deprecated_options);
 	parser.store(argc, argv, command);
