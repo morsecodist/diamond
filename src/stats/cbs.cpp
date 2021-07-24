@@ -90,7 +90,7 @@ int TargetMatrix::score_width() const {
 
 TargetMatrix::TargetMatrix(const Composition& query_comp, int query_len, const Sequence& target)
 {
-    if (!CBS::matrix_adjust(config.comp_based_stats))
+    if (!CBS::matrix_adjust(config.comp_based_stats) || target.length() == 0 || query_len == 0)
         return;
     
     vector<Letter> target_seq = target.copy();

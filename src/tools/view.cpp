@@ -34,7 +34,8 @@ static TextBuffer* view_query(const string& query_acc, const string& buf, Sequen
 	const HspValues v = HspValues::COORDS | HspValues::IDENT | HspValues::LENGTH;
 	DP::Targets dp_targets;
 	for (size_t i = 0; i < target_acc.size(); ++i)
-		dp_targets[DP::BandedSwipe::bin(v, query.size(), 0, 0, 0, 0)].emplace_back(targets[i], i, &matrices[i]);
+		if (targets.length(i) > 0)
+			dp_targets[DP::BandedSwipe::bin(v, query.size(), 0, 0, 0, 0)].emplace_back(targets[i], i, &matrices[i]);
 
 	list<Hsp> hsp = DP::BandedSwipe::swipe(Sequence(query), dp_targets, Frame(0), nullptr, DP::Flags::FULL_MATRIX, v, stats);
 	hsp.sort(Hsp::cmp_evalue);
@@ -63,8 +64,8 @@ void view_tsv() {
 		throw std::runtime_error("Too many arguments for --in.");
 	if (config.database.empty())
 		throw std::runtime_error("Missing argument: database file (-d)");
-	if (config.query_file.empty())
-		throw std::runtime_error("Missing argument: query file (-q)");
+	/*if (config.query_file.empty())
+		throw std::runtime_error("Missing argument: query file (-q)");*/
 	if (config.query_file.size() > 1)
 		throw std::runtime_error("Too many arguments for query file (--query/-q)");
 
@@ -74,10 +75,10 @@ void view_tsv() {
 	score_matrix.set_db_letters(config.db_size ? config.db_size : db->letters());
 	Masking::instance = unique_ptr<Masking>(new Masking(score_matrix));
 
-	timer.go("Opening the query file");
-	unique_ptr<SequenceFile> query_file(SequenceFile::auto_create(config.query_file.front(), SequenceFile::Flags::NO_FASTA));
+	/*timer.go("Opening the query file");
+	unique_ptr<SequenceFile> query_file(SequenceFile::auto_create(config.query_file.front(), SequenceFile::Flags::NO_FASTA));*/
 
-	if (db->type() != SequenceFile::Type::BLAST || query_file->type() != SequenceFile::Type::BLAST)
+	if (db->type() != SequenceFile::Type::BLAST) // || query_file->type() != SequenceFile::Type::BLAST)
 		throw std::runtime_error("BLAST database required.");
 
 	timer.go("Opening the input file");
@@ -106,7 +107,7 @@ void view_tsv() {
 				std::cout << "#Query = " << q << endl;
 			if (query.empty())
 				return;
-			TextBuffer* out = view_query(query, buf, *query_file, *db, cfg, stats);
+			TextBuffer* out = view_query(query, buf, *db, *db, cfg, stats);
 			OutputSink::instance->push(q, out);
 		}
 	};

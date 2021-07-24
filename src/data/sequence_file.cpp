@@ -48,7 +48,7 @@ static string dict_file_name(const size_t query_block, const size_t target_block
 static size_t single_oid(const SequenceFile* f, const string& acc) {
 	const vector<int> oid = f->accession_to_oid(acc);
 	if (oid.empty())
-		throw std::runtime_error("No oid for target accession: " + acc);
+		throw AccessionNotFound();
 	if (oid.size() > 1)
 		throw std::runtime_error("Multiple oids for target accession: " + acc);
 	return oid.front();
@@ -322,13 +322,21 @@ SequenceSet SequenceFile::seqs_by_accession(const std::vector<std::string>::cons
 	vector<size_t> oids;
 	oids.reserve(end - begin);
 	for (auto it = begin; it != end; ++it) {
-		const size_t oid = single_oid(this, *it);
-		oids.push_back(oid);
-		out.reserve(seq_length(oid));
+		try {
+			const size_t oid = single_oid(this, *it);
+			oids.push_back(oid);
+			out.reserve(seq_length(oid));
+		}
+		catch (AccessionNotFound&) {
+			out.reserve(0);
+			oids.push_back(SIZE_MAX);
+		}		
 	}
 	out.finish_reserve();
 	vector<Letter> seq;
 	for (size_t i = 0; i < oids.size(); ++i) {
+		if (oids[i] == SIZE_MAX)
+			continue;
 		seq_data(oids[i], seq);
 		out.assign(i, seq.begin(), seq.end());
 		out.convert_to_std_alph(i);

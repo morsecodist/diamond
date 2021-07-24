@@ -53,6 +53,9 @@ struct SeqInfo
 	enum { SIZE = 16 };
 };
 
+struct AccessionNotFound : public std::exception {
+};
+
 struct SequenceFile {
 
 	enum class Type { DMND = 0, BLAST = 1 };
