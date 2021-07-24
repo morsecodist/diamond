@@ -26,7 +26,7 @@ static TextBuffer* view_query(const string& query_acc, const string& buf, Sequen
 			Masking::get()(targets.ptr(i), targets.length(i), cfg.target_masking);
 
 	const auto query_comp = Stats::composition(Sequence(query));
-	const int query_len = (int)query.size();
+	const int query_len = Stats::count_true_aa(Sequence(query));
 	vector<Stats::TargetMatrix> matrices;
 	for (size_t i = 0; i < target_acc.size(); ++i)
 		matrices.emplace_back(query_comp, query_len, targets[i]);
@@ -102,6 +102,8 @@ void view_tsv() {
 				query = Util::Tsv::fetch_block(in, buf);
 				q = query_idx++;
 			}
+			if (q % 1000 == 0)
+				std::cout << "#Query = " << q << endl;
 			if (query.empty())
 				return;
 			TextBuffer* out = view_query(query, buf, *query_file, *db, cfg, stats);
