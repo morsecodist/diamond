@@ -16,9 +16,31 @@ using std::mutex;
 using std::lock_guard;
 using std::thread;
 using std::list;
+using std::array;
+
+template<size_t L>
+struct FixedString {
+	FixedString(const string& s) {
+		if (s.length() >= L)
+			throw std::runtime_error("FixedString");
+		std::copy(s.begin(), s.end(), chars.begin());
+		chars[s.length()] = '\0';
+	}
+	bool operator==(const FixedString& s) const {
+		return strcmp(chars.data(), s.chars.data()) == 0;
+	}
+	array<char, L> chars;
+	struct Hash {
+		size_t operator()(const FixedString& s) const {
+			return std::hash<string>()(string(s.chars.data()));
+		}
+	};
+};
+
+using Acc = FixedString<20>;
 
 static Block* db_block, *query_block;
-static std::unordered_map<string, unsigned> acc2oid_db, acc2oid_query;
+static std::unordered_map<Acc, unsigned, Acc::Hash> acc2oid_db, acc2oid_query;
 
 static Sequence get_query_seq(const string& acc) {
 	return query_block->seqs()[acc2oid_query.at(acc)];
