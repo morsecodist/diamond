@@ -185,6 +185,23 @@ static inline BackwardCell<int32_t>::Stats extract_stats(const BackwardCell<Sv>&
 	return { s(extract_channel(v.mismatch, channel)), s(extract_channel(v.gapopen, channel)) };
 }
 
+template<typename Sv>
+static inline bool overflow_stats(Void) {
+	return false;
+}
+
+template<typename Sv>
+static inline bool overflow_stats(const ForwardCell<int32_t>::Stats& stats) {
+	const auto m = DISPATCH_ARCH::ScoreTraits<Sv>::max_int_score();
+	return stats.ident == m || stats.len == m;
+}
+
+template<typename Sv>
+static inline bool overflow_stats(const BackwardCell<int32_t>::Stats& stats) {
+	const auto m = DISPATCH_ARCH::ScoreTraits<Sv>::max_int_score();
+	return stats.gap_open == m || stats.mismatch == m;
+}
+
 static inline void assign_stats(Hsp& hsp, Void) {}
 
 static inline void assign_stats(Hsp& hsp, const ForwardCell<int32_t>::Stats& v) {

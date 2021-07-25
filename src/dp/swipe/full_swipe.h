@@ -194,11 +194,15 @@ list<Hsp> swipe(const Sequence& query, const Frame frame, const It target_begin,
 				overflow.push_back(targets.dp_targets[c]);
 				reinit = true;
 			} else if (!targets.inc(c)) {
-				const int s = ScoreTraits<_sv>::int_score(best[c]) * config.cbs_matrix_scale;
-				const double evalue = score_matrix.evalue(s, qlen, (unsigned)targets.dp_targets[c].seq.length());
-				if (score_matrix.report_cutoff(s, evalue))
-					out.push_back(traceback<_sv>(query, frame, composition_bias, dp, targets.dp_targets[c], best[c], evalue, max_col[c], max_i[c], max_j[c], c, hsp_stats[c]));
-				reinit = true;				
+				if (overflow_stats<_sv>(hsp_stats[c]))
+					overflow.push_back(targets.dp_targets[c]);
+				else {
+					const int s = ScoreTraits<_sv>::int_score(best[c]) * config.cbs_matrix_scale;
+					const double evalue = score_matrix.evalue(s, qlen, (unsigned)targets.dp_targets[c].seq.length());
+					if (score_matrix.report_cutoff(s, evalue))
+						out.push_back(traceback<_sv>(query, frame, composition_bias, dp, targets.dp_targets[c], best[c], evalue, max_col[c], max_i[c], max_j[c], c, hsp_stats[c]));
+				}
+				reinit = true;
 			}
 			if (reinit) {
 				if (targets.init_target(i, c)) {
