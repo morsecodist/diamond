@@ -84,7 +84,7 @@ struct Reduction
 		dst.clear();
 		dst.resize(seq.length());
 		for (unsigned i = 0; i < seq.length(); ++i)
-			dst[i] = reduction(seq[i]);
+			dst[i] = reduction(letter_mask(seq[i]));
 	}
 
 	static Reduction reduction;

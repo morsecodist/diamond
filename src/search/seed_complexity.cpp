@@ -43,7 +43,28 @@ bool Search::seed_is_complex(const Letter* seq, const Shape& shape, const double
 	return entropy / shape.weight_ >= cut;
 }
 
-void Search::mask_seeds(const Shape& shape, const SeedPartitionRange& range, DoubleArray<SeedArray::Entry::Value>* query_seed_hits, DoubleArray<SeedArray::Entry::Value>* ref_seed_hits, Search::Config& cfg)
+bool Search::seed_is_complex_unreduced(Letter* seq, const Shape& shape, const double cut, const bool mask_seeds)
+{
+	array<unsigned, AMINO_ACID_COUNT> count;
+	count.fill(0);
+	for (unsigned i = 0; i < shape.weight_; ++i) {
+		const Letter l = letter_mask(seq[shape.positions_[i]]);
+		if(Reduction::reduction(l) == MASK_LETTER) {
+			if(mask_seeds) *seq |= SEED_MASK;
+			return false;
+		}
+		++count[(int)l];
+	}
+	double entropy = lnfact[shape.weight_];
+	for (unsigned i = 0; i < AMINO_ACID_COUNT; ++i)
+		entropy -= lnfact[count[i]];
+	if (entropy / shape.weight_ >= cut)
+		return true;
+	if(mask_seeds) *seq |= SEED_MASK;
+	return false;
+}
+
+/*void Search::mask_seeds(const Shape& shape, const SeedPartitionRange& range, DoubleArray<SeedArray::Entry::Value>* query_seed_hits, DoubleArray<SeedArray::Entry::Value>* ref_seed_hits, Search::Config& cfg)
 {
 	task_timer timer("Masking low complexity seeds");
 	SequenceSet& query_seqs = cfg.query->seqs();
@@ -89,3 +110,4 @@ void Search::mask_seeds(const Shape& shape, const SeedPartitionRange& range, Dou
 	verbose_stream << "Masked positions (query): " << query_count << endl;
 	verbose_stream << "Masked positions (target): " << target_count << endl;
 }
+*/

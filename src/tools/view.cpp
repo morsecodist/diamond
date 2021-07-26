@@ -37,7 +37,7 @@ struct FixedString {
 	};
 };
 
-using Acc = FixedString<20>;
+using Acc = FixedString<30>;
 
 static Block* db_block, *query_block;
 static std::unordered_map<Acc, unsigned, Acc::Hash> acc2oid_db, acc2oid_query;

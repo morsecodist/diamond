@@ -26,8 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../basic/shape.h"
 #include "../basic/reduction.h"
 #include "../basic/config.h"
-#include "../data/seed_array.h"
-#include "../util/data_structures/double_array.h"
+//#include "../data/seed_array.h"
+//#include "../util/data_structures/double_array.h"
 #include "../run/config.h"
 
 struct SeedComplexity
@@ -63,6 +63,7 @@ private:
 namespace Search {
 
 bool seed_is_complex(const Letter* seq, const Shape& shape, const double cut);
-void mask_seeds(const Shape& shape, const SeedPartitionRange& range, DoubleArray<SeedArray::Entry::Value>* query_seed_hits, DoubleArray<SeedArray::Entry::Value>* ref_seed_hits, Search::Config& cfg);
+bool seed_is_complex_unreduced(Letter* seq, const Shape& shape, const double cut, const bool mask_seeds);
+//void mask_seeds(const Shape& shape, const SeedPartitionRange& range, DoubleArray<SeedArray::Entry::Value>* query_seed_hits, DoubleArray<SeedArray::Entry::Value>* ref_seed_hits, Search::Config& cfg);
 
 }

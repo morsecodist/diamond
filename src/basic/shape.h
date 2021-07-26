@@ -124,7 +124,7 @@ struct Shape
 #ifdef SEQ_MASK
 			l &= LETTER_MASK;
 #endif
-			if (l == value_traits.mask_char)
+			if (l == MASK_LETTER)
 				return false;
 			s *= Reduction::reduction.size();
 			s += uint64_t(l);

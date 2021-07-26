@@ -133,7 +133,7 @@ void search_shape(unsigned sid, unsigned query_block, unsigned query_iteration, 
 		timer.finish();
 
 		if (config.cmask)
-			Search::mask_seeds(shapes[sid], range, query_seed_hits, ref_seed_hits, cfg);
+			; // Search::mask_seeds(shapes[sid], range, query_seed_hits, ref_seed_hits, cfg);
 		else {
 			timer.go("Building seed filter");
 			frequent_seeds.build(sid, range, query_seed_hits, ref_seed_hits, cfg);

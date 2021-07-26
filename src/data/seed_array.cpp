@@ -131,7 +131,7 @@ SeedArray::SeedArray(SequenceSet &seqs, size_t shape, const shape_histogram &hst
 	PtrVector<BuildCallback> cb;
 	for (size_t i = 0; i < seq_partition.size() - 1; ++i)
 		cb.push_back(new BuildCallback(range, iterators[i].data()));
-	enum_seeds(&seqs, cb, seq_partition, shape, shape + 1, filter, code, skip, false);
+	enum_seeds(&seqs, cb, seq_partition, shape, shape + 1, filter, code, skip, false, false);
 }
 
 template SeedArray::SeedArray(SequenceSet &, size_t, const shape_histogram &, const SeedPartitionRange &, const vector<size_t>&, char *buffer, const No_filter *, const SeedEncoding, const std::vector<bool>*);
@@ -204,7 +204,7 @@ SeedArray::SeedArray(SequenceSet& seqs, size_t shape, const SeedPartitionRange& 
 	PtrVector<BuildCallback2> cb;
 	for (size_t i = 0; i < seq_partition.size() - 1; ++i)
 		cb.push_back(new BuildCallback2(range));
-	enum_seeds(&seqs, cb, seq_partition, shape, shape + 1, filter, code, skip, false);
+	enum_seeds(&seqs, cb, seq_partition, shape, shape + 1, filter, code, skip, false, false);
 
 	array<size_t, Const::seedp> counts;
 	counts.fill(0);

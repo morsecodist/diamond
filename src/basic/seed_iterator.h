@@ -39,6 +39,10 @@ struct Seed_iterator
 	{
 		return sh.set_seed_reduced(seed, ptr_++);
 	}
+	Seed_iterator& operator++() {
+		ptr_++;
+		return *this;
+	}
 private:
 	const Letter *ptr_, *end_;
 };
