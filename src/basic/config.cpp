@@ -194,6 +194,7 @@ Config::Config(int argc, const char **argv, bool check_io)
 		.add_command("roc-id", "", rocid)
 		.add_command("find-shapes", "", find_shapes)
 		.add_command("composition", "", composition)
+		.add_command("join", "", JOIN)
 #endif
 		;
 
@@ -526,7 +527,9 @@ Config::Config(int argc, const char **argv, bool check_io)
 		("max-traceback-matrix-size", 0, "", max_traceback_matrix_size, 512 * KILOBYTES)
 		("cmask", 0, "", cmask)
 		("seed-cut", 0, "", seed_cut_)
-		("no-reorder", 0, "", no_reorder);
+		("no-reorder", 0, "", no_reorder)
+		("file1", 0, "", file1)
+		("file2", 0, "", file2);
 
 	parser.add(general).add(makedb).add(cluster).add(aligner).add(advanced).add(view_options).add(getseq_options).add(hidden_options).add(deprecated_options);
 	parser.store(argc, argv, command);

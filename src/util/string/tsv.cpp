@@ -36,6 +36,14 @@ std::string column(const std::string& line, const size_t i)
 	return s;
 }
 
+std::string columns(const std::string& line, const size_t begin, const size_t end)
+{
+	String::Tokenizer tok(line, "\t");
+	for (size_t j = 0; j < begin; ++j)
+		tok >> String::Skip();
+	for (size_t j = begin; j < end && tok.good(); ++j);
+}
+
 std::vector<std::string> extract_column(const std::string& buf, const size_t i)
 {
 	Util::String::Tokenizer tok(buf, "\n");

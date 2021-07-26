@@ -270,6 +270,7 @@ set(OBJECTS
   src/search/seed_complexity.cpp
   src/tools/view.cpp
   src/util/string/tsv.cpp
+  src/tools/join.cpp
 )
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")

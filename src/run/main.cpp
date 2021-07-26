@@ -55,6 +55,7 @@ void roc_id();
 void makeindex();
 void find_shapes();
 void composition();
+void join();
 #ifdef WITH_BLASTDB
 void prep_blast_db();
 #endif
@@ -197,6 +198,9 @@ int main(int ac, const char* av[])
 #endif
 		case Config::composition:
 			composition();
+			break;
+		case Config::JOIN:
+			join();
 			break;
 		default:
 			return 1;
