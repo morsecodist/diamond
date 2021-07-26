@@ -167,8 +167,10 @@ void run_ref_chunk(SequenceFile &db_file,
 		delete[] ref_buffer;
 		delete target_seeds;
 
-		timer.go("Clearing query masking");
-		Frequent_seeds::clear_masking(query_seqs);
+		if (!config.cmask) {
+			timer.go("Clearing query masking");
+			Frequent_seeds::clear_masking(query_seqs);
+		}
 	}
 
 	Consumer* out;
