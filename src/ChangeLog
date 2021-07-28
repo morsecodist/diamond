@@ -3,6 +3,8 @@
 - Optimized the performance of alignment traceback.
 - A non-default setting of `--max-hsps` will always recompute the Smith Waterman
   alignment with the ranges of the primary HSP masked.
+- Added the option `--seed-cut` to set a complexity cutoff for indexed seeds.
+- The `--freq-sd` option is now deprecated and has no effect.
 
 [2.0.11]
 - Fixed a bug that could cause invalid output when using `--masking 0` combined with
