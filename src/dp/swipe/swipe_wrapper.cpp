@@ -307,12 +307,12 @@ static pair<list<Hsp>, vector<DpTarget>> swipe_bin(const unsigned bin, const Seq
 	switch (bin) {
 #ifdef __SSE4_1__
 	case 0:
-		out = swipe_threads<::DISPATCH_ARCH::score_vector<int8_t>, It>(query, begin, end, frame, composition_bias, flags, v, overflow, stat, round);
+		out = swipe_threads<::DISPATCH_ARCH::ScoreVector<int8_t, SCHAR_MIN>, It>(query, begin, end, frame, composition_bias, flags, v, overflow, stat, round);
 		break;
 #endif
 #ifdef __SSE2__
 	case 1:
-		out = swipe_threads<::DISPATCH_ARCH::score_vector<int16_t>, It>(query, begin, end, frame, composition_bias, flags, v, overflow, stat, round);
+		out = swipe_threads<::DISPATCH_ARCH::ScoreVector<int16_t, SHRT_MIN>, It>(query, begin, end, frame, composition_bias, flags, v, overflow, stat, round);
 		break;
 #endif
 	case 2:

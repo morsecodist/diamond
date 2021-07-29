@@ -538,7 +538,7 @@ void banded_3frame_swipe_worker(vector<DpTarget>::const_iterator begin,
 	while (begin + (pos = next->fetch_add(config.swipe_chunk_size)) < end)
 #ifdef __SSE2__
 		if(score_only)
-			out->splice(out->end(), banded_3frame_swipe_targets<score_vector<int16_t>>(begin + pos, min(begin + pos + config.swipe_chunk_size, end), score_only, *query, strand, stat, true, of));
+			out->splice(out->end(), banded_3frame_swipe_targets<ScoreVector<int16_t, SHRT_MIN>>(begin + pos, min(begin + pos + config.swipe_chunk_size, end), score_only, *query, strand, stat, true, of));
 		else
 			out->splice(out->end(), banded_3frame_swipe_targets<int32_t>(begin + pos, min(begin + pos + config.swipe_chunk_size, end), score_only, *query, strand, stat, true, of));
 #else
@@ -585,7 +585,7 @@ list<Hsp> banded_3frame_swipe(const TranslatedSequence &query, Strand strand, ve
 	}
 	else {
 		if(score_only)
-			out = banded_3frame_swipe_targets<score_vector<int16_t>>(target_begin, target_end, score_only, query, strand, stat, false, overflow16);
+			out = banded_3frame_swipe_targets<ScoreVector<int16_t, SHRT_MIN>>(target_begin, target_end, score_only, query, strand, stat, false, overflow16);
 		else
 			out = banded_3frame_swipe_targets<int32_t>(target_begin, target_end, score_only, query, strand, stat, false, overflow16);
 	}

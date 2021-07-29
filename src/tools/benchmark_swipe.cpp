@@ -17,7 +17,7 @@ namespace Benchmark { namespace DISPATCH_ARCH {
 #ifdef __SSE4_1__
 
 static const size_t N = 256;
-using Sv = score_vector<int8_t>;
+using Sv = ScoreVector<int8_t, SCHAR_MIN>;
 using Cell = ForwardCell<Sv>;
 //using Cell = Sv;
 static Cell diagonal_cell[N], horizontal_gap[N];
@@ -48,7 +48,7 @@ void swipe_cell_update() {
 		int8_t v[C];
 		for (size_t j = 0; j < C; ++j)
 			v[j] = rand() % 20 - 10;
-		profile[i] = load_sv(v);
+		profile[i] = load_sv<Sv>(v);
 	}
 	high_resolution_clock::time_point t1 = high_resolution_clock::now();
 

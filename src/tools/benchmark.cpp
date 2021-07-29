@@ -96,16 +96,16 @@ void benchmark_ungapped(const Sequence& s1, const Sequence& s2)
 void benchmark_ssse3_shuffle(const Sequence&s1, const Sequence&s2)
 {
 	static const size_t n = 100000000llu;
-	constexpr size_t CHANNELS = ScoreTraits<score_vector<int8_t>>::CHANNELS;
+	constexpr size_t CHANNELS = ScoreTraits<ScoreVector<int8_t, SCHAR_MIN>>::CHANNELS;
 	high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
 	const Letter *q = s1.data(), *s = s2.data();
 	int score = 0;
-	score_vector<int8_t> sv;
+	ScoreVector<int8_t, SCHAR_MIN> sv;
 	::DISPATCH_ARCH::SIMD::Vector<int8_t> seq(s1.data());
 
 	for (size_t i = 0; i < n; ++i) {		
-		sv  = score_vector<int8_t>(i & 15, seq);
+		sv  = ScoreVector<int8_t, SCHAR_MIN>(i & 15, seq);
 		volatile auto x = sv.data_;
 	}
 	cout << "SSSE3 score shuffle:\t\t" << (double)duration_cast<std::chrono::nanoseconds>(high_resolution_clock::now() - t1).count() / (n * CHANNELS) * 1000 << " ps/Letter" << endl;
@@ -180,7 +180,7 @@ void benchmark_transpose() {
 
 #ifdef __SSE4_1__
 void swipe(const Sequence&s1, const Sequence&s2) {
-	constexpr int CHANNELS = ::DISPATCH_ARCH::ScoreTraits<score_vector<int8_t>>::CHANNELS;
+	constexpr int CHANNELS = ::DISPATCH_ARCH::ScoreTraits<ScoreVector<int8_t, SCHAR_MIN>>::CHANNELS;
 	static const size_t n = 1000llu;
 	DP::Targets targets;
 	for (size_t i = 0; i < 32; ++i)

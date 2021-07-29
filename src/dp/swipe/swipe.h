@@ -50,7 +50,7 @@ struct CBSBuffer<_sv, const int8_t*> {
 		typedef typename ::DISPATCH_ARCH::ScoreTraits<_sv>::Score Score;
 		data.reserve(l);
 		for (int i = 0; i < l; ++i)
-			data.push_back(load_sv(Score(v[i]), (Score)0, channel_mask));
+			data.push_back(blend_sv<_sv>(Score(v[i]), (Score)0, channel_mask));
 	}
 	_sv operator()(int i) const {
 		return data[i];
@@ -88,18 +88,18 @@ static inline _sv cell_update(const _sv &diagonal_cell,
 
 namespace DISPATCH_ARCH {
 
-template<typename _sv>
+template<typename Sv>
 struct SwipeProfile
 {
 
-	inline void set(typename ScoreTraits<_sv>::Vector seq)
+	inline void set(typename ScoreTraits<Sv>::Vector seq)
 	{
-		assert(sizeof(data_) / sizeof(_sv) >= value_traits.alphabet_size);
+		assert(sizeof(data_) / sizeof(Sv) >= value_traits.alphabet_size);
 		for (unsigned j = 0; j < AMINO_ACID_COUNT; ++j)
-			data_[j] = _sv(j, seq);
+			data_[j] = Sv(j, seq);
 	}
 
-	inline const _sv& get(Letter i) const
+	inline const Sv& get(Letter i) const
 	{
 		return data_[(int)i];
 	}
@@ -123,16 +123,16 @@ struct SwipeProfile
 	}
 
 	void set(const int32_t** target_scores) {
-		typename ScoreTraits<_sv>::Score s[ScoreTraits<_sv>::CHANNELS];
+		typename ScoreTraits<Sv>::Score s[ScoreTraits<Sv>::CHANNELS];
 		for (size_t i = 0; i < AMINO_ACID_COUNT; ++i) {
-			for (size_t j = 0; j < ScoreTraits<_sv>::CHANNELS; ++j)
+			for (size_t j = 0; j < ScoreTraits<Sv>::CHANNELS; ++j)
 				s[j] = target_scores[j][i];
-			data_[i] = load_sv(s);
+			data_[i] = load_sv<Sv>(s);
 		}
 	}
 
 	//_sv data_[AMINO_ACID_COUNT];
-	_sv data_[32];
+	Sv data_[32];
 
 };
 

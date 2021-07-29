@@ -66,7 +66,6 @@ struct TargetIterator
 {
 
 	typedef ::DISPATCH_ARCH::SIMD::Vector<_t> SeqVector;
-	typedef ::DISPATCH_ARCH::score_vector<_t> ScoreVector;
 	enum {
 		CHANNELS = SeqVector::CHANNELS
 	};

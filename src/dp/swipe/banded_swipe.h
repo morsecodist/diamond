@@ -214,8 +214,8 @@ list<Hsp> swipe(
 	const uint32_t cbs_mask = targets.cbs_mask();
 	const Score go = score_matrix.gap_open() + score_matrix.gap_extend(), go_s = go * (Score)config.cbs_matrix_scale,
 		ge = score_matrix.gap_extend(), ge_s = ge * (Score)config.cbs_matrix_scale;
-	const _sv open_penalty = load_sv(go, go_s, cbs_mask),
-		extend_penalty = load_sv(ge, ge_s, cbs_mask);
+	const _sv open_penalty = blend_sv<_sv>(go, go_s, cbs_mask),
+		extend_penalty = blend_sv<_sv>(ge, ge_s, cbs_mask);
 	SwipeProfile<_sv> profile;
 	array<const int8_t*, 32> target_scores;
 
@@ -260,7 +260,7 @@ list<Hsp> swipe(
 		for (int part = 0; part < band_parts.count(); ++part) {
 			const int i_begin = std::max(i0 + band_parts.begin(part), i0_);
 			const int i_end = std::min(i0 + band_parts.end(part), i1_);
-			const _sv target_mask = load_sv(band_parts.mask(part));
+			const _sv target_mask = load_sv<_sv>(band_parts.mask(part));
 #ifdef DP_STAT
 			stat.inc(Statistics::GROSS_DP_CELLS, uint64_t(i_end - i_begin) * CHANNELS);
 			stat.inc(Statistics::NET_DP_CELLS, uint64_t(i_end - i_begin) * popcount64(live & band_parts.bit_mask(part)));
