@@ -20,7 +20,6 @@ Config::Config() :
 	seed_encoding(config.target_indexed ? SeedEncoding::HASHED : SeedEncoding::SPACED_FACTOR),
 	query_masking(MaskingAlgo::NONE),
 	target_masking(MaskingAlgo::NONE),
-	extension_mode(from_string<Extension::Mode>(config.ext_)),
 	lazy_masking(false),
 	track_aligned_queries(false),
 	db(nullptr),
@@ -78,6 +77,25 @@ Config::Config() :
 	}
 
 	seed_complexity_cut = config.seed_cut_;
+
+	if (config.ext_.empty()) {
+		if (config.global_ranking_targets)
+			extension_mode = Extension::Mode::FULL;
+		else
+			extension_mode = Extension::default_ext_mode.at(sensitivity.back());
+	}
+	else {
+		extension_mode = from_string<Extension::Mode>(config.ext_);
+		if (config.global_ranking_targets && extension_mode != Extension::Mode::FULL)
+			throw std::runtime_error("Global ranking only supports full matrix extension.");
+	}
+
+	if (extension_mode == Extension::Mode::FULL) {
+		if (config.max_hsps != 1)
+			throw std::runtime_error("--max-hsps > 1 is not supported for full matrix extension.");
+		if (config.frame_shift > 0)
+			throw std::runtime_error("Frameshift alignment does not support full matrix extension.");
+	}
 }
 
 Config::~Config() {

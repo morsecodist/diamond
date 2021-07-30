@@ -551,12 +551,6 @@ Config::Config(int argc, const char **argv, bool check_io)
 	if (global_ranking_targets > 0 && (query_range_culling || taxon_k || multiprocessing || mp_init || mp_recover || comp_based_stats >= 2 || frame_shift > 0))
 		throw std::runtime_error("Global ranking is not supported in this mode.");
 
-	if (global_ranking_targets > 0) {
-		if (ext != "" && ext != "full")
-			throw std::runtime_error("Global ranking only supports full matrix extension.");
-		ext = "full";
-	}
-
 #ifdef EXTRA
 	if (comp_based_stats >= Stats::CBS::COUNT)
 #else
@@ -568,15 +562,6 @@ Config::Config(int argc, const char **argv, bool check_io)
 
 	if (command == blastx && !Stats::CBS::support_translated(comp_based_stats))
 		throw std::runtime_error("This mode of composition based stats is not supported for translated searches.");
-
-	if (swipe_all)
-		ext = "full";
-
-	if (max_hsps > 1 && ext == "full")
-		throw std::runtime_error("--max-hsps > 1 is not supported for full matrix extension.");
-
-	if (frame_shift > 0 && ext == "full")
-		throw std::runtime_error("Frameshift alignment does not support full matrix extension.");
 
 	if (check_io) {
 		switch (command) {
@@ -751,10 +736,6 @@ Config::Config(int argc, const char **argv, bool check_io)
 	if (mode_ultra_sensitive) set_sens(Sensitivity::ULTRA_SENSITIVE);
 
 	algo = from_string<Algo>(algo_str);
-
-	const set<string> ext_modes = { "", "banded-fast", "banded-slow", "full" };
-	if (ext_modes.find(ext) == ext_modes.end())
-		throw std::runtime_error("Possible values for --ext are: banded-fast, banded-slow, full");
 
 	Translator::init(query_gencode);
 

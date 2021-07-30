@@ -135,11 +135,11 @@ vector<Target> extend(size_t query_id,
 	stat.inc(Statistics::TARGET_HITS3, target_block_ids.size());
 
 	timer.go("Computing chaining");
-	vector<WorkTarget> targets = ungapped_stage(query_seq, query_cb, query_comp, seed_hits, target_block_ids, flags, stat, *cfg.target);
+	vector<WorkTarget> targets = ungapped_stage(query_seq, query_cb, query_comp, seed_hits, target_block_ids, flags, stat, *cfg.target, cfg.extension_mode);
 	if (!flag_any(flags, DP::Flags::PARALLEL))
 		stat.inc(Statistics::TIME_CHAINING, timer.microseconds());
 
-	return align(targets, query_seq, query_cb, source_query_len, flags, hsp_values, stat);
+	return align(targets, query_seq, query_cb, source_query_len, flags, hsp_values, cfg.extension_mode, stat);
 }
 
 vector<Match> extend(
@@ -251,7 +251,7 @@ vector<Match> extend(
 	stat.inc(Statistics::TARGET_HITS5, aligned_targets.size());
 	timer.finish();
 
-	vector<Match> matches = align(aligned_targets, query_seq.data(), query_cb.data(), source_query_len, flags, first_round, stat);
+	vector<Match> matches = align(aligned_targets, query_seq.data(), query_cb.data(), source_query_len, flags, first_round, cfg.extension_mode, stat);
 	std::sort(matches.begin(), matches.end(), config.toppercent == 100.0 ? Match::cmp_evalue : Match::cmp_score);
 	return matches;
 }

@@ -34,7 +34,7 @@ enum class Mode {
 	BANDED_FAST, BANDED_SLOW, FULL, GLOBAL
 };
 
-extern std::map<Sensitivity, Mode> default_ext_mode;
+extern const std::map<Sensitivity, Mode> default_ext_mode;
 
 struct Match {
 	Match(size_t target_block_id, int ungapped_score, int filter_score = 0, double filter_evalue = DBL_MAX):
