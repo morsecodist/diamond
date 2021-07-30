@@ -269,6 +269,7 @@ Hsp::Hsp(const IntermediateRecord &r, unsigned query_source_len) :
 	backtraced(!IntermediateRecord::stats_mode(output_format->hsp_values) && output_format->hsp_values != HspValues::NONE),
 	score(r.score),
 	evalue(r.evalue),
+	bit_score(score_matrix.bitscore(r.score)),
 	transcript(r.transcript)
 {
 	subject_range.begin_ = r.subject_begin;

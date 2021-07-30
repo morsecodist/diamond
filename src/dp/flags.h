@@ -3,7 +3,7 @@
 
 namespace DP {
 
-	enum class Flags { NONE = 0, PARALLEL = 2, FULL_MATRIX = 4 };
+	enum class Flags { NONE = 0, PARALLEL = 1, FULL_MATRIX = 2, SEMI_GLOBAL = 4 };
 
 	DEF_ENUM_FLAG_OPERATORS(Flags)
 

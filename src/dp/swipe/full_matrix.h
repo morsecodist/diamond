@@ -215,7 +215,6 @@ struct TracebackVectorMatrix
 		trace_mask_.resize(cols * rows);
 		std::fill(hgap_.begin(), hgap_.end(), _sv());
 		std::fill(score_.begin(), score_.end(), _sv());
-
 	}
 
 	inline ColumnIterator begin(int col)

@@ -147,6 +147,8 @@ vector<Target> align(const vector<WorkTarget> &targets, const Sequence *query_se
 
 	if (mode == Mode::FULL)
 		flags |= DP::Flags::FULL_MATRIX;
+	if (mode == Mode::GLOBAL)
+		flags |= DP::Flags::SEMI_GLOBAL;
 
 	for (unsigned frame = 0; frame < align_mode.query_contexts; ++frame) {
 		if (dp_targets[frame].empty())
@@ -238,6 +240,8 @@ vector<Match> align(vector<Target> &targets, const Sequence *query_seq, const Bi
 
 	if(mode == Mode::FULL)
 		flags |= DP::Flags::FULL_MATRIX;
+	if (mode == Mode::GLOBAL)
+		flags |= DP::Flags::SEMI_GLOBAL;
 
 	for (int i = 0; i < (int)targets.size(); ++i) {
 		/*if (config.log_subject)
