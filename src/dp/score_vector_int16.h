@@ -34,7 +34,7 @@ struct ScoreVector<int16_t, DELTA>
 	typedef __m256i Register;
 
 	ScoreVector() :
-		data_(::SIMD::_mm256_set1_epi16(SHRT_MIN))
+		data_(::SIMD::_mm256_set1_epi16(DELTA))
 	{}
 
 	explicit ScoreVector(int x)
@@ -181,7 +181,7 @@ struct ScoreVector<int16_t, DELTA>
 	typedef __m128i Register;
 
 	inline ScoreVector() :
-		data_(::SIMD::_mm_set1_epi16(SHRT_MIN))
+		data_(::SIMD::_mm_set1_epi16(DELTA))
 	{}
 
 	explicit ScoreVector(int x)
@@ -397,18 +397,18 @@ struct ScoreTraits<ScoreVector<int16_t, DELTA>>
 	}
 	static constexpr int16_t zero_score()
 	{
-		return SHRT_MIN;
+		return DELTA;
 	}
 	static int int_score(Score s)
 	{
-		return (uint16_t)s ^ 0x8000;
+		return (int)s - DELTA;
 	}
 	static constexpr int16_t max_score()
 	{
 		return SHRT_MAX;
 	}
 	static constexpr int max_int_score() {
-		return SHRT_MAX - SHRT_MIN;
+		return SHRT_MAX - DELTA;
 	}
 };
 

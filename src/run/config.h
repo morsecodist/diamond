@@ -38,7 +38,9 @@ template<typename T> struct AsyncBuffer;
 struct Async;
 template<typename T, size_t E, typename Sync> struct Deque;
 
-namespace Extension { namespace GlobalRanking {
+namespace Extension { 
+	enum class Mode;
+	namespace GlobalRanking {
 	struct Hit;
 }}
 
@@ -60,6 +62,7 @@ struct Config {
 	SeedEncoding                               seed_encoding;
 	MaskingAlgo                                query_masking;
 	MaskingAlgo                                target_masking;
+	Extension::Mode                            extension_mode;
 	double                                     seed_complexity_cut;
 	bool                                       lazy_masking;
 	bool                                       track_aligned_queries;

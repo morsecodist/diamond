@@ -30,6 +30,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace Extension {
 
+enum class Mode {
+	BANDED_FAST, BANDED_SLOW, FULL, GLOBAL
+};
+
+extern std::map<Sensitivity, Mode> default_ext_mode;
+
 struct Match {
 	Match(size_t target_block_id, int ungapped_score, int filter_score = 0, double filter_evalue = DBL_MAX):
 		target_block_id(target_block_id),
@@ -66,3 +72,8 @@ TextBuffer* generate_intermediate_output(const vector<Match> &targets, size_t qu
 }*/
 
 }
+
+template<>
+struct EnumTraits<Extension::Mode> {
+	static const SEMap<Extension::Mode> from_string;
+};

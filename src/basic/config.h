@@ -217,7 +217,7 @@ struct Config
 	double gapped_filter_evalue1;
 	size_t ext_chunk_size;
 	double ext_min_yield;
-	string ext;
+	string ext_;
 	int full_sw_len;
 	double relaxed_evalue_factor;
 	string type;

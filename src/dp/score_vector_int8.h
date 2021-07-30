@@ -32,7 +32,7 @@ struct ScoreVector<int8_t, DELTA>
 {
 
 	ScoreVector() :
-		data_(::SIMD::_mm256_set1_epi8(SCHAR_MIN))
+		data_(::SIMD::_mm256_set1_epi8(DELTA))
 	{}
 
 	explicit ScoreVector(__m256i data) :
@@ -197,13 +197,13 @@ struct ScoreTraits<ScoreVector<int8_t, DELTA>>
 	}
 	static int int_score(int8_t s)
 	{
-		return (int)s - SCHAR_MIN;
+		return (int)s - DELTA;
 	}
 	static constexpr int max_int_score() {
-		return SCHAR_MAX - SCHAR_MIN;
+		return SCHAR_MAX - DELTA;
 	}
 	static constexpr int8_t zero_score() {
-		return SCHAR_MIN;
+		return DELTA;
 	}
 	static void saturate(ScoreVector<int8_t, DELTA>& v) {}
 };
@@ -215,7 +215,7 @@ struct ScoreVector<int8_t, DELTA>
 {
 
 	ScoreVector():
-		data_(::SIMD::_mm_set1_epi8(SCHAR_MIN))
+		data_(::SIMD::_mm_set1_epi8(DELTA))
 	{}
 
 	explicit ScoreVector(__m128i data):
@@ -370,22 +370,21 @@ struct ScoreTraits<ScoreVector<int8_t, DELTA>>
 		uint32_t gap;
 		uint32_t open;
 	};
-	template<typename S>
-	static ScoreVector<int8_t, DELTA> zero(S s) {
-		return ScoreVector<int8_t, DELTA>(zero_score(s));
+	static ScoreVector<int8_t, DELTA> zero() {
+		return ScoreVector<int8_t, DELTA>();
 	}
 	static constexpr int8_t max_score() {
 		return SCHAR_MAX;
 	}
 	static int int_score(int8_t s)
 	{
-		return (int)s - SCHAR_MIN;
+		return (int)s - DELTA;
 	}
 	static constexpr int max_int_score() {
-		return SCHAR_MAX - SCHAR_MIN;
+		return SCHAR_MAX - DELTA;
 	}
 	static constexpr int8_t zero_score() {
-		return SCHAR_MIN;
+		return DELTA;
 	}
 	static void saturate(ScoreVector<int8_t, DELTA>& v) {}
 };

@@ -20,6 +20,7 @@ Config::Config() :
 	seed_encoding(config.target_indexed ? SeedEncoding::HASHED : SeedEncoding::SPACED_FACTOR),
 	query_masking(MaskingAlgo::NONE),
 	target_masking(MaskingAlgo::NONE),
+	extension_mode(from_string<Extension::Mode>(config.ext_)),
 	lazy_masking(false),
 	track_aligned_queries(false),
 	db(nullptr),

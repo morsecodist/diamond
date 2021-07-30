@@ -44,7 +44,24 @@ using std::pair;
 using std::endl;
 using std::move;
 
+const SEMap<Extension::Mode> EnumTraits<Extension::Mode>::from_string = {
+	{ "banded-fast", Extension::Mode::BANDED_FAST},
+	{ "banded-slow", Extension::Mode::BANDED_SLOW},
+	{ "full", Extension::Mode::FULL},
+	{ "global", Extension::Mode::GLOBAL}
+};
+
 namespace Extension {
+
+const std::map<Sensitivity, Mode> default_ext_mode = {
+	{ Sensitivity::FAST, Mode::BANDED_FAST},
+	{ Sensitivity::DEFAULT, Mode::BANDED_FAST},
+	{ Sensitivity::MID_SENSITIVE, Mode::BANDED_FAST},
+	{ Sensitivity::SENSITIVE, Mode::BANDED_FAST},
+	{ Sensitivity::MORE_SENSITIVE, Mode::BANDED_SLOW},
+	{ Sensitivity::VERY_SENSITIVE, Mode::BANDED_SLOW},
+	{ Sensitivity::ULTRA_SENSITIVE, Mode::BANDED_SLOW}
+};
 
 constexpr size_t MAX_CHUNK_SIZE = 400, MIN_CHUNK_SIZE = 128;
 
