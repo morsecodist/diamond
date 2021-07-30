@@ -2,6 +2,7 @@
 #include "chaining.h"
 #include "../output/output_format.h"
 #include "../dp/dp.h"
+#include "../dp/ungapped.h"
 
 using std::cout;
 using std::endl;
@@ -34,7 +35,7 @@ void print_diag(int i0, int j0, int l, int score, const Diag_graph &diags, const
 void smith_waterman(Sequence q, Sequence s, const Diag_graph &diags)
 {
 	Hsp hsp(true);
-	smith_waterman(q, s, hsp);
+	//smith_waterman(q, s, hsp);
 	Hsp::Iterator i = hsp.begin();
 	int i0 = -1, j0 = -1, l = 0, score = 0;
 	for (; i.good(); ++i) {

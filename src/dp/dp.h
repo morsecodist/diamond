@@ -31,126 +31,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../stats/cbs.h"
 #include "flags.h"
 
-int smith_waterman(const Sequence&query, const Sequence&subject, unsigned band, unsigned padding, int op, int ep);
-
-struct Local {};
-struct Global {};
-
-template<typename _t>
-struct Fixed_score_buffer
-{
-
-	inline void init(size_t col_size, size_t cols, _t init)
-	{
-		col_size_ = col_size;
-		data_.clear();
-		data_.reserve(col_size * cols);
-		data_.resize(col_size);
-		for (size_t i = 0; i<col_size; ++i)
-			data_[i] = init;
-	}
-	
-	std::pair<int, int> find(_t s) const
-	{
-		const int i = int(std::find(data_.begin(), data_.end(), s) - data_.begin());
-		return std::pair<int, int>(int(i % col_size_), int(i / col_size_));
-	}
-
-	inline std::pair<_t*, _t*> get()
-	{
-		data_.resize(data_.size() + col_size_);
-		_t* ptr = last();
-		return std::pair<_t*, _t*>(ptr - col_size_, ptr);
-	}
-
-	inline _t* last()
-	{
-		return &*(data_.end() - col_size_);
-	}
-
-	const _t* column(int col) const
-	{
-		return &data_[col_size_*col];
-	}
-
-	_t operator()(int i, int j) const
-	{
-		return data_[j*col_size_ + i];
-	}
-
-	friend std::ostream& operator<<(std::ostream &s, const Fixed_score_buffer &buf)
-	{
-		s << '\t';
-		for (int j = 0; j < int(buf.data_.size() / buf.col_size_); ++j)
-			s << j << '\t';
-		s << std::endl;
-		for (int i = 0; i < int(buf.col_size_); ++i) {
-			s << i << '\t';
-			for (int j = 0; j < int(buf.data_.size() / buf.col_size_); ++j)
-				s << buf(i, j) << '\t';
-			s << std::endl;
-		}
-		return s;
-	}
-
-private:
-	std::vector<_t> data_;
-	size_t col_size_;
-
-};
-
-template<typename _score, typename _mode>
-const Fixed_score_buffer<_score>& needleman_wunsch(Sequence query, Sequence subject, int &max_score, const _mode&, const _score&);
-
-struct Band
-{
-	void init(int diags, int cols)
-	{
-		diags_ = diags;
-		cols_ = cols;
-		data_.clear();
-		data_.resize((size_t)diags*cols);
-	}
-	struct Iterator {
-		Iterator(uint8_t *p, int diags) :
-			diags_(diags),
-			p_(p)			
-		{}
-		uint8_t& operator[](int i)
-		{
-			return p_[i*diags_];
-		}
-	private:
-		const int diags_;
-		uint8_t *p_;
-	};
-	Iterator diag(int o)
-	{
-		return Iterator(&data_[o], diags_);
-	}
-	int cols() const
-	{
-		return cols_;
-	}
-	int diags() const
-	{
-		return diags_;
-	}
-	uint8_t* data()
-	{
-		return data_.data();
-	}
-	bool check(uint8_t *ptr) const
-	{
-		return ptr >= data_.data() && ptr <= data_.data() + data_.size();
-	}
-private:
-	int diags_, cols_;
-	vector<uint8_t> data_;
-};
-
-extern size_t cells;
-
 struct DpTarget
 {
 	struct CarryOver {
@@ -254,9 +134,6 @@ private:
 
 extern DpStat dp_stat;
 
-void smith_waterman(Sequence q, Sequence s, Hsp &out);
-int score_range(Sequence query, Sequence subject, int i, int j, int j_end);
-
 namespace DP {
 
 enum { BINS = 3};
@@ -285,10 +162,5 @@ DECL_DISPATCH(unsigned, bin, (HspValues v, int query_len, int score, int ungappe
 }
 
 }
-
-void banded_sw(const Sequence&query, const Sequence&subject, int d_begin, int d_end, int j_begin, int j_end, Hsp &out);
-
-void anchored_3frame_dp(const TranslatedSequence &query, Sequence&subject, const DiagonalSegment &anchor, Hsp &out, int gap_open, int gap_extend, int frame_shift);
-int sw_3frame(const TranslatedSequence &query, Strand strand, const Sequence&subject, int gap_open, int gap_extend, int frame_shift, Hsp &out);
 
 DECL_DISPATCH(std::list<Hsp>, banded_3frame_swipe, (const TranslatedSequence &query, Strand strand, vector<DpTarget>::iterator target_begin, vector<DpTarget>::iterator target_end, DpStat &stat, bool score_only, bool parallel))

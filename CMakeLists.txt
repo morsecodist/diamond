@@ -155,7 +155,6 @@ set(OBJECTS
   src/data/frequent_seeds.cpp
   src/align/legacy/query_mapper.cpp
   src/output/blast_tab_format.cpp
-  src/dp/needleman_wunsch.cpp
   src/output/blast_pairwise_format.cpp
   src/run/double_indexed.cpp
   src/output/sam_format.cpp
@@ -163,7 +162,6 @@ set(OBJECTS
   src/search/setup.cpp
   src/data/taxonomy.cpp
   src/basic/masking.cpp
-  src/dp/banded_sw.cpp
   src/data/seed_set.cpp
   src/util/simd.cpp
   src/output/taxon_format.cpp
