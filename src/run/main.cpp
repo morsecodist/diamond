@@ -56,6 +56,7 @@ void makeindex();
 void find_shapes();
 void composition();
 void join();
+void hash_seqs();
 #ifdef WITH_BLASTDB
 void prep_blast_db();
 #endif
@@ -190,6 +191,9 @@ int main(int ac, const char* av[])
 			break;
 		case Config::find_shapes:
 			find_shapes();
+			break;
+		case Config::HASH_SEQS:
+			hash_seqs();
 			break;
 #ifdef WITH_BLASTDB
 		case Config::prep_blast_db:

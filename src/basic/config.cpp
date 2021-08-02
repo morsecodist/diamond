@@ -195,6 +195,7 @@ Config::Config(int argc, const char **argv, bool check_io)
 		.add_command("find-shapes", "", find_shapes)
 		.add_command("composition", "", composition)
 		.add_command("join", "", JOIN)
+		.add_command("hashseqs", "", HASH_SEQS)
 #endif
 		;
 

@@ -1,3 +1,4 @@
+#include <array>
 #include <iostream>
 #include <vector>
 #include "tsv_record.h"
@@ -8,7 +9,10 @@
 #include "../util/seq_file_format.h"
 #include "../util/sequence/sequence.h"
 #include "../stats/cbs.h"
+#include "../util/algo/MurmurHash3.h"
+#include "../util/sequence/sequence.h"
 
+using std::array;
 using std::cout;
 using std::endl;
 using std::vector;
@@ -61,4 +65,18 @@ void composition() {
 			std::cout << x << '\t';
 		std::cout << endl;
 	}
+}
+
+void hash_seqs() {
+	TextInputFile f(config.query_file.front());
+	FASTA_format fmt;
+	string id;
+	vector<Letter> seq;
+	while (fmt.get_seq(id, seq, f, amino_acid_traits)) {
+		array<char, 16> hash;
+		hash.fill('\0');
+		MurmurHash3_x64_128(seq.data(), seq.size(), hash.data(), hash.data());
+		cout << Util::Seq::seqid(id.c_str(), false) << '\t' << hex_print(hash.data(), 16) << endl;
+	}
+	f.close();
 }
