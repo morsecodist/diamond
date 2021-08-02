@@ -78,6 +78,7 @@ Hsp traceback(_cbs bias_correction, const TracebackMatrix<_sv> &dp, const DpTarg
 	out.subject_range.begin_ = it.j + 1;
 	out.transcript.reverse();
 	out.transcript.push_terminator();
+	out.query_source_range = TranslatedPosition::absolute_interval(TranslatedPosition(out.query_range.begin_, p.frame), TranslatedPosition(out.query_range.end_, p.frame), p.query_source_len);
 	return out;
 }
 
@@ -109,6 +110,7 @@ Hsp traceback(_cbs bias_correction, const Matrix<Cell> &dp, const DpTarget &targ
 	}
 	out.target_seq = target.seq;
 	assign_stats(out, stats);
+	out.query_source_range = TranslatedPosition::absolute_interval(TranslatedPosition(out.query_range.begin_, p.frame), TranslatedPosition(out.query_range.end_, p.frame), p.query_source_len);
 	return out;
 }
 
@@ -161,6 +163,7 @@ Hsp traceback(_cbs bias_correction, const TracebackVectorMatrix<_sv> &dp, const 
 	out.subject_range.begin_ = it.j + 1;
 	out.transcript.reverse();
 	out.transcript.push_terminator();
+	out.query_source_range = TranslatedPosition::absolute_interval(TranslatedPosition(out.query_range.begin_, p.frame), TranslatedPosition(out.query_range.end_, p.frame), p.query_source_len);
 	return out;
 }
 template<typename _sv, typename _cbs, typename Cfg>

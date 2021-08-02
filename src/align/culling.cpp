@@ -38,8 +38,8 @@ static void max_hsp_culling(list<Hsp>& hsps) {
 }
 
 static void inner_culling(list<Hsp>& hsps, int source_query_len) {
-	for (Hsp& h : hsps)
-		h.query_source_range = TranslatedPosition::absolute_interval(TranslatedPosition(h.query_range.begin_, Frame(h.frame)), TranslatedPosition(h.query_range.end_, Frame(h.frame)), source_query_len);
+	if (hsps.size() <= 1)
+		return;
 	hsps.sort();
 	const double overlap = config.inner_culling_overlap / 100.0;
 	for (list<Hsp>::iterator i = hsps.begin(); i != hsps.end();) {
