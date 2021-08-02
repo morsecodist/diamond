@@ -48,7 +48,7 @@ Hsp traceback(_cbs bias_correction, const TracebackMatrix<_sv> &dp, const DpTarg
 {
 	typedef typename ScoreTraits<_sv>::Score Score;
 	const int j0 = i1 - (target.d_end - 1), d1 = target.d_end;
-	typename TracebackMatrix<_sv>::TracebackIterator it(dp.traceback(max_col + 1, i0 + max_col, j0 + max_col, (int)query.length(), channel, max_score));
+	typename TracebackMatrix<_sv>::TracebackIterator it(dp.traceback(max_col + 1, i0 + max_col, j0 + max_col, (int)p.query.length(), channel, max_score));
 	
 	Hsp out(true);
 	out.swipe_target = target.target_idx;
@@ -57,12 +57,12 @@ Hsp traceback(_cbs bias_correction, const TracebackMatrix<_sv> &dp, const DpTarg
 	out.bit_score = score_matrix.bitscore(out.score);
 	out.transcript.reserve(size_t(out.score * config.transcript_len_estimate));
 
-	out.frame = frame.index();
+	out.frame = p.frame.index();
 	out.query_range.end_ = it.i + 1;
 	out.subject_range.end_ = it.j + 1;
 	
 	while (it.score() > ScoreTraits<_sv>::zero_score()) {
-		const Letter q = query[it.i], s = target.seq[it.j];
+		const Letter q = p.query[it.i], s = target.seq[it.j];
 		const Score m = score_matrix(q, s), score = it.score();
 		const Score m2 = add_cbs_scalar(m, bias_correction[it.i]);
 		if (score == saturated_add(it.diag(), m2)) {
