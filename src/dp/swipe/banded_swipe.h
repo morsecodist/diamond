@@ -58,6 +58,8 @@ Hsp traceback(_cbs bias_correction, const TracebackMatrix<_sv> &dp, const DpTarg
 	out.transcript.reserve(size_t(out.score * config.transcript_len_estimate));
 
 	out.frame = p.frame.index();
+	out.d_begin = target.d_begin;
+	out.d_end = target.d_end;
 	out.query_range.end_ = it.i + 1;
 	out.subject_range.end_ = it.j + 1;
 	
@@ -131,6 +133,8 @@ Hsp traceback(_cbs bias_correction, const TracebackVectorMatrix<_sv> &dp, const 
 	out.transcript.reserve(size_t(out.score * config.transcript_len_estimate));
 
 	out.frame = p.frame.index();
+	out.d_begin = target.d_begin;
+	out.d_end = target.d_end;
 	out.query_range.end_ = it.i + 1;
 	out.subject_range.end_ = it.j + 1;
 	const int end_score = out.score;
