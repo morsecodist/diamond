@@ -97,7 +97,7 @@ static Sv load_sv(const typename DISPATCH_ARCH::ScoreTraits<Sv>::Score* ptr) {
 }
 
 template<>
-static int32_t load_sv<int32_t>(const int32_t* x) {
+int32_t load_sv<int32_t>(const int32_t* x) {
 	return *x;
 }
 
@@ -114,7 +114,7 @@ static Sv blend_sv(const typename DISPATCH_ARCH::ScoreTraits<Sv>::Score a, const
 }
 
 template<>
-static int32_t blend_sv<int32_t>(const int32_t a, const int32_t b, const uint32_t mask) {
+int32_t blend_sv<int32_t>(const int32_t a, const int32_t b, const uint32_t mask) {
 	return mask ? b : a;
 }
 
