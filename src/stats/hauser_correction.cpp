@@ -127,10 +127,12 @@ int Bias_correction::operator()(const Diagonal_segment &d) const
 	return (int)s;
 }
 
-Bias_correction Bias_correction::reverse() const {
-	Bias_correction r;
-	r.int8.reserve(int8.size());
-	std::reverse_copy(int8.begin(), int8.end(), std::back_inserter(r.int8));
+vector<int8_t> Bias_correction::reverse(const int8_t* p, const size_t len) {
+	vector<int8_t> r;
+	if (p == nullptr)
+		return r;
+	r.reserve(len);
+	std::reverse_copy(p, p + len, std::back_inserter(r));
 	return r;
 }
 

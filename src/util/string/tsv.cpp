@@ -42,6 +42,7 @@ std::string columns(const std::string& line, const size_t begin, const size_t en
 	for (size_t j = 0; j < begin; ++j)
 		tok >> String::Skip();
 	for (size_t j = begin; j < end && tok.good(); ++j);
+	return {};
 }
 
 std::vector<std::string> extract_column(const std::string& buf, const size_t i)

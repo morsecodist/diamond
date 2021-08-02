@@ -153,14 +153,16 @@ vector<Target> align(const vector<WorkTarget> &targets, const Sequence *query_se
 	for (unsigned frame = 0; frame < align_mode.query_contexts; ++frame) {
 		if (dp_targets[frame].empty())
 			continue;
-		list<Hsp> hsp = DP::BandedSwipe::swipe(
+		DP::Params params{
 			query_seq[frame],
-			dp_targets[frame],
 			Frame(frame),
-			Stats::CBS::hauser(config.comp_based_stats) ? &query_cb[frame] : nullptr,
+			source_query_len,
+			Stats::CBS::hauser(config.comp_based_stats) ? query_cb[frame].int8.data() : nullptr,
 			flags,
 			hsp_values,
-			stat);
+			stat
+		};
+		list<Hsp> hsp = DP::BandedSwipe::swipe(dp_targets[frame], params);
 		while (!hsp.empty())
 			r[hsp.front().swipe_target].add_hit(hsp, hsp.begin());
 	}
@@ -185,15 +187,16 @@ vector<Target> full_db_align(const Sequence *query_seq, const Bias_correction *q
 	const SequenceSet& ref_seqs = target_block.seqs();
 	
 	for (unsigned frame = 0; frame < align_mode.query_contexts; ++frame) {
-		list<Hsp> frame_hsp = DP::BandedSwipe::swipe_set(
+		DP::Params params{
 			query_seq[frame],
-			ref_seqs.cbegin(),
-			ref_seqs.cend(),
 			Frame(frame),
-			Stats::CBS::hauser(config.comp_based_stats) ? &query_cb[frame] : nullptr,
+			0,
+			Stats::CBS::hauser(config.comp_based_stats) ? query_cb[frame].int8.data() : nullptr,
 			flags | DP::Flags::FULL_MATRIX,
 			hsp_values,
-			stat);
+			stat
+		};
+		list<Hsp> frame_hsp = DP::BandedSwipe::swipe_set(ref_seqs.cbegin(), ref_seqs.cend(), params);
 		hsp.splice(hsp.begin(), frame_hsp, frame_hsp.begin(), frame_hsp.end());
 	}
 
@@ -253,14 +256,16 @@ vector<Match> align(vector<Target> &targets, const Sequence *query_seq, const Bi
 	for (unsigned frame = 0; frame < align_mode.query_contexts; ++frame) {
 		if (dp_targets[frame].empty())
 			continue;
-		list<Hsp> hsp = DP::BandedSwipe::swipe(
+		DP::Params params{
 			query_seq[frame],
-			dp_targets[frame],
 			Frame(frame),
-			Stats::CBS::hauser(config.comp_based_stats) ? &query_cb[frame] : nullptr,
+			source_query_len,
+			Stats::CBS::hauser(config.comp_based_stats) ? query_cb[frame].int8.data() : nullptr,
 			flags,
 			hsp_values,
-			stat);
+			stat
+		};
+		list<Hsp> hsp = DP::BandedSwipe::swipe(dp_targets[frame], params);
 		while (!hsp.empty())
 			r[hsp.front().swipe_target].add_hit(hsp, hsp.begin());
 	}

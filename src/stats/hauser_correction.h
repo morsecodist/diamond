@@ -42,6 +42,6 @@ struct Bias_correction : public std::vector<float>
 	}
 	int operator()(const Hsp &hsp) const;
 	int operator()(const Diagonal_segment &d) const;
-	Bias_correction reverse() const;
+	static std::vector<int8_t> reverse(const int8_t* p, const size_t len);
 	std::vector<int8_t> int8;
 };

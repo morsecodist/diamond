@@ -136,6 +136,16 @@ extern DpStat dp_stat;
 
 namespace DP {
 
+struct Params {
+	const Sequence query;
+	const Frame frame;
+	const int query_source_len;
+	const int8_t* const composition_bias;
+	const Flags flags;
+	const HspValues v;
+	Statistics& stat;
+};
+
 enum { BINS = 3};
 
 struct Traceback {};
@@ -155,8 +165,8 @@ namespace Swipe {
 
 namespace BandedSwipe {
 
-DECL_DISPATCH(std::list<Hsp>, swipe, (const Sequence& query, const Targets& targets, const Frame frame, const Bias_correction* composition_bias, const DP::Flags flags, const HspValues v, Statistics& stat))
-DECL_DISPATCH(std::list<Hsp>, swipe_set, (const Sequence& query, const SequenceSet::ConstIterator begin, const SequenceSet::ConstIterator end, const Frame frame, const Bias_correction* composition_bias, const DP::Flags flags, const HspValues v, Statistics& stat))
+DECL_DISPATCH(std::list<Hsp>, swipe, (const Targets& targets, Params& params))
+DECL_DISPATCH(std::list<Hsp>, swipe_set, (const SequenceSet::ConstIterator begin, const SequenceSet::ConstIterator end, Params& params))
 DECL_DISPATCH(unsigned, bin, (HspValues v, int query_len, int score, int ungapped_score, size_t dp_size, unsigned score_width))
 
 }

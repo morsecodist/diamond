@@ -104,7 +104,8 @@ static TextBuffer* view_query(const string& query_acc, const string& buf, Sequen
 			if (targets.length(i) > 0)
 				dp_targets[DP::BandedSwipe::bin(v, query.size(), 0, 0, 0, 0)].emplace_back(targets[i], i, &matrices[i - t]);
 
-		hsp.splice(hsp.end(), DP::BandedSwipe::swipe(Sequence(query), dp_targets, Frame(0), nullptr, DP::Flags::FULL_MATRIX, v, stats));
+		DP::Params params{ Sequence(query), Frame(0), query.size(), nullptr, DP::Flags::FULL_MATRIX, v, stats };
+		hsp.splice(hsp.end(), DP::BandedSwipe::swipe(dp_targets, params));
 	}
 
 	hsp.sort(Hsp::cmp_evalue);

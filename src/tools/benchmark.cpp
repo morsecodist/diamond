@@ -192,16 +192,19 @@ void swipe(const Sequence&s1, const Sequence&s2) {
 	auto dp_size = (n * query.length() * s2.length() * CHANNELS);
 	config.comp_based_stats = 4;
 	Stats::TargetMatrix matrix(Stats::composition(s1), s1.length(), s2);
+	DP::Params params{
+		query, Frame(0), query.length(), cbs.int8.data(), DP::Flags::FULL_MATRIX, HspValues(), stat
+	};
 
 	high_resolution_clock::time_point t1 = high_resolution_clock::now();
 	for (size_t i = 0; i < n; ++i) {
-		volatile list<Hsp> v = ::DP::BandedSwipe::swipe(query, targets, Frame(0), nullptr, DP::Flags::FULL_MATRIX, HspValues::NONE, stat);
+		volatile list<Hsp> v = ::DP::BandedSwipe::swipe(targets, params);
 	}
 	cout << "SWIPE (int8_t):\t\t\t" << (double)duration_cast<std::chrono::nanoseconds>(high_resolution_clock::now() - t1).count() / dp_size * 1000 << " ps/Cell" << endl;
 
 	t1 = high_resolution_clock::now();
 	for (size_t i = 0; i < n; ++i) {
-		volatile list<Hsp> v = ::DP::BandedSwipe::swipe(query, targets, Frame(0), nullptr, DP::Flags::FULL_MATRIX, HspValues::COORDS, stat);
+		volatile list<Hsp> v = ::DP::BandedSwipe::swipe(targets, params);
 	}
 	cout << "SWIPE (int8_t, Stats):\t\t" << (double)duration_cast<std::chrono::nanoseconds>(high_resolution_clock::now() - t1).count() / dp_size * 1000 << " ps/Cell" << endl;
 
@@ -209,19 +212,19 @@ void swipe(const Sequence&s1, const Sequence&s2) {
 	for (size_t i = 0; i < 32; ++i)
 		targets[0][i].matrix = &matrix;
 	for (size_t i = 0; i < n; ++i) {
-		volatile list<Hsp> v = ::DP::BandedSwipe::swipe(query, targets, Frame(0), nullptr, DP::Flags::FULL_MATRIX, HspValues::NONE, stat);
+		volatile list<Hsp> v = ::DP::BandedSwipe::swipe(targets, params);
 	}
 	cout << "SWIPE (int8_t, MatrixAdjust):\t" << (double)duration_cast<std::chrono::nanoseconds>(high_resolution_clock::now() - t1).count() / dp_size * 1000 << " ps/Cell" << endl;
 
 	t1 = high_resolution_clock::now();
 	for (size_t i = 0; i < n; ++i) {
-		volatile list<Hsp> v = ::DP::BandedSwipe::swipe(query, targets, Frame(0), &cbs, DP::Flags::FULL_MATRIX, HspValues::NONE, stat);
+		volatile list<Hsp> v = ::DP::BandedSwipe::swipe(targets, params);
 	}
 	cout << "SWIPE (int8_t, CBS):\t\t" << (double)duration_cast<std::chrono::nanoseconds>(high_resolution_clock::now() - t1).count() / dp_size * 1000 << " ps/Cell" << endl;
 
 	t1 = high_resolution_clock::now();
 	for (size_t i = 0; i < n; ++i) {
-		volatile list<Hsp> v = ::DP::BandedSwipe::swipe(query, targets, Frame(0), nullptr, DP::Flags::FULL_MATRIX, HspValues::TRANSCRIPT, stat);
+		volatile list<Hsp> v = ::DP::BandedSwipe::swipe(targets, params);
 	}
 	cout << "SWIPE (int8_t, TB):\t\t" << (double)duration_cast<std::chrono::nanoseconds>(high_resolution_clock::now() - t1).count() / dp_size * 1000 << " ps/Cell" << endl;
 }
@@ -236,21 +239,24 @@ void banded_swipe(const Sequence &s1, const Sequence &s2) {
 	//static const size_t n = 1llu;
 	Statistics stat;
 	Bias_correction cbs(s1);
+	DP::Params params{
+		s1, Frame(0), s1.length(), cbs.int8.data(), DP::Flags::NONE, HspValues(), stat
+	};
 	high_resolution_clock::time_point t1 = high_resolution_clock::now();
 	for (size_t i = 0; i < n; ++i) {
-		volatile auto out = ::DP::BandedSwipe::swipe(s1, targets, Frame(0), &cbs, DP::Flags::NONE, HspValues(), stat);
+		volatile auto out = ::DP::BandedSwipe::swipe(targets, params);
 	}
 	cout << "Banded SWIPE (int16_t, CBS):\t" << (double)duration_cast<std::chrono::nanoseconds>(high_resolution_clock::now() - t1).count() / (n * s1.length() * 65 * 16) * 1000 << " ps/Cell" << endl;
 	
 	t1 = high_resolution_clock::now();
 	for (size_t i = 0; i < n; ++i) {
-		volatile auto out = ::DP::BandedSwipe::swipe(s1, targets, Frame(0), nullptr, DP::Flags::NONE, HspValues(), stat);
+		volatile auto out = ::DP::BandedSwipe::swipe(targets, params);
 	}
 	cout << "Banded SWIPE (int16_t):\t\t" << (double)duration_cast<std::chrono::nanoseconds>(high_resolution_clock::now() - t1).count() / (n * s1.length() * 65 * 16) * 1000 << " ps/Cell" << endl;
 
 	t1 = high_resolution_clock::now();
 	for (size_t i = 0; i < n; ++i) {
-		volatile auto out = ::DP::BandedSwipe::swipe(s1, targets, Frame(0), &cbs, DP::Flags::NONE, HspValues::TRANSCRIPT, stat);
+		volatile auto out = ::DP::BandedSwipe::swipe(targets, params);
 	}
 	cout << "Banded SWIPE (int16_t, CBS, TB):" << (double)duration_cast<std::chrono::nanoseconds>(high_resolution_clock::now() - t1).count() / (n * s1.length() * 65 * 16) * 1000 << " ps/Cell" << endl;
 }
