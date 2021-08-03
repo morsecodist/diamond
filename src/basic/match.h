@@ -181,7 +181,7 @@ struct Hsp
 	}
 
 	static bool cmp_evalue(const Hsp& a, const Hsp& b) {
-		return a.evalue < b.evalue;
+		return a.evalue < b.evalue || (a.evalue == b.evalue && a.score > b.score);
 	}
 
 	double id_percent() const
