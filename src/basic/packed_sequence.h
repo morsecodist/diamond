@@ -37,7 +37,7 @@ inline bool has_n(const Sequence &seq)
 struct Packed_sequence
 {
 
-	Packed_sequence(const Sequence &seq, Sequence_type type):
+	Packed_sequence(const Sequence &seq, SequenceType type):
 		has_n_ (type == nucleotide ? ::has_n(seq) : false)
 	{
 		switch (type) {

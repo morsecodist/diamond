@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../util/simd.h"
 
 typedef signed char Letter;
-typedef enum { amino_acid=0, nucleotide=1 } Sequence_type;
+typedef enum { amino_acid=0, nucleotide=1 } SequenceType;
 struct Amino_acid {};
 struct Nucleotide {};
 
@@ -59,12 +59,12 @@ private:
 
 struct Value_traits
 {
-	Value_traits(const char *alphabet, Letter mask_char, const char *ignore, Sequence_type seq_type);
+	Value_traits(const char *alphabet, Letter mask_char, const char *ignore, SequenceType seq_type);
 	const char *alphabet;
 	unsigned alphabet_size;
 	Letter mask_char;
 	Char_representation from_char;
-	Sequence_type seq_type;
+	SequenceType seq_type;
 };
 
 #define AMINO_ACID_ALPHABET "ARNDCQEGHILKMFPSTWYVBJZX*_"
@@ -123,7 +123,7 @@ struct Align_mode
 		return i;
 	}
 	enum { blastp = 2, blastx = 3, blastn = 4 };
-	Sequence_type sequence_type, input_sequence_type;
+	SequenceType sequence_type, input_sequence_type;
 	unsigned mode, query_contexts;
 	int query_len_factor;
 	bool query_translated;

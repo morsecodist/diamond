@@ -48,7 +48,7 @@ Char_representation::Char_representation(unsigned size, const char* chars, char 
 	}
 }
 
-Value_traits::Value_traits(const char* alphabet, Letter mask_char, const char* ignore, Sequence_type seq_type) :
+Value_traits::Value_traits(const char* alphabet, Letter mask_char, const char* ignore, SequenceType seq_type) :
 	alphabet(alphabet),
 	alphabet_size((unsigned)strlen(alphabet)),
 	mask_char(mask_char),
@@ -56,8 +56,8 @@ Value_traits::Value_traits(const char* alphabet, Letter mask_char, const char* i
 	seq_type(seq_type)
 {}
 
-const Value_traits amino_acid_traits(AMINO_ACID_ALPHABET, 23, "UO-", Sequence_type::amino_acid);
-const Value_traits nucleotide_traits("ACGTN", 4, "MRWSYKVHDBX", Sequence_type::nucleotide);
+const Value_traits amino_acid_traits(AMINO_ACID_ALPHABET, 23, "UO-", SequenceType::amino_acid);
+const Value_traits nucleotide_traits("ACGTN", 4, "MRWSYKVHDBX", SequenceType::nucleotide);
 Value_traits value_traits(amino_acid_traits);
 Value_traits input_value_traits(amino_acid_traits);
 

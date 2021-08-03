@@ -77,9 +77,9 @@ bool Block::long_offsets() const {
 	return seqs_.raw_len() > (size_t)std::numeric_limits<uint32_t>::max();
 }
 
-static size_t push_seq(SequenceSet& ss, SequenceSet& source_seqs, const vector<Letter>& seq, unsigned frame_mask, Sequence_type seq_type)
+static size_t push_seq(SequenceSet& ss, SequenceSet& source_seqs, const vector<Letter>& seq, unsigned frame_mask, SequenceType seq_type)
 {
-	if (seq_type == Sequence_type::amino_acid) {
+	if (seq_type == SequenceType::amino_acid) {
 		ss.push_back(seq.cbegin(), seq.cend());
 		return seq.size();
 	}

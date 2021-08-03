@@ -45,6 +45,18 @@ std::string columns(const std::string& line, const size_t begin, const size_t en
 	return {};
 }
 
+size_t column_count(const std::string& line)
+{
+	if (line.empty())
+		return 0;
+	size_t n = 1, i = 0;
+	while ((i = line.find_first_of('\t', i)) != string::npos) {
+		++n;
+		++i;
+	}
+	return n;
+}
+
 std::vector<std::string> extract_column(const std::string& buf, const size_t i)
 {
 	Util::String::Tokenizer tok(buf, "\n");

@@ -530,7 +530,8 @@ Config::Config(int argc, const char **argv, bool check_io)
 		("seed-cut", 0, "", seed_cut_)
 		("no-reorder", 0, "", no_reorder)
 		("file1", 0, "", file1)
-		("file2", 0, "", file2);
+		("file2", 0, "", file2)
+		("key2", 0, "", key2);
 
 	parser.add(general).add(makedb).add(cluster).add(aligner).add(advanced).add(view_options).add(getseq_options).add(hidden_options).add(deprecated_options);
 	parser.store(argc, argv, command);

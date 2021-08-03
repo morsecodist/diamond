@@ -270,6 +270,7 @@ struct Config
 	bool no_reorder;
 	string file1;
 	string file2;
+	size_t key2;
 
 	Sensitivity sensitivity;
 
