@@ -89,17 +89,12 @@ struct Config
 	unsigned fetch_size;
 	uint64_t	db_size;
 	double	query_cover;
-
 	bool		mode_sensitive;
 	unsigned	verbosity;
 	bool no_auto_append;
-	unsigned local_align_mode;
-	bool extend_all;
-	bool slow_search;
 	string_vector seq_no;
 	double rank_factor;
 	double rank_ratio;
-	bool ht_mode;
 	double freq_sd_;
 	unsigned target_fetch_size;
 	bool mode_more_sensitive;

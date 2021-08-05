@@ -1,6 +1,6 @@
 /****
 DIAMOND protein aligner
-Copyright (C) 2013-2020 Max Planck Society for the Advancement of Science e.V.
+Copyright (C) 2013-2021 Max Planck Society for the Advancement of Science e.V.
                         Benjamin Buchfink
                         Eberhard Karls Universitaet Tuebingen
 
@@ -408,10 +408,6 @@ Config::Config(int argc, const char **argv, bool check_io)
 	Options_group hidden_options("", true);
 #endif
 	hidden_options.add()
-		("extend-all", 0, "extend all seed hits", extend_all)
-		("local-align", 0, "Local alignment algorithm", local_align_mode, 0u)
-		("slow-search", 0, "", slow_search)
-		("ht", 0, "", ht_mode)
 		("match1", 0, "", match_file1)
 		("match2", 0, "", match_file2)
 		("seed-freq", 0, "maximum seed frequency", max_seed_freq, -15.0)

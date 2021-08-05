@@ -212,7 +212,6 @@ set(OBJECTS
   src/test/data.cpp
   src/test/test_cases.cpp
   src/chaining/smith_waterman.cpp
-  src/basic/value.cpp
   src/tools/merge_tsv.cpp
   src/output/xml_format.cpp
   src/align/gapped_filter.cpp
@@ -269,6 +268,7 @@ set(OBJECTS
   src/tools/view.cpp
   src/util/string/tsv.cpp
   src/tools/join.cpp
+  src/basic/value.cpp
 )
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")
