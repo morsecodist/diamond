@@ -113,7 +113,7 @@ void list_seeds() {
 	PtrVector<Callback> cb;
 	cb.push_back(new Callback{ seeds });
 	auto parts = block->seqs().partition(1);
-	::shapes = ShapeConfig(shape_codes.at(Sensitivity::DEFAULT), 0);
+	::shapes = ShapeConfig(config.shape_mask.empty() ? shape_codes.at(Sensitivity::DEFAULT) : config.shape_mask, config.shapes);
 	Reduction::reduction = Reduction("A R N D C Q E G H I L K M F P S T W Y V");
 	enum_seeds(&block->seqs(), cb, parts, 0, 1, &no_filter, SeedEncoding::SPACED_FACTOR, nullptr, false, false);
 	ips4o::parallel::sort(seeds.begin(), seeds.end());
@@ -126,11 +126,10 @@ void list_seeds() {
 	}
 	ips4o::parallel::sort(counts.begin(), counts.end());
 
-	Reduction murphy10("A KR EDNQ C G H ILVM FYW P ST");
 	auto end = std::min(counts.rbegin() + config.query_count, counts.rend());
 	string s;
 	for (auto i = counts.rbegin(); i != end; ++i) {
 		s = Reduction::reduction.decode_seed(i->second, shapes[0].weight_);
-		cout << i->first << '\t' << s << '\t' << freq(s, murphy10) << endl;
+		cout << i->first << '\t' << s << endl;
 	}
 }

@@ -47,7 +47,6 @@ bool Search::seed_is_complex_unreduced(Letter* seq, const Shape& shape, const do
 {
 	array<unsigned, AMINO_ACID_COUNT> count;
 	count.fill(0);
-	double f = 0.0;
 	for (unsigned i = 0; i < shape.weight_; ++i) {
 		const Letter l = letter_mask(seq[shape.positions_[i]]);
 		const unsigned r = Reduction::reduction(l);
@@ -56,12 +55,11 @@ bool Search::seed_is_complex_unreduced(Letter* seq, const Shape& shape, const do
 			return false;
 		}
 		++count[(int)l];
-		f += Reduction::reduction.freq(r);
 	}
 	double entropy = lnfact[shape.weight_];
 	for (unsigned i = 0; i < AMINO_ACID_COUNT; ++i)
 		entropy -= lnfact[count[i]];
-	if (entropy / shape.weight_ < cut || f / shape.weight_ > config.max_seed_freq) {
+	if (entropy / shape.weight_ < cut) {
 		if (mask_seeds) *seq |= SEED_MASK;
 		return false;
 	}
