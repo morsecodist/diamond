@@ -90,8 +90,9 @@ void hash_seqs() {
 
 static double freq(const string& s, const Reduction& r) {
 	double f = 0.0;
-	for (char c : s)
+	for (char c : s) {
 		f += r.freq(r(amino_acid_traits.from_char(c)));
+	}
 	return f / s.length();
 }
 

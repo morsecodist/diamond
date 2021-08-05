@@ -46,7 +46,6 @@ struct Config
 	string	database;
 	string_vector query_file;
 	unsigned	merge_seq_treshold;
-	unsigned	hit_cap;
 	unsigned shapes;
 	size_t	max_alignments;
 	string	match_file1;
@@ -101,7 +100,6 @@ struct Config
 	double rank_factor;
 	double rank_ratio;
 	bool ht_mode;
-	bool old_freq;
 	double freq_sd_;
 	unsigned target_fetch_size;
 	bool mode_more_sensitive;

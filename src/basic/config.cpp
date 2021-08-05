@@ -412,10 +412,8 @@ Config::Config(int argc, const char **argv, bool check_io)
 		("local-align", 0, "Local alignment algorithm", local_align_mode, 0u)
 		("slow-search", 0, "", slow_search)
 		("ht", 0, "", ht_mode)
-		("old-freq", 0, "", old_freq)
 		("match1", 0, "", match_file1)
 		("match2", 0, "", match_file2)
-		("max-hits", 'C', "maximum number of hits to consider for one seed", hit_cap)
 		("seed-freq", 0, "maximum seed frequency", max_seed_freq, -15.0)
 		("space-penalty", 0, "", space_penalty, 0.5)
 		("reverse", 0, "", reverse)
@@ -602,9 +600,6 @@ Config::Config(int argc, const char **argv, bool check_io)
 				throw std::runtime_error("Missing parameter: database file (--db/-d)");
 		}
 	}
-
-	if (hit_cap != 0)
-		throw std::runtime_error("Deprecated parameter: --max-hits/-C.");
 
 	if (debug_log)
 		verbosity = 3;

@@ -247,8 +247,10 @@ Reduction::Reduction(const char* definition_string)
 			map_[letter] = i;
 			map8_[letter] = i;
 			map8b_[letter] = i;
-			freq_[i] += std::log(Stats::blosum62.background_freqs[letter]);
+			freq_[i] += Stats::blosum62.background_freqs[letter];
 		}
+	for (double& f : freq_)
+		f = std::log(f);
 	map8_[(long)MASK_LETTER] = (Letter)size_;
 	map8_[(long)STOP_LETTER] = (Letter)size_;
 	map8_[(long)DELIMITER_LETTER] = (Letter)size_;
