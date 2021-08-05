@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 #include <vector>
+#include <array>
 #include <string>
 #include <string.h>
 #include "value.h"
@@ -87,6 +88,10 @@ struct Reduction
 			dst[i] = reduction(letter_mask(seq[i]));
 	}
 
+	double freq(unsigned bucket) const {
+		return freq_[bucket];
+	}
+
 	std::string decode_seed(const uint64_t seed, const size_t len) const;
 
 	static Reduction reduction;
@@ -98,5 +103,6 @@ private:
 	unsigned size_;
 	uint64_t bit_size_;
 	double bit_size_exact_;
+	std::array<double, 20> freq_;
 
 };

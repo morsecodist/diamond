@@ -88,6 +88,13 @@ void hash_seqs() {
 	f.close();
 }
 
+static double freq(const string& s, const Reduction& r) {
+	double f = 0.0;
+	for (char c : s)
+		f += r.freq(r(amino_acid_traits.from_char(c)));
+	return f / s.length();
+}
+
 void list_seeds() {
 	struct Callback {
 		bool operator()(uint64_t seed, size_t, unsigned, size_t) {
@@ -117,7 +124,12 @@ void list_seeds() {
 		++it;
 	}
 	ips4o::parallel::sort(counts.begin(), counts.end());
+
+	Reduction murphy10("A KR EDNQ C G H ILVM FYW P ST");
 	auto end = std::min(counts.rbegin() + config.query_count, counts.rend());
-	for (auto i = counts.rbegin(); i != end; ++i)
-		cout << i->first << '\t' << Reduction::reduction.decode_seed(i->second, shapes[0].weight_) << endl;
+	string s;
+	for (auto i = counts.rbegin(); i != end; ++i) {
+		s = Reduction::reduction.decode_seed(i->second, shapes[0].weight_);
+		cout << i->first << '\t' << s << '\t' << freq(s, murphy10) << endl;
+	}
 }

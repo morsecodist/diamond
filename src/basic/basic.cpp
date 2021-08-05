@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "sequence.h"
 #include "masking.h"
 #include "../util/util.h"
+#include "../stats/standard_matrix.h"
 
 const char* Const::version_string = "2.0.11";
 const char* Const::program_name = "diamond";
@@ -238,12 +239,15 @@ Reduction::Reduction(const char* definition_string)
 	size_ = (unsigned)tokens.size();
 	bit_size_exact_ = log(size_) / log(2);
 	bit_size_ = (uint64_t)ceil(bit_size_exact_);
+	freq_.fill(0.0);
 	for (unsigned i = 0; i < size_; ++i)
 		for (unsigned j = 0; j < tokens[i].length(); ++j) {
 			const char ch = tokens[i][j];
-			map_[(long)value_traits.from_char(ch)] = i;
-			map8_[(long)value_traits.from_char(ch)] = i;
-			map8b_[(long)value_traits.from_char(ch)] = i;
+			const long letter = (long)value_traits.from_char(ch);
+			map_[letter] = i;
+			map8_[letter] = i;
+			map8b_[letter] = i;
+			freq_[i] += std::log(Stats::blosum62.background_freqs[letter]);
 		}
 	map8_[(long)MASK_LETTER] = (Letter)size_;
 	map8_[(long)STOP_LETTER] = (Letter)size_;
