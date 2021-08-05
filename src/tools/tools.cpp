@@ -15,6 +15,7 @@
 #include "../search/search.h"
 #define _REENTRANT
 #include "../lib/ips4o/ips4o.hpp"
+#include "../basic/masking.h"
 
 using std::array;
 using std::cout;
@@ -98,6 +99,7 @@ void list_seeds() {
 	};
 	unique_ptr<SequenceFile> db(SequenceFile::auto_create(config.database));
 	unique_ptr<Block> block(db->load_seqs(SIZE_MAX));
+	mask_seqs(block->seqs(), Masking::get(), true, MaskingAlgo::TANTAN);
 	vector<uint64_t> seeds;
 	seeds.reserve(block->seqs().letters());
 	PtrVector<Callback> cb;

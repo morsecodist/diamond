@@ -683,6 +683,7 @@ Config::Config(int argc, const char **argv, bool check_io)
 	case Config::cluster:
 	case Config::regression_test:
 	case Config::compute_medoids:
+	case Config::LIST_SEEDS:
 		if (frame_shift != 0 && command == Config::blastp)
 			throw std::runtime_error("Frameshift alignments are only supported for translated searches.");
 		if (query_range_culling && frame_shift == 0)
@@ -711,8 +712,7 @@ Config::Config(int argc, const char **argv, bool check_io)
 			}
 		}
 		message_stream << "Scoring parameters: " << score_matrix << endl;
-		//if (masking == 1 || target_seg)
-			Masking::instance = unique_ptr<Masking>(new Masking(score_matrix));
+		Masking::instance = unique_ptr<Masking>(new Masking(score_matrix));
 	}
 
 	if (command == Config::blastp || command == Config::blastx || command == Config::benchmark || command == Config::model_sim || command == Config::opt
