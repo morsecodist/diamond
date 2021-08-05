@@ -11,11 +11,17 @@
 #include "../stats/cbs.h"
 #include "../util/algo/MurmurHash3.h"
 #include "../util/sequence/sequence.h"
+#include "../data/sequence_file.h"
+#include "../search/search.h"
+#define _REENTRANT
+#include "../lib/ips4o/ips4o.hpp"
 
 using std::array;
 using std::cout;
 using std::endl;
 using std::vector;
+using std::unique_ptr;
+using std::pair;
 
 void filter_blasttab() {
 	TextInputFile in("");
@@ -79,4 +85,37 @@ void hash_seqs() {
 		cout << Util::Seq::seqid(id.c_str(), false) << '\t' << hex_print(hash.data(), 16) << endl;
 	}
 	f.close();
+}
+
+void list_seeds() {
+	struct Callback {
+		bool operator()(uint64_t seed, size_t, unsigned, size_t) {
+			seeds.push_back(seed);
+			return true;
+		};
+		void finish() {}
+		vector<uint64_t>& seeds;
+	};
+	unique_ptr<SequenceFile> db(SequenceFile::auto_create(config.database));
+	unique_ptr<Block> block(db->load_seqs(SIZE_MAX));
+	vector<uint64_t> seeds;
+	seeds.reserve(block->seqs().letters());
+	PtrVector<Callback> cb;
+	cb.push_back(new Callback{ seeds });
+	auto parts = block->seqs().partition(1);
+	::shapes = ShapeConfig(shape_codes.at(Sensitivity::DEFAULT), 0);
+	Reduction::reduction = Reduction("A R N D C Q E G H I L K M F P S T W Y V");
+	enum_seeds(&block->seqs(), cb, parts, 0, 1, &no_filter, SeedEncoding::SPACED_FACTOR, nullptr, false, false);
+	ips4o::parallel::sort(seeds.begin(), seeds.end());
+
+	auto it = merge_keys(seeds.begin(), seeds.end(), [](uint64_t seed) {return seed; });
+	vector<pair<uint64_t, uint64_t>> counts;
+	while (it.good()) {
+		counts.push_back({ it.count(), it.key() });
+		++it;
+	}
+	ips4o::parallel::sort(counts.begin(), counts.end());
+	auto end = std::min(counts.rbegin() + config.query_count, counts.rend());
+	for (auto i = counts.rbegin(); i != end; ++i)
+		cout << i->first << '\t' << Reduction::reduction.decode_seed(i->second, shapes[0].weight_) << endl;
 }

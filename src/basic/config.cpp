@@ -196,6 +196,7 @@ Config::Config(int argc, const char **argv, bool check_io)
 		.add_command("composition", "", composition)
 		.add_command("join", "", JOIN)
 		.add_command("hashseqs", "", HASH_SEQS)
+		.add_command("listseeds", "", LIST_SEEDS)
 #endif
 		;
 

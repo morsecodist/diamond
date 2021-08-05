@@ -5,6 +5,9 @@
   alignment with the ranges of the primary HSP masked.
 - Added the option `--seed-cut` to set a complexity cutoff for indexed seeds.
 - The `--freq-sd` option is now deprecated and has no effect.
+- Fixed a bug that caused the `full_sseq` output field to contain invalid information
+  or to produce an error when using a BLAST database.
+- Changed composition based statistics to use BLOSUM62 background frequencies.
 
 [2.0.11]
 - Fixed a bug that could cause invalid output when using `--masking 0` combined with

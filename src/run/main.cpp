@@ -57,6 +57,7 @@ void find_shapes();
 void composition();
 void join();
 void hash_seqs();
+void list_seeds();
 #ifdef WITH_BLASTDB
 void prep_blast_db();
 #endif
@@ -205,6 +206,9 @@ int main(int ac, const char* av[])
 			break;
 		case Config::JOIN:
 			join();
+			break;
+		case Config::LIST_SEEDS:
+			list_seeds();
 			break;
 		default:
 			return 1;

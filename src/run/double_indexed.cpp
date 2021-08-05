@@ -105,8 +105,10 @@ void run_ref_chunk(SequenceFile &db_file,
 	auto& ref_seqs = cfg.target->seqs();
 	auto& query_seqs = cfg.query->seqs();
 
-	if (config.comp_based_stats == Stats::CBS::COMP_BASED_STATS_AND_MATRIX_ADJUST || flag_any(output_format->flags, Output::Flags::TARGET_SEQS))
+	if (config.comp_based_stats == Stats::CBS::COMP_BASED_STATS_AND_MATRIX_ADJUST || flag_any(output_format->flags, Output::Flags::TARGET_SEQS)) {
 		cfg.target->unmasked_seqs() = ref_seqs;
+		cfg.target->unmasked_seqs().convert_all_to_std_alph(config.threads_);
+	}
 
 	task_timer timer;
 	if (cfg.target_masking != MaskingAlgo::NONE && !cfg.lazy_masking) {

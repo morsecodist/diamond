@@ -207,12 +207,12 @@ size_t BlastDB::dict_len(size_t dict_id, const size_t ref_block) const
 
 std::vector<Letter> BlastDB::dict_seq(size_t dict_id, const size_t ref_block) const
 {
-	if (dict_id >= dict_oid_.size())
+	const size_t b = dict_block(ref_block);
+	if (dict_id >= dict_oid_[b].size())
 		throw std::runtime_error("Dictionary not loaded.");
 	vector<Letter> v;
-	seq_data(dict_oid_[dict_block(ref_block)][dict_id], v);
-	for (Letter& l : v)
-		l = NCBI_TO_STD[(int)l];
+	seq_data(dict_oid_[b][dict_id], v);
+	alph_ncbi_to_std(v.begin(), v.end());
 	return v;
 }
 

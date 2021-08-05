@@ -87,6 +87,8 @@ struct Reduction
 			dst[i] = reduction(letter_mask(seq[i]));
 	}
 
+	std::string decode_seed(const uint64_t seed, const size_t len) const;
+
 	static Reduction reduction;
 
 private:

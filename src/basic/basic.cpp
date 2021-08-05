@@ -252,3 +252,13 @@ Reduction::Reduction(const char* definition_string)
 	map8b_[(long)STOP_LETTER] = (Letter)(size_ + 1);
 	map8b_[(long)DELIMITER_LETTER] = (Letter)(size_ + 1);
 }
+
+std::string Reduction::decode_seed(const uint64_t seed, const size_t len) const {
+	string s(len, '-');
+	uint64_t c = seed;
+	for (size_t i = 0; i < len; ++i) {
+		s[len - i - 1] = amino_acid_traits.alphabet[c % size_];
+		c /= size_;
+	}
+	return s;
+}

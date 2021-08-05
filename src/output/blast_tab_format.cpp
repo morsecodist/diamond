@@ -32,6 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../util/util.h"
 #include "../run/config.h"
 #include "../util/sequence/sequence.h"
+#include "../dp/ungapped.h"
 
 using namespace Output;
 using std::endl;
@@ -102,7 +103,8 @@ const vector<OutputField> Blast_tab_format::field_def = {
 { "ungapped_score", "Ungapped score", HspValues::NONE, Flags::NONE },	// 61
 { "full_qseq_mate", "Query sequence of the mate", HspValues::NONE, Flags::NONE }, // 62
 { "qseq_translated", "Aligned part of query sequence (translated)", HspValues::TRANSCRIPT, Flags::NONE }, // 63 needs transcript only in frameshift mode
-{ "reduced_match_bitstring", "", HspValues::TRANSCRIPT, Flags::NONE} // 64
+{ "reduced_match_bitstring", "", HspValues::TRANSCRIPT, Flags::NONE}, // 64
+{ "normalized_bitscore_semiglobal", "", HspValues::NONE, Flags::NONE}  // 65
 };
 
 Blast_tab_format::Blast_tab_format() :
@@ -136,7 +138,7 @@ Blast_tab_format::Blast_tab_format() :
 		fields.push_back(j);
 		if (j == 6 || j == 39 || j == 40 || j == 34)
 			config.salltitles = true;
-		if (j == 48)
+		if (j == 48 || j == 65)
 			flags |= Flags::TARGET_SEQS;
 		if (j == 49 || j == 53)
 			config.store_query_quality = true;
@@ -434,6 +436,11 @@ void Blast_tab_format::print_match(const HspContext& r, const Search::Config& cf
 			out << s;
 			break;
 		}
+#ifdef EXTRA
+		case 65:
+			out.print_d(r.bit_score() / score_matrix.bitscore(self_score(r.subject_seq)));
+			break;
+#endif
 		default:
 			throw std::runtime_error(string("Invalid output field: ") + field_def[*i].key);
 		}

@@ -30,3 +30,4 @@ int ungapped_window(const Letter* query, const Letter* subject, int window);
 Diagonal_segment xdrop_ungapped(const Sequence &query, const Bias_correction &query_bc, const Sequence &subject, int qa, int sa);
 Diagonal_segment xdrop_ungapped(const Sequence &query, const Sequence &subject, int qa, int sa);
 int score_range(Sequence query, Sequence subject, int i, int j, int j_end);
+int self_score(const Sequence& seq);
