@@ -22,22 +22,36 @@ inline uint64_t kmer(It it) {
 	return k;
 }
 
-inline void reduce_softmask(Letter* seq, size_t len, std::vector<Letter>& out, const ptrdiff_t shape_len) {
+inline void reduce_softmask(Letter* seq, size_t len, std::vector<Letter>& out, const ptrdiff_t shape_len, const bool mask_seeds) {
 	if (soft_mask.empty() || len < SOFTMASK_KMER) {
 		Reduction::reduce_seq(Sequence(seq, len), out);
 		return;
-	}
-	std::vector<Letter> m(seq, seq + len);
+	}	
 	std::vector<ptrdiff_t> pos;
-	for (ptrdiff_t i = 0; i < m.size() - SOFTMASK_KMER + 1; ++i) {
-		const uint64_t k = kmer(m.begin() + i);
+	const ptrdiff_t l = len - SOFTMASK_KMER + 1;
+	for (ptrdiff_t i = 0; i < l; ++i) {
+		const uint64_t k = kmer(&seq[i]);
 		if (k && soft_mask.find(k) != soft_mask.end())
 			pos.push_back(i);
 	}
-	for (const ptrdiff_t i : pos) {
-		std::fill(m.begin() + i, m.begin() + i + SOFTMASK_KMER, MASK_LETTER);
-		for (ptrdiff_t j = std::max(i - shape_len + 1, (ptrdiff_t)0); j < i + SOFTMASK_KMER; ++j)
-			seq[j] |= SEED_MASK;
+	size_t n = 0;
+	for (auto i = pos.cbegin(); i != pos.cend(); ++i) {
+		if (i == pos.cbegin() || *i - *(i - 1) >= SOFTMASK_KMER)
+			n += SOFTMASK_KMER;
+		else
+			n += *i - (*i - 1);
+	}
+	if ((double)n / len >= 0.5) {
+		Reduction::reduce_seq(Sequence(seq, len), out);
+		return;
+	}
+
+	std::vector<Letter> m(seq, seq + len);	
+	for (auto i = pos.cbegin(); i != pos.cend(); ++i) {
+		std::fill(m.begin() + *i, m.begin() + *i + SOFTMASK_KMER, MASK_LETTER);
+		if (mask_seeds)
+			for (ptrdiff_t j = std::max(*i - shape_len + 1, (ptrdiff_t)0); j < *i + SOFTMASK_KMER; ++j)
+				seq[j] |= SEED_MASK;
 	}
 	Reduction::reduce_seq(m, out);
 }
@@ -54,7 +68,7 @@ std::pair<size_t, size_t> enum_seeds(SequenceSet* seqs, _f* f, unsigned begin, u
 		seqs->convert_to_std_alph(i);
 		const Sequence seq = (*seqs)[i];
 		//Reduction::reduce_seq(seq, buf);
-		reduce_softmask(seqs->ptr(i), seqs->length(i), buf, shapes[shape_range.first].length_);
+		reduce_softmask(seqs->ptr(i), seqs->length(i), buf, shapes[shape_range.first].length_, mask_seeds);
 		for (size_t shape_id = shape_range.first; shape_id < shape_range.second; ++shape_id) {
 			const Shape& sh = shapes[shape_id];
 			if (seq.length() < sh.length_) continue;
