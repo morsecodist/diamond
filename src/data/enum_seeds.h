@@ -22,20 +22,23 @@ inline uint64_t kmer(It it) {
 	return k;
 }
 
-inline void reduce_softmask(const Sequence& seq, std::vector<Letter>& out) {
-	if (soft_mask.empty() || seq.length() < SOFTMASK_KMER) {
-		Reduction::reduce_seq(seq, out);
+inline void reduce_softmask(Letter* seq, size_t len, std::vector<Letter>& out) {
+	if (soft_mask.empty() || len < SOFTMASK_KMER) {
+		Reduction::reduce_seq(Sequence(seq, len), out);
 		return;
 	}
-	std::vector<Letter> m = seq.copy();
+	std::vector<Letter> m(seq, seq + len);
 	std::vector<size_t> pos;
 	for (size_t i = 0; i < m.size() - SOFTMASK_KMER + 1; ++i) {
 		const uint64_t k = kmer(m.begin() + i);
 		if (k && soft_mask.find(k) != soft_mask.end())
 			pos.push_back(i);
 	}
-	for (size_t i : pos)
+	for (size_t i : pos) {
 		std::fill(m.begin() + i, m.begin() + i + SOFTMASK_KMER, MASK_LETTER);
+		for (size_t j = i; j < i + SOFTMASK_KMER; ++j)
+			seq[j] |= SEED_MASK;
+	}
 	Reduction::reduce_seq(m, out);
 }
 
@@ -51,7 +54,7 @@ std::pair<size_t, size_t> enum_seeds(SequenceSet* seqs, _f* f, unsigned begin, u
 		seqs->convert_to_std_alph(i);
 		const Sequence seq = (*seqs)[i];
 		//Reduction::reduce_seq(seq, buf);
-		reduce_softmask(seq, buf);
+		reduce_softmask(seqs->ptr(i), seqs->length(i), buf);
 		for (size_t shape_id = shape_range.first; shape_id < shape_range.second; ++shape_id) {
 			const Shape& sh = shapes[shape_id];
 			if (seq.length() < sh.length_) continue;
