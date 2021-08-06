@@ -28,6 +28,7 @@ using std::array;
 using std::endl;
 
 extern double lnfact[];
+std::unordered_set<uint64_t> soft_mask;
 
 bool Search::seed_is_complex(const Letter* seq, const Shape& shape, const double cut)
 {

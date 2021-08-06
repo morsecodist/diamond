@@ -526,7 +526,8 @@ Config::Config(int argc, const char **argv, bool check_io)
 		("no-reorder", 0, "", no_reorder)
 		("file1", 0, "", file1)
 		("file2", 0, "", file2)
-		("key2", 0, "", key2);
+		("key2", 0, "", key2)
+		("motif-mask-file", 0, "", motif_mask_file);
 
 	parser.add(general).add(makedb).add(cluster).add(aligner).add(advanced).add(view_options).add(getseq_options).add(hidden_options).add(deprecated_options);
 	parser.store(argc, argv, command);

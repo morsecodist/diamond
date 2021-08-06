@@ -1,9 +1,43 @@
 #pragma once
 
+#include <unordered_set>
 #include "sequence_set.h"
 #include "../search/seed_complexity.h"
 
 enum class SeedEncoding { SPACED_FACTOR, HASHED, CONTIGUOUS };
+
+const size_t SOFTMASK_KMER = 8;
+extern std::unordered_set<uint64_t> soft_mask;
+
+template<typename It>
+inline uint64_t kmer(It it) {
+	uint64_t k = 0;
+	for (size_t i = 0; i < SOFTMASK_KMER; ++i) {
+		const Letter l = letter_mask(*it++);
+		if (l >= TRUE_AA)
+			return 0;
+		else
+			k = k * TRUE_AA + uint64_t(l);
+	}
+	return k;
+}
+
+inline void reduce_softmask(const Sequence& seq, std::vector<Letter>& out) {
+	if (soft_mask.empty()) {
+		Reduction::reduce_seq(seq, out);
+		return;
+	}
+	std::vector<Letter> m = seq.copy();
+	std::vector<size_t> pos;
+	for (size_t i = 0; i < m.size() - SOFTMASK_KMER + 1; ++i) {
+		const size_t k = kmer(m.begin() + i);
+		if (k && soft_mask.find(k) != soft_mask.end())
+			pos.push_back(i);
+	}
+	for (size_t i : pos)
+		std::fill(m.begin() + i, m.begin() + i + SOFTMASK_KMER, MASK_LETTER);
+	Reduction::reduce_seq(m, out);
+}
 
 template<typename _f, typename _filter>
 std::pair<size_t, size_t> enum_seeds(SequenceSet* seqs, _f* f, unsigned begin, unsigned end, std::pair<size_t, size_t> shape_range, const _filter* filter, const std::vector<bool>* skip, const bool mask_seeds)
@@ -16,7 +50,8 @@ std::pair<size_t, size_t> enum_seeds(SequenceSet* seqs, _f* f, unsigned begin, u
 			continue;
 		seqs->convert_to_std_alph(i);
 		const Sequence seq = (*seqs)[i];
-		Reduction::reduce_seq(seq, buf);
+		//Reduction::reduce_seq(seq, buf);
+		reduce_softmask(seq, buf);
 		for (size_t shape_id = shape_range.first; shape_id < shape_range.second; ++shape_id) {
 			const Shape& sh = shapes[shape_id];
 			if (seq.length() < sh.length_) continue;

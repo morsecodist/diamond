@@ -178,11 +178,7 @@ struct Sequence
 		return Sequence(p + 1, s - p - 1);
 	}
 	std::vector<Letter> copy() const {
-		std::vector<Letter> v;
-		v.reserve(len_);
-		for (size_t i = 0; i < len_; ++i)
-			v.push_back(data_[i]);
-		return v;
+		return std::vector<Letter>(data_, data_ + len_);
 	}
 	std::vector<Letter> reverse() const;
 	void mask(const interval &i) {

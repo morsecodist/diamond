@@ -709,6 +709,14 @@ void run(const shared_ptr<SequenceFile>& db, const shared_ptr<std::list<TextInpu
 	message_stream << "Block size = " << (size_t)(config.chunk_size * 1e9) << endl;
 	score_matrix.set_db_letters(config.db_size ? config.db_size : cfg.db->letters());
 
+	if (!config.motif_mask_file.empty()) {
+		TextInputFile f(config.motif_mask_file);
+		while (f.getline(), !f.line.empty() || !f.eof()) {
+			soft_mask.insert(kmer(Sequence::from_string(f.line.c_str(), amino_acid_traits).begin()));
+		}
+		f.close();
+	}
+
 	if (output_format->needs_taxon_nodes || taxon_filter || taxon_culling) {
 		timer.go("Loading taxonomy nodes");
 		cfg.taxon_nodes = cfg.db->taxon_nodes();
