@@ -23,14 +23,14 @@ inline uint64_t kmer(It it) {
 }
 
 inline void reduce_softmask(const Sequence& seq, std::vector<Letter>& out) {
-	if (soft_mask.empty()) {
+	if (soft_mask.empty() || seq.length() < SOFTMASK_KMER) {
 		Reduction::reduce_seq(seq, out);
 		return;
 	}
 	std::vector<Letter> m = seq.copy();
 	std::vector<size_t> pos;
 	for (size_t i = 0; i < m.size() - SOFTMASK_KMER + 1; ++i) {
-		const size_t k = kmer(m.begin() + i);
+		const uint64_t k = kmer(m.begin() + i);
 		if (k && soft_mask.find(k) != soft_mask.end())
 			pos.push_back(i);
 	}
