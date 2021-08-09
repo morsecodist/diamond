@@ -97,7 +97,7 @@ BlastDB::BlastDB(const std::string& file_name, Metadata metadata, Flags flags) :
 	CSeqDB::FindVolumePaths(file_name, CSeqDB::eProtein, paths);
 	for (const string& db : paths)
 		if(!exists(db + ".acc"))
-			throw std::runtime_error("Accession file not found. BLAST databases require preprocessing using this command line: diamond prepdp -d DATABASE_PATH");
+			throw std::runtime_error("Accession file not found. BLAST databases require preprocessing using this command line: diamond prepdb -d DATABASE_PATH");
 	if (config.multiprocessing)
 		throw std::runtime_error("Multiprocessing mode is not compatible with BLAST databases.");
 }

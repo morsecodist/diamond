@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <math.h>
 #include <algorithm>
 #include <atomic>
+#include <numeric>
 #include "masking.h"
 #include "../lib/tantan/LambdaCalculator.hh"
 #include "../util/tantan.h"
@@ -31,6 +32,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 using std::unique_ptr;
 using std::atomic;
 using std::thread;
+using std::vector;
+using std::pair;
 
 const EMap<MaskingAlgo> EnumTraits<MaskingAlgo>::to_string{ {MaskingAlgo::NONE, "None"}, {MaskingAlgo::SEG, "SEG"}, {MaskingAlgo::TANTAN, "tantan"} };
 const SEMap<MaskingAlgo> EnumTraits<MaskingAlgo>::from_string{
@@ -46,6 +49,29 @@ const SEMap<MaskingMode> EnumTraits<MaskingMode>::from_string{
 
 unique_ptr<Masking> Masking::instance;
 const int8_t Masking::bit_mask = (int8_t)128;
+
+void MaskingTable::add(const size_t block_id, const int begin, const int end, Letter* seq) {
+	{
+		std::lock_guard<std::mutex> lock(mtx_);
+		entry_.emplace_back(block_id, begin);
+		seqs_.push_back(seq + begin, seq + end);
+	}
+	std::fill(seq + begin, seq + end, MASK_LETTER);
+}
+
+void MaskingTable::remove(SequenceSet& seqs) const {
+	for (size_t i = 0; i < entry_.size(); ++i) {
+		Letter* ptr = seqs.ptr(entry_[i].block_id) + entry_[i].begin;
+		std::copy(seqs_[i].data(), seqs_[i].end(), ptr);
+	}
+}
+
+void MaskingTable::apply(SequenceSet& seqs) const {
+	for (size_t i = 0; i < entry_.size(); ++i) {
+		Letter* ptr = seqs.ptr(entry_[i].block_id) + entry_[i].begin;
+		std::fill(ptr, ptr + seqs_[i].length(), MASK_LETTER);
+	}
+}
 
 Masking::Masking(const Score_matrix &score_matrix)
 {
@@ -146,4 +172,27 @@ size_t mask_seqs(SequenceSet &seqs, const Masking &masking, bool hard_mask, cons
 		n += std::count(seqs[i].data(), seqs[i].end(), value_traits.mask_char);
 	seqs.alphabet() = Alphabet::STD;
 	return n;
+}
+
+void mask_motifs(Letter* seq, const size_t len, const size_t block_id, MaskingTable& table) {
+	if (len < MOTIF_LEN)
+		return;
+	vector<pair<ptrdiff_t, ptrdiff_t>> pos;
+	KmerIterator<MOTIF_LEN> it(Sequence(seq, len));
+	while (it.good()) {
+		if (motif_table.find(*it) != motif_table.end()) {
+			const ptrdiff_t p = it - seq;
+			if (!pos.empty() && p <= pos.back().second)
+				pos.back().second = p + MOTIF_LEN;
+			else
+				pos.emplace_back(p, p + MOTIF_LEN);
+		}
+	}
+	const ptrdiff_t n = std::accumulate(pos.cbegin(), pos.cend(), (ptrdiff_t)0, [](const ptrdiff_t s, const pair<ptrdiff_t, ptrdiff_t>& r) { return s + r.second - r.first; });
+	
+	if ((double)n / len >= 0.5)
+		return;
+
+	for (auto i = pos.cbegin(); i != pos.cend(); ++i)
+		table.add(block_id, (int)i->first, (int)i->second, seq);
 }

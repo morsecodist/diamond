@@ -155,6 +155,9 @@ Config::Config(int argc, const char **argv, bool check_io)
 {
 	Command_line_parser parser;
 	parser.add_command("makedb", "Build DIAMOND database from a FASTA file", makedb)
+#ifdef WITH_BLASTDB
+		.add_command("prepdb", "Prepare BLAST database for use with Diamond", prep_blast_db)
+#endif
 		.add_command("blastp", "Align amino acid query sequences against a protein reference database", blastp)
 		.add_command("blastx", "Align DNA query sequences against a protein reference database", blastx)
 		.add_command("view", "View DIAMOND alignment archive (DAA) formatted file", view)
@@ -166,9 +169,6 @@ Config::Config(int argc, const char **argv, bool check_io)
 		.add_command("makeidx", "Make database index", makeidx)
 		.add_command("roc", "", roc)
 		.add_command("benchmark", "", benchmark)
-#ifdef WITH_BLASTDB
-		.add_command("prepdb", "", prep_blast_db)
-#endif
 #ifdef EXTRA
 		.add_command("random-seqs", "", random_seqs)
 		.add_command("sort", "", sort)

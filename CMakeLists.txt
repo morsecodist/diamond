@@ -269,6 +269,7 @@ set(OBJECTS
   src/util/string/tsv.cpp
   src/tools/join.cpp
   src/basic/value.cpp
+  src/basic/motifs.cpp
 )
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")

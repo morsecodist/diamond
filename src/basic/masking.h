@@ -1,6 +1,10 @@
 /****
 DIAMOND protein aligner
-Copyright (C) 2013-2017 Benjamin Buchfink <buchfink@gmail.com>
+Copyright (C) 2013-2021 Max Planck Society for the Advancement of Science e.V.
+                        Benjamin Buchfink
+                        Eberhard Karls Universitaet Tuebingen
+						
+Code developed by Benjamin Buchfink <benjamin.buchfink@tue.mpg.de>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -18,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 #include <memory>
+#include <unordered_set>
 #include "value.h"
 #include "../stats/score_matrix.h"
 #include "../basic/sequence.h"
@@ -61,3 +66,92 @@ template<>
 struct EnumTraits<MaskingMode> {
 	static const SEMap<MaskingMode> from_string;
 };
+
+struct MaskingTable {
+
+	void add(const size_t block_id, const int begin, const int end, Letter* seq);
+	void remove(SequenceSet& seqs) const;
+	void apply(SequenceSet& seqs) const;
+
+private:
+
+	struct Entry {
+		Entry(const size_t block_id, const int begin) :
+			block_id(block_id), begin(begin) {}
+		const size_t block_id;
+		const int begin;
+	};
+
+	std::vector<Entry> entry_;
+	SequenceSet seqs_;
+	std::mutex mtx_;
+
+};
+
+template<size_t K>
+struct Kmer {
+	Kmer():
+		code(0)
+	{ }
+	Kmer(const char* s) :
+		code(0)
+	{
+		assert(strlen(s) == K);
+		for (size_t i = 0; i < K; ++i)
+			code = (code << 5) | (uint64_t)amino_acid_traits.from_char(*s++);
+	}
+	operator uint64_t() const {
+		return code;
+	}
+	uint64_t code;
+};
+
+template<size_t K>
+struct std::hash<Kmer<K>> {
+	size_t operator()(const Kmer<K> k) const {
+		return std::hash<uint64_t>()(k.code);
+	}
+};
+
+template<size_t K>
+struct KmerIterator {
+	KmerIterator(const Sequence& seq) :
+		ptr_(seq.data()),
+		end_(seq.end())
+	{
+		inc(0);
+	}
+	Kmer<K> operator*() const {
+		return kmer_;
+	}
+	bool good() const {
+		return ptr_ < end_;
+	}
+	KmerIterator& operator++() {
+		inc(K - 1);
+		return *this;
+	}
+	ptrdiff_t operator-(const Letter* ptr) {
+		return ptr_ - K - ptr;
+	}
+private:
+	void inc(size_t n) {
+		do {
+			const uint64_t l = letter_mask(*ptr_++);
+			if (l < TRUE_AA) {
+				kmer_.code = (kmer_.code << 5) | l;
+				++n;
+			}
+			else
+				n = 0;
+		} while (n < K && ptr_ < end_);
+	}
+	const Letter* ptr_, *const end_;
+	Kmer<K> kmer_;
+};
+
+const size_t MOTIF_LEN = 8;
+extern const std::unordered_set<Kmer<MOTIF_LEN>> motif_table;
+
+void mask_motifs(Letter* seq, const size_t len, MaskingTable& table);
+
