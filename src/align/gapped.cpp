@@ -190,7 +190,7 @@ vector<Target> full_db_align(const Sequence *query_seq, const Bias_correction *q
 		DP::Params params{
 			query_seq[frame],
 			Frame(frame),
-			0,
+			query_seq[frame].length(),
 			Stats::CBS::hauser(config.comp_based_stats) ? query_cb[frame].int8.data() : nullptr,
 			flags | DP::Flags::FULL_MATRIX,
 			hsp_values,

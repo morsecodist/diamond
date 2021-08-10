@@ -159,4 +159,3 @@ const size_t MOTIF_LEN = 8;
 extern const std::unordered_set<Kmer<MOTIF_LEN>> motif_table;
 
 void mask_motifs(Letter* seq, const size_t len, const size_t block_id, MaskingTable& table);
-

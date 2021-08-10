@@ -264,10 +264,8 @@ struct AsyncTargetBuffer
 			return false;
 		}
 		DpTarget t = begin[n];
-		if (t.blank()) {
-			active.erase(i);
-			return false;
-		}
+		if (t.blank())
+			t.target_idx = n;
 		pos[channel] = 0;
 		dp_targets[channel] = t;
 		return true;

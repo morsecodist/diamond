@@ -90,15 +90,19 @@ Config::Config() :
 	}
 
 	if (config.ext_.empty()) {
-		if (config.global_ranking_targets)
+		if (config.global_ranking_targets || config.swipe_all)
 			extension_mode = Extension::Mode::FULL;
 		else
 			extension_mode = Extension::default_ext_mode.at(sensitivity.back());
 	}
 	else {
 		extension_mode = from_string<Extension::Mode>(config.ext_);
-		if (config.global_ranking_targets && extension_mode != Extension::Mode::FULL)
-			throw std::runtime_error("Global ranking only supports full matrix extension.");
+		if (extension_mode != Extension::Mode::FULL) {
+			if (config.global_ranking_targets)
+				throw std::runtime_error("Global ranking only supports full matrix extension.");
+			if (config.swipe_all)
+				throw std::runtime_error("--swipe only supports full matrix extension.");
+		}
 	}
 
 	if (extension_mode == Extension::Mode::FULL) {

@@ -60,7 +60,7 @@ static void sort(const SequenceSet::ConstIterator begin, const SequenceSet::Cons
 }
 
 static unsigned bin(int x) {
-	return x <= UCHAR_MAX ? 0 : (x <= USHRT_MAX ? 1 : 2);
+	return x < UCHAR_MAX ? 0 : (x < USHRT_MAX ? 1 : 2);
 }
 
 unsigned bin(HspValues v, int query_len, int score, int ungapped_score, size_t dp_size, unsigned score_width) {
@@ -176,7 +176,7 @@ static list<Hsp> dispatch_swipe(const It begin, const It end, atomic_size_t* con
 template<typename _sv, typename It>
 static void swipe_worker(const It begin, const It end, atomic_size_t* const next, list<Hsp> *out, vector<DpTarget> *overflow, const int round, Params* p)
 {
-	const size_t CHANNELS = ::DISPATCH_ARCH::ScoreTraits<_sv>::CHANNELS;
+	const ptrdiff_t CHANNELS = ::DISPATCH_ARCH::ScoreTraits<_sv>::CHANNELS;
 	Statistics stat2;
 	size_t pos;
 	vector<DpTarget> of;
@@ -192,8 +192,10 @@ static void swipe_worker(const It begin, const It end, atomic_size_t* const next
 	if (flag_any(p->flags, Flags::FULL_MATRIX))
 		*out = dispatch_swipe<_sv, It>(begin, end, next, of, round, params);
 	else
-		while (begin + (pos = next->fetch_add(CHANNELS)) < end)
-			out->splice(out->end(), dispatch_swipe<_sv, It>(begin + pos, std::min(begin + pos + CHANNELS, end), next, of, round, params));
+		while (begin + (pos = next->fetch_add(CHANNELS)) < end) {
+			const auto start = begin + pos;
+			out->splice(out->end(), dispatch_swipe<_sv, It>(start, start + std::min(CHANNELS, end - start), next, of, round, params));
+		}
 		
 	*overflow = std::move(of);
 	p->stat += stat2;
