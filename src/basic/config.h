@@ -265,6 +265,7 @@ struct Config
 	string file2;
 	size_t key2;
 	string motif_mask_file;
+	string motif_masking;
 
 	Sensitivity sensitivity;
 

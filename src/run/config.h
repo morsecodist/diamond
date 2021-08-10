@@ -62,6 +62,7 @@ struct Config {
 	SeedEncoding                               seed_encoding;
 	MaskingAlgo                                query_masking;
 	MaskingAlgo                                target_masking;
+	MaskingAlgo                                soft_masking;
 	Extension::Mode                            extension_mode;
 	double                                     seed_complexity_cut;
 	bool                                       lazy_masking;

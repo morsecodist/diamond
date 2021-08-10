@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "sequence_set.h"
 #include "seed_histogram.h"
 #include "../util/seq_file_format.h"
+#include "../basic/masking.h"
 
 struct SequenceFile;
 
@@ -82,6 +83,8 @@ struct Block {
 	bool fetch_seq_if_unmasked(size_t block_id, std::vector<Letter>& seq);
 	void write_masked_seq(size_t block_id, const std::vector<Letter>& seq);
 	uint32_t dict_id(size_t block, size_t block_id, SequenceFile& db) const;
+	void soft_mask(const MaskingAlgo algo);
+	void remove_soft_masking();
 
 private:
 
@@ -92,6 +95,7 @@ private:
 	std::vector<uint32_t> block2oid_;
 	std::vector<bool> masked_;
 	std::mutex mask_lock_;
+	MaskingTable soft_masking_table_;
 
 	friend struct SequenceFile;
 

@@ -40,6 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 struct SensitivityTraits {
 	const bool     support_query_indexed;
+	const bool     motif_masking;
 	const double   freq_sd;
 	const unsigned min_identities;
 	const double   ungapped_evalue;

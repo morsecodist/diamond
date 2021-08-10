@@ -29,13 +29,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../data/sequence_set.h"
 #include "../lib/blast/blast_seg.h"
 
-enum struct MaskingAlgo { NONE, TANTAN, SEG };
+enum struct MaskingAlgo { NONE = 0, TANTAN = 1, SEG = 2, MOTIF = 4 };
+
+struct MaskingTable;
 
 struct Masking
 {
 	Masking(const Score_matrix &score_matrix);
 	~Masking();
-	void operator()(Letter *seq, size_t len, const MaskingAlgo algo) const;
+	void operator()(Letter *seq, size_t len, const MaskingAlgo algo, const size_t block_id, MaskingTable* table = nullptr) const;
 	void mask_bit(Letter *seq, size_t len) const;
 	void bit_to_hard_mask(Letter *seq, size_t len, size_t &n) const;
 	void remove_bit_mask(Letter *seq, size_t len) const;
@@ -52,7 +54,7 @@ private:
 	SegParameters* blast_seg_;
 };
 
-size_t mask_seqs(SequenceSet &seqs, const Masking &masking, bool hard_mask, const MaskingAlgo algo);
+size_t mask_seqs(SequenceSet &seqs, const Masking &masking, bool hard_mask, const MaskingAlgo algo, MaskingTable* table = nullptr);
 
 template<>
 struct EnumTraits<MaskingAlgo> {
@@ -69,9 +71,11 @@ struct EnumTraits<MaskingMode> {
 
 struct MaskingTable {
 
+	MaskingTable();
 	void add(const size_t block_id, const int begin, const int end, Letter* seq);
 	void remove(SequenceSet& seqs) const;
 	void apply(SequenceSet& seqs) const;
+	bool blank() const;
 
 private:
 
@@ -82,6 +86,7 @@ private:
 		const int begin;
 	};
 
+	size_t seq_count_;
 	std::vector<Entry> entry_;
 	SequenceSet seqs_;
 	std::mutex mtx_;
@@ -153,5 +158,5 @@ private:
 const size_t MOTIF_LEN = 8;
 extern const std::unordered_set<Kmer<MOTIF_LEN>> motif_table;
 
-void mask_motifs(Letter* seq, const size_t len, MaskingTable& table);
+void mask_motifs(Letter* seq, const size_t len, const size_t block_id, MaskingTable& table);
 

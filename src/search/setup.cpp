@@ -33,14 +33,14 @@ double SeedComplexity::prob_[AMINO_ACID_COUNT];
 const double SINGLE_INDEXED_SEED_SPACE_MAX_COVERAGE = 0.15;
 
 const map<Sensitivity, SensitivityTraits> sensitivity_traits {
-	//                               qidx   freqsd minid ug_ev   ug_ev_s gf_ev  idx_chunk qbins ctg_seed
-	{ Sensitivity::FAST,            {true,  50.0,  11,   10000,  10000,  0,     4,        16,   nullptr }},
-	{ Sensitivity::DEFAULT,         {true,  50.0,  11,   10000,  10000,  0,     4,        16,   "111111" }},
-	{ Sensitivity::MID_SENSITIVE,   {true,  20.0,  11,   10000,  10000,  0,     4,        16,   nullptr }},
-	{ Sensitivity::SENSITIVE,       {true,  20.0,  11,   10000,  10000,  1,     4,        16,   "11111" }},
-	{ Sensitivity::MORE_SENSITIVE,  {true,  200.0, 11,   10000,  10000,  1,     4,        16,   "11111" }},
-	{ Sensitivity::VERY_SENSITIVE,  {true,  15.0,  9,    100000, 30000,  1,     1,        16,   nullptr }},
-	{ Sensitivity::ULTRA_SENSITIVE, {true,  20.0,  9,    300000, 30000,  1,     1,        64,   nullptr }}
+	//                               qidx   motifm freqsd minid ug_ev   ug_ev_s gf_ev  idx_chunk qbins ctg_seed
+	{ Sensitivity::FAST,            {true,  true,  50.0,  11,   10000,  10000,  0,     4,        16,   nullptr }},
+	{ Sensitivity::DEFAULT,         {true,  true,  50.0,  11,   10000,  10000,  0,     4,        16,   "111111" }},
+	{ Sensitivity::MID_SENSITIVE,   {true,  true,  20.0,  11,   10000,  10000,  0,     4,        16,   nullptr }},
+	{ Sensitivity::SENSITIVE,       {true,  true,  20.0,  11,   10000,  10000,  1,     4,        16,   "11111" }},
+	{ Sensitivity::MORE_SENSITIVE,  {true,  false, 200.0, 11,   10000,  10000,  1,     4,        16,   "11111" }},
+	{ Sensitivity::VERY_SENSITIVE,  {true,  false, 15.0,  9,    100000, 30000,  1,     1,        16,   nullptr }},
+	{ Sensitivity::ULTRA_SENSITIVE, {true,  false, 20.0,  9,    300000, 30000,  1,     1,        64,   nullptr }}
 };
 
 const map<Sensitivity, vector<Sensitivity>> iterated_sens{

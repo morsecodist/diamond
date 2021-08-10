@@ -194,3 +194,14 @@ uint32_t Block::dict_id(size_t block, size_t block_id, SequenceFile& db) const
 	const Letter* seq = unmasked_seqs().empty() ? nullptr : unmasked_seqs()[block_id].data();
 	return db.dict_id(block, block_id, block_id2oid(block_id), seqs().length(block_id), t.c_str(), seq);
 }
+
+void Block::soft_mask(const MaskingAlgo algo) {
+	if (soft_masking_table_.blank())
+		mask_seqs(seqs_, Masking::get(), true, algo, &soft_masking_table_);
+	else
+		soft_masking_table_.apply(seqs_);
+}
+
+void Block::remove_soft_masking() {
+	soft_masking_table_.remove(seqs_);
+}

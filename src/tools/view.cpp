@@ -82,10 +82,10 @@ static TextBuffer* view_query(const string& query_acc, const string& buf, Sequen
 		throw std::runtime_error("Query accession not found: " + query_acc);
 	}
 	if (cfg.query_masking != MaskingAlgo::NONE)
-		Masking::get()(query.data(), query.size(), cfg.query_masking);
+		Masking::get()(query.data(), query.size(), cfg.query_masking, 0);
 	if (cfg.target_masking != MaskingAlgo::NONE)
 		for (size_t i = 0; i < targets.size(); ++i)
-			Masking::get()(targets.ptr(i), targets.length(i), cfg.target_masking);
+			Masking::get()(targets.ptr(i), targets.length(i), cfg.target_masking, 0);
 
 	const auto query_comp = Stats::composition(Sequence(query));
 	const int query_len = Stats::count_true_aa(Sequence(query));

@@ -89,7 +89,7 @@ static size_t lazy_masking(const vector<uint32_t>& target_block_ids, Block& targ
 	size_t n = 0;
 	for (uint32_t t : target_block_ids)
 		if (targets.fetch_seq_if_unmasked(t, seq)) {
-			masking(seq.data(), seq.size(), algo);
+			masking(seq.data(), seq.size(), algo, t);
 			targets.write_masked_seq(t, seq);
 			++n;
 		}
