@@ -192,13 +192,13 @@ static inline bool overflow_stats(Void) {
 
 template<typename Sv>
 static inline bool overflow_stats(const ForwardCell<int32_t>::Stats& stats) {
-	const auto m = DISPATCH_ARCH::ScoreTraits<Sv>::max_int_score();
+	constexpr auto m = DISPATCH_ARCH::ScoreTraits<Sv>::max_int_score();
 	return stats.ident == m || stats.len == m;
 }
 
 template<typename Sv>
 static inline bool overflow_stats(const BackwardCell<int32_t>::Stats& stats) {
-	const auto m = DISPATCH_ARCH::ScoreTraits<Sv>::max_int_score();
+	constexpr auto m = DISPATCH_ARCH::ScoreTraits<Sv>::max_int_score();
 	return stats.gap_open == m || stats.mismatch == m;
 }
 
@@ -266,4 +266,12 @@ FORCE_INLINE static void set_max(BackwardCell<Sv>& v, const BackwardCell<Sv>& x)
 	const Sv mask = v == x;
 	v.mismatch = blend(v.mismatch, x.mismatch, mask);
 	v.gapopen = blend(v.gapopen, x.gapopen, mask);
+}
+
+static inline void saturate(ForwardCell<int32_t>& c) {
+	c.v = std::max(c.v, 0);
+}
+
+static inline void saturate(BackwardCell<int32_t>& c) {
+	c.v = std::max(c.v, 0);
 }

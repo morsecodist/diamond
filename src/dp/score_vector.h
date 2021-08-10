@@ -70,11 +70,6 @@ struct ScoreTraits<int32_t>
 	{
 		return s;
 	}
-	template<typename T>
-	static void saturate(T &x)
-	{
-		x = std::max((int32_t)x, 0);
-	}
 	static int max_score()
 	{
 		return INT_MAX;
@@ -134,4 +129,12 @@ static inline int extract_channel(const int32_t v, const int i) {
 
 static inline int32_t set_channel(const int32_t v, const int i, const int32_t x) {
 	return x;
+}
+
+template<typename Sv>
+static inline void saturate(Sv& v) {
+}
+
+static inline void saturate(int32_t& v) {
+	v = std::max(v, 0);
 }

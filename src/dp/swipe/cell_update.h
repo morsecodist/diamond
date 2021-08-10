@@ -119,7 +119,7 @@ FORCE_INLINE static Cell swipe_cell_update(const Cell& diagonal_cell,
 	update_stats(current_cell, horizontal_gap, vertical_gap, id_mask);
 	set_max(current_cell, horizontal_gap);
 	set_max(current_cell, vertical_gap);
-	::DISPATCH_ARCH::ScoreTraits<Sv>::saturate(current_cell);
+	saturate(current_cell);
 
 	make_gap_mask(trace_mask, current_cell, vertical_gap, horizontal_gap);
 

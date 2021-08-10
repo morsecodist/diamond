@@ -76,7 +76,7 @@ static inline _sv cell_update(const _sv &diagonal_cell,
 	current_cell = max(current_cell, shift_cell0 + f);
 	current_cell = max(current_cell, shift_cell1 + f);
 	current_cell = max(max(current_cell, vertical_gap), horizontal_gap);
-	::DISPATCH_ARCH::ScoreTraits<_sv>::saturate(current_cell);
+	saturate(current_cell);
 	best = max(best, current_cell);
 	vertical_gap -= gap_extension;
 	horizontal_gap -= gap_extension;
