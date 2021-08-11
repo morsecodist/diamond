@@ -85,6 +85,7 @@ struct Block {
 	uint32_t dict_id(size_t block, size_t block_id, SequenceFile& db) const;
 	void soft_mask(const MaskingAlgo algo);
 	void remove_soft_masking();
+	bool soft_masked() const;
 
 private:
 
@@ -96,6 +97,7 @@ private:
 	std::vector<bool> masked_;
 	std::mutex mask_lock_;
 	MaskingTable soft_masking_table_;
+	bool soft_masked_;
 
 	friend struct SequenceFile;
 

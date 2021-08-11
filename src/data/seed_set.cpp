@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "enum_seeds.h"
 #include "../util/system/system.h"
 #include "../util/io/output_file.h"
+#include "../basic/shape_config.h"
 
 static const size_t PADDING = 32;
 static const double HASH_TABLE_FACTOR = 1.25;

@@ -26,12 +26,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "value.h"
 #include "../stats/score_matrix.h"
 #include "../basic/sequence.h"
-#include "../data/sequence_set.h"
 #include "../lib/blast/blast_seg.h"
+#include "../data/string_set.h"
+#include "../util/enum.h"
 
 enum struct MaskingAlgo { NONE = 0, TANTAN = 1, SEG = 2, MOTIF = 4 };
 
 struct MaskingTable;
+struct SequenceSet;
 
 struct Masking
 {
@@ -72,6 +74,8 @@ struct EnumTraits<MaskingMode> {
 struct MaskingTable {
 
 	MaskingTable();
+	MaskingTable(const MaskingTable& t);
+	MaskingTable& operator=(const MaskingTable& t);
 	void add(const size_t block_id, const int begin, const int end, Letter* seq);
 	void remove(SequenceSet& seqs) const;
 	void apply(SequenceSet& seqs) const;
@@ -82,13 +86,13 @@ private:
 	struct Entry {
 		Entry(const size_t block_id, const int begin) :
 			block_id(block_id), begin(begin) {}
-		const size_t block_id;
-		const int begin;
+		size_t block_id;
+		int begin;
 	};
 
 	size_t seq_count_;
 	std::vector<Entry> entry_;
-	SequenceSet seqs_;
+	StringSetBase<Letter, Sequence::DELIMITER, 1> seqs_;
 	std::mutex mtx_;
 
 };

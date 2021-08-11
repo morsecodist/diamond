@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "sequence_set.h"
 #include "../util/util.h"
 #include "../util/sequence/sequence.h"
+#include "../util/log_stream.h"
 
 SequenceSet::SequenceSet(Alphabet alphabet) :
 	alphabet_(alphabet)

@@ -230,7 +230,8 @@ void run_query_iteration(const unsigned query_chunk,
 		(!sensitivity_traits.at(config.sensitivity).support_query_indexed
 			|| query_seqs.letters() > MAX_INDEX_QUERY_SIZE
 			|| options.db->letters() < MIN_QUERY_INDEXED_DB_SIZE
-			|| config.target_indexed))
+			|| config.target_indexed
+			|| config.swipe_all))
 		config.algo = ::Config::Algo::DOUBLE_INDEXED;
 	if (config.algo == ::Config::Algo::AUTO || config.algo == ::Config::Algo::QUERY_INDEXED) {
 		timer.go("Building query seed set");

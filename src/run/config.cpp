@@ -79,12 +79,15 @@ Config::Config() :
 	seed_complexity_cut = config.seed_cut_;
 
 	if (config.motif_masking.empty())
-		soft_masking = sensitivity_traits.at(sensitivity.back()).motif_masking ? MaskingAlgo::MOTIF : MaskingAlgo::NONE;
+		soft_masking = (!config.swipe_all && sensitivity_traits.at(sensitivity.back()).motif_masking) ? MaskingAlgo::MOTIF : MaskingAlgo::NONE;
 	else {
 		if (config.motif_masking == "0")
 			soft_masking = MaskingAlgo::NONE;
-		else if (config.motif_masking == "1")
+		else if (config.motif_masking == "1") {
+			if (config.swipe_all)
+				throw std::runtime_error("Soft masking is not supported for --swipe.");
 			soft_masking = MaskingAlgo::MOTIF;
+		}
 		else
 			throw std::runtime_error("Permitted values for --motif-masking: 0, 1");
 	}

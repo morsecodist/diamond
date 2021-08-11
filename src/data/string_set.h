@@ -93,6 +93,10 @@ struct StringSetBase
 	const T* ptr(size_t i) const
 	{ return &data_[limits_[i]]; }
 
+	const T* end(size_t i) const {
+		return &data_[limits_[i + 1]] - _padding;
+	}
+
 	size_t check_idx(size_t i) const
 	{
 		if (limits_.size() < i + 2)

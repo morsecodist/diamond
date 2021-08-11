@@ -196,12 +196,22 @@ uint32_t Block::dict_id(size_t block, size_t block_id, SequenceFile& db) const
 }
 
 void Block::soft_mask(const MaskingAlgo algo) {
+	if (soft_masked_)
+		return;
 	if (soft_masking_table_.blank())
 		mask_seqs(seqs_, Masking::get(), true, algo, &soft_masking_table_);
 	else
 		soft_masking_table_.apply(seqs_);
+	soft_masked_ = true;
 }
 
 void Block::remove_soft_masking() {
+	if (!soft_masked_)
+		return;
 	soft_masking_table_.remove(seqs_);
+	soft_masked_ = false;
+}
+
+bool Block::soft_masked() const {
+	return soft_masked_;
 }

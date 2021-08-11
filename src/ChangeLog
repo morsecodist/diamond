@@ -8,6 +8,9 @@
 - Fixed a bug that caused the `full_sseq` output field to contain invalid information
   or to produce an error when using a BLAST database.
 - Changed composition based statistics to use BLOSUM62 background frequencies.
+- The fast, default, mid-sensitive and sensitive modes will by default softmask
+  abundant sequence motifs.
+- Added the option `--motif-masking (0,1)` to enable or disable motif masking.
 - Fixed the zstd dependency in the Dockerfile.
 
 [2.0.11]

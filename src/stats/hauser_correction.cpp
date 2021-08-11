@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <array>
 #include <algorithm>
 #include "../dp/dp.h"
+#include "score_matrix.h"
 
 using std::array;
 

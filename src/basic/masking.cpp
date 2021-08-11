@@ -28,6 +28,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../lib/tantan/LambdaCalculator.hh"
 #include "../util/tantan.h"
 #include "../lib/blast/blast_filter.h"
+#include "../data/sequence_set.h"
+#include "../basic/config.h"
 
 using std::unique_ptr;
 using std::atomic;
@@ -54,6 +56,19 @@ MaskingTable::MaskingTable():
 	seq_count_(0)
 {}
 
+MaskingTable& MaskingTable::operator=(const MaskingTable& t) {
+	seq_count_ = t.seq_count_;
+	entry_ = t.entry_;
+	seqs_ = t.seqs_;
+	return *this;
+}
+
+MaskingTable::MaskingTable(const MaskingTable& t):
+	seq_count_(t.seq_count_),
+	entry_(t.entry_),
+	seqs_(t.seqs_)
+{}
+
 bool MaskingTable::blank() const {
 	return seq_count_ == 0;
 }
@@ -71,14 +86,14 @@ void MaskingTable::add(const size_t block_id, const int begin, const int end, Le
 void MaskingTable::remove(SequenceSet& seqs) const {
 	for (size_t i = 0; i < entry_.size(); ++i) {
 		Letter* ptr = seqs.ptr(entry_[i].block_id) + entry_[i].begin;
-		std::copy(seqs_[i].data(), seqs_[i].end(), ptr);
+		std::copy(seqs_.ptr(i), seqs_.end(i), ptr);
 	}
 }
 
 void MaskingTable::apply(SequenceSet& seqs) const {
 	for (size_t i = 0; i < entry_.size(); ++i) {
 		Letter* ptr = seqs.ptr(entry_[i].block_id) + entry_[i].begin;
-		std::fill(ptr, ptr + seqs_[i].length(), MASK_LETTER);
+		std::fill(ptr, ptr + seqs_.length(i), MASK_LETTER);
 	}
 }
 
