@@ -132,7 +132,7 @@ public:
 				map.emplace(r, index++);
 			}
 		}
-		std::vector<unordered_set<T>> listOfSets(map.size());
+		std::vector<std::unordered_set<T>> listOfSets(map.size());
 		for (Node<T>* n : *(getNodes())) {
 			if (n == nullptr) {
 				continue;
@@ -235,7 +235,7 @@ public:
 		isIntegralAndConsecutive = false;
 		elements = s;
 		nodes = std::vector<Node<T>*>(elements->size());
-		mapping = unordered_map<const T*, uint64_t>(elements->size());
+		mapping = std::unordered_map<const T*, uint64_t>(elements->size());
 		for(auto e = elements->begin(); e != elements->end(); e++){
 			mapping[&(*e)] = nodes.size();
 			Node<T>* n = new TypeNode<T>(&(*e));

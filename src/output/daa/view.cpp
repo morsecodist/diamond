@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ****/
 
 #include <memory>
+#include <thread>
 #include "../basic/config.h"
 #include "../util/io/output_file.h"
 #include "../util/text_buffer.h"
@@ -33,7 +34,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "daa_write.h"
 #include "../run/config.h"
 
-using namespace std;
+using std::thread;
+using std::unique_ptr;
+using std::endl;
 
 const unsigned view_buf_size = 32;
 

@@ -34,6 +34,9 @@ using std::vector;
 using std::map;
 using std::ofstream;
 using std::unordered_set;
+using std::ios;
+using std::ifstream;
+using std::min;
 
 namespace Workflow { namespace Cluster{
 template <typename T>
