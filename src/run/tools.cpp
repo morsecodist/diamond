@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <sstream>
 #include <memory>
 #include <chrono>
+#include <thread>
 #include "tools.h"
 #include "../basic/config.h"
 #include "../data/sequence_set.h"
@@ -40,9 +41,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../util/sequence/sequence.h"
 #include "../basic/translate.h"
 
-using namespace std;
+using std::thread;
 using std::chrono::high_resolution_clock;
 using std::chrono::duration_cast;
+using std::cout;
+using std::endl;
+using std::cerr;
+using std::unique_ptr;
 
 void get_seq()
 {

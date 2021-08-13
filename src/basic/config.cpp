@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <exception>
 #include <iomanip>
 #include <numeric>
+#include <thread>
 #include "../util/command_line_parser.h"
 #include "config.h"
 #include "../util/util.h"
@@ -45,7 +46,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../util/simd.h"
 #include "../util/parallel/multiprocessing.h"
 
-using namespace std;
+using std::thread;
+using std::stringstream;
+using std::endl;
+using std::cerr;
+using std::ostream;
+using std::cout;
+using std::unique_ptr;
 
 const EMap<Sensitivity> EnumTraits<Sensitivity>::to_string = {
 	{ Sensitivity::FAST, "fast" },
