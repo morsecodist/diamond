@@ -38,6 +38,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../data/dmnd/dmnd.h"
 #include "../util/util.h"
 #include "../util/sequence/sequence.h"
+#include "../basic/translate.h"
 
 using namespace std;
 using std::chrono::high_resolution_clock;

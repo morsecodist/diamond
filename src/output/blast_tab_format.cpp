@@ -33,6 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../run/config.h"
 #include "../util/sequence/sequence.h"
 #include "../dp/ungapped.h"
+#include "../basic/reduction.h"
 
 using namespace Output;
 using std::endl;

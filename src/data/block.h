@@ -68,7 +68,7 @@ struct Block {
 	const StringSet& qual() const {
 		return qual_;
 	}
-	Partitioned_histogram& hst() {
+	SeedHistogram& hst() {
 		return hst_;
 	}
 	size_t block_id2oid(size_t i) const {
@@ -92,7 +92,7 @@ private:
 	SequenceSet seqs_, source_seqs_, unmasked_seqs_;
 	StringSet ids_;
 	StringSet qual_;
-	Partitioned_histogram hst_;
+	SeedHistogram hst_;
 	std::vector<uint32_t> block2oid_;
 	std::vector<bool> masked_;
 	std::mutex mask_lock_;

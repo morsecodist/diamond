@@ -20,13 +20,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ****/
 
 #pragma once
-#include <atomic>
-#include "../basic/const.h"
-#include "../util/hash_table.h"
 #include "seed_array.h"
 #include "../util/algo/join_result.h"
 #include "../util/range.h"
 #include "../run/config.h"
+
+struct SequenceSet;
 
 struct Frequent_seeds
 {
@@ -47,7 +46,7 @@ private:
 		unsigned sid,
 		unsigned ref_max_n,
 		unsigned query_max_n,
-		vector<unsigned> *counts,
+		std::vector<unsigned> *counts,
 		Search::Config* cfg);
 
 };

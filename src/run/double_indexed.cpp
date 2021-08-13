@@ -140,11 +140,11 @@ void run_ref_chunk(SequenceFile &db_file,
 	if (!config.swipe_all) {
 		timer.go("Building reference histograms");
 		if(query_seeds_bitset.get())
-			cfg.target->hst() = Partitioned_histogram(ref_seqs, true, query_seeds_bitset.get(), cfg.seed_encoding, nullptr, false);
+			cfg.target->hst() = SeedHistogram(*cfg.target, true, query_seeds_bitset.get(), cfg.seed_encoding, nullptr, false);
 		else if (query_seeds_hashed.get())
-			cfg.target->hst() = Partitioned_histogram(ref_seqs, true, query_seeds_hashed.get(), cfg.seed_encoding, nullptr, false);
+			cfg.target->hst() = SeedHistogram(*cfg.target, true, query_seeds_hashed.get(), cfg.seed_encoding, nullptr, false);
 		else
-			cfg.target->hst() = Partitioned_histogram(ref_seqs, false, &no_filter, cfg.seed_encoding, nullptr, false);
+			cfg.target->hst() = SeedHistogram(*cfg.target, false, &no_filter, cfg.seed_encoding, nullptr, false);
 
 		timer.go("Allocating buffers");
 		char *ref_buffer = SeedArray::alloc_buffer(cfg.target->hst(), cfg.index_chunks);
@@ -235,7 +235,7 @@ void run_query_iteration(const unsigned query_chunk,
 		config.algo = ::Config::Algo::DOUBLE_INDEXED;
 	if (config.algo == ::Config::Algo::AUTO || config.algo == ::Config::Algo::QUERY_INDEXED) {
 		timer.go("Building query seed set");
-		query_seeds_hashed.reset(new HashedSeedSet(query_seqs, options.query_skip.get()));
+		query_seeds_hashed.reset(new HashedSeedSet(*options.query, options.query_skip.get()));
 		if (config.algo == ::Config::Algo::AUTO && !use_query_index(query_seeds_hashed->max_table_size())) {
 			config.algo = ::Config::Algo::DOUBLE_INDEXED;
 			query_seeds_hashed.reset();
@@ -248,7 +248,7 @@ void run_query_iteration(const unsigned query_chunk,
 	}
 	if (config.algo == ::Config::Algo::CTG_SEED) {
 		timer.go("Building query seed set");
-		query_seeds_bitset.reset(new SeedSet(query_seqs, 1.0, options.query_skip.get()));
+		query_seeds_bitset.reset(new SeedSet(*options.query, 1.0, options.query_skip.get()));
 		options.seed_encoding = SeedEncoding::CONTIGUOUS;
 		timer.finish();
 	}
@@ -275,7 +275,7 @@ void run_query_iteration(const unsigned query_chunk,
 	char* query_buffer = nullptr;
 	if (!config.swipe_all && !config.target_indexed) {
 		timer.go("Building query histograms");
-		options.query->hst() = Partitioned_histogram(query_seqs, false, &no_filter, options.seed_encoding, options.query_skip.get(), true);
+		options.query->hst() = SeedHistogram(*options.query, false, &no_filter, options.seed_encoding, options.query_skip.get(), true);
 
 		timer.go("Allocating buffers");
 		query_buffer = SeedArray::alloc_buffer(options.query->hst(), options.index_chunks);

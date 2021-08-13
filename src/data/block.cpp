@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "block.h"
 #include "../util/sequence/sequence.h"
 #include "sequence_file.h"
+#include "../basic/config.h"
 
 using std::mutex;
 using std::lock_guard;

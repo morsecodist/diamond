@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "blastdb.h"
 #include "../../util/string/tokenizer.h"
 #include "../../util/system/system.h"
+#include "../basic/config.h"
 
 using std::cout;
 using std::endl;

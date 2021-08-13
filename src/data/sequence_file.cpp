@@ -30,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../util/algo/partition.h"
 #include "../util/sequence/sequence.h"
 #include "../util/parallel/multiprocessing.h"
+#include "../basic/config.h"
 #ifdef WITH_BLASTDB
 #include "blastdb/blastdb.h"
 #endif

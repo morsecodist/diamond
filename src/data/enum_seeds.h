@@ -1,12 +1,10 @@
 #pragma once
 #include <thread>
-#include "sequence_set.h"
+#include "block.h"
 #include "../search/seed_complexity.h"
 #include "../util/ptr_vector.h"
 #include "../basic/seed_iterator.h"
 #include "../basic/shape_config.h"
-
-enum class SeedEncoding { SPACED_FACTOR, HASHED, CONTIGUOUS };
 
 template<typename _f, typename _filter>
 std::pair<size_t, size_t> enum_seeds(SequenceSet* seqs, _f* f, unsigned begin, unsigned end, std::pair<size_t, size_t> shape_range, const _filter* filter, const std::vector<bool>* skip, const bool mask_seeds)
@@ -148,29 +146,19 @@ static void enum_seeds_worker(_f* f, SequenceSet* seqs, unsigned begin, unsigned
 		*masked_count = enum_seeds<_f, _filter>(seqs, f, begin, end, shape_range, filter, skip, mask_seeds);
 }
 
-struct No_filter
-{
-	bool contains(uint64_t seed, uint64_t shape) const
-	{
-		return true;
-	}
-};
-
-extern No_filter no_filter;
-
 template <typename _f, typename _filter>
-std::pair<size_t, size_t> enum_seeds(SequenceSet* seqs, PtrVector<_f>& f, const std::vector<size_t>& p, size_t shape_begin, size_t shape_end, const _filter* filter, SeedEncoding code, const std::vector<bool>* skip, bool filter_masked_seeds, const bool mask_seeds)
+std::pair<size_t, size_t> enum_seeds(Block& seqs, PtrVector<_f>& f, const std::vector<size_t>& p, size_t shape_begin, size_t shape_end, const _filter* filter, SeedEncoding code, const std::vector<bool>* skip, bool filter_masked_seeds, const bool mask_seeds)
 {
 	std::vector<std::thread> threads;
 	std::vector<std::pair<size_t, size_t>> masked_count(f.size());
 	for (unsigned i = 0; i < f.size(); ++i)
 		if (filter_masked_seeds)
-			threads.emplace_back(enum_seeds_worker<_f, _filter, FilterMaskedSeeds>, &f[i], seqs, (unsigned)p[i], (unsigned)p[i + 1], std::make_pair(shape_begin, shape_end), filter, code, skip, &masked_count[i], mask_seeds);
+			threads.emplace_back(enum_seeds_worker<_f, _filter, FilterMaskedSeeds>, &f[i], &seqs.seqs(), (unsigned)p[i], (unsigned)p[i + 1], std::make_pair(shape_begin, shape_end), filter, code, skip, &masked_count[i], mask_seeds);
 		else
-			threads.emplace_back(enum_seeds_worker<_f, _filter, void>, &f[i], seqs, (unsigned)p[i], (unsigned)p[i + 1], std::make_pair(shape_begin, shape_end), filter, code, skip, &masked_count[i], mask_seeds);
+			threads.emplace_back(enum_seeds_worker<_f, _filter, void>, &f[i], &seqs.seqs(), (unsigned)p[i], (unsigned)p[i + 1], std::make_pair(shape_begin, shape_end), filter, code, skip, &masked_count[i], mask_seeds);
 	for (auto& t : threads)
 		t.join();
-	seqs->alphabet() = Alphabet::STD;
+	seqs.seqs().alphabet() = Alphabet::STD;
 	for (size_t i = 1; i < f.size(); ++i) {
 		masked_count[0].first += masked_count[i].first;
 		masked_count[0].second += masked_count[i].second;

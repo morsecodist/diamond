@@ -25,6 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #pragma pack(1)
 // #define KEEP_TARGET_ID
 
+struct Block;
+
 struct SeedArray
 {
 
@@ -81,10 +83,10 @@ struct SeedArray
 	} PACKED_ATTRIBUTE;
 
 	template<typename _filter>
-	SeedArray(SequenceSet &seqs, size_t shape, const shape_histogram &hst, const SeedPartitionRange &range, const vector<size_t> &seq_partition, char *buffer, const _filter *filter, const SeedEncoding code, const std::vector<bool>* skip);
+	SeedArray(Block &seqs, size_t shape, const ShapeHistogram &hst, const SeedPartitionRange &range, const std::vector<size_t> &seq_partition, char *buffer, const _filter *filter, const SeedEncoding code, const std::vector<bool>* skip);
 
 	template<typename _filter>
-	SeedArray(SequenceSet& seqs, size_t shape, const SeedPartitionRange& range, const _filter* filter, const SeedEncoding code, const std::vector<bool>* skip);
+	SeedArray(Block& seqs, size_t shape, const SeedPartitionRange& range, const _filter* filter, const SeedEncoding code, const std::vector<bool>* skip);
 
 	Entry* begin(unsigned i)
 	{
@@ -122,7 +124,7 @@ struct SeedArray
 		}
 	}
 
-	static char *alloc_buffer(const Partitioned_histogram &hst, size_t index_chunks);
+	static char *alloc_buffer(const SeedHistogram &hst, size_t index_chunks);
 
 	const size_t key_bits;
 

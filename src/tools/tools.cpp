@@ -13,9 +13,11 @@
 #include "../util/sequence/sequence.h"
 #include "../data/sequence_file.h"
 #include "../search/search.h"
+#include "../data/enum_seeds.h"
 #define _REENTRANT
 #include "../lib/ips4o/ips4o.hpp"
 #include "../basic/masking.h"
+#include "../util/ptr_vector.h"
 
 using std::array;
 using std::cout;
@@ -115,7 +117,7 @@ void list_seeds() {
 	auto parts = block->seqs().partition(1);
 	::shapes = ShapeConfig(config.shape_mask.empty() ? shape_codes.at(Sensitivity::DEFAULT) : config.shape_mask, config.shapes);
 	Reduction::reduction = Reduction("A R N D C Q E G H I L K M F P S T W Y V");
-	enum_seeds(&block->seqs(), cb, parts, 0, 1, &no_filter, SeedEncoding::SPACED_FACTOR, nullptr, false, false);
+	enum_seeds(*block, cb, parts, 0, 1, &no_filter, SeedEncoding::SPACED_FACTOR, nullptr, false, false);
 	ips4o::parallel::sort(seeds.begin(), seeds.end());
 
 	auto it = merge_keys(seeds.begin(), seeds.end(), [](uint64_t seed) {return seed; });

@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../util/log_stream.h"
 #include "../data/reference.h"
 #include "../util/io/input_stream_buffer.h"
+#include "../basic/config.h"
 #ifdef WITH_BLASTDB
 #include "../data/blastdb/blastdb.h"
 #endif
