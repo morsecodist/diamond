@@ -1,4 +1,5 @@
 #pragma once
+#include <thread>
 #include "sequence_set.h"
 #include "../search/seed_complexity.h"
 #include "../util/ptr_vector.h"
