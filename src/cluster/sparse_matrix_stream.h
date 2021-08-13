@@ -37,6 +37,8 @@ using std::unordered_set;
 using std::ios;
 using std::ifstream;
 using std::min;
+using std::move;
+using std::max;
 
 namespace Workflow { namespace Cluster{
 template <typename T>
