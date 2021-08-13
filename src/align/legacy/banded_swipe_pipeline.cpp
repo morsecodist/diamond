@@ -17,13 +17,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ****/
 
 #include <algorithm>
+#include <thread>
 #include <atomic>
 #include "../align.h"
 #include "../../dp/dp.h"
 #include "../../util/interval_partition.h"
 #include "../../util/simd.h"
 
-using namespace std;
+using std::thread;
+using std::list;
+using std::max;
+using std::atomic;
+using std::endl;
 
 namespace ExtensionPipeline { namespace BandedSwipe {
 
