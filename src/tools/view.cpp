@@ -1,5 +1,6 @@
 #include <mutex>
 #include <unordered_map>
+#include <thread>
 #include "../basic/config.h"
 #include "../data/sequence_file.h"
 #include "../util/string/tokenizer.h"
@@ -17,6 +18,7 @@ using std::lock_guard;
 using std::thread;
 using std::list;
 using std::array;
+using std::thread;
 
 template<size_t L>
 struct FixedString {
