@@ -4,6 +4,7 @@
 #include "../search/seed_complexity.h"
 #include "../util/ptr_vector.h"
 #include "../basic/seed_iterator.h"
+#include "../basic/shape_config.h"
 
 enum class SeedEncoding { SPACED_FACTOR, HASHED, CONTIGUOUS };
 

@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <algorithm>
 #include <atomic>
 #include <numeric>
+#include <thread>
 #include "masking.h"
 #include "../lib/tantan/LambdaCalculator.hh"
 #include "../util/tantan.h"
