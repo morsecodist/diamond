@@ -62,6 +62,7 @@ void IntermediateRecord::read(BinaryBuffer::Iterator& f)
 		f.read_varint(identities);
 		f.read_varint(mismatches);
 		f.read_varint(positives);
+		f.read_varint(length);
 		f.read_varint(gap_openings);
 		f.read_varint(gaps);
 	}
@@ -110,6 +111,7 @@ void IntermediateRecord::write(TextBuffer& buf, const Hsp& match, unsigned query
 		buf.write_varint(match.identities);
 		buf.write_varint(match.mismatches);
 		buf.write_varint(match.positives);
+		buf.write_varint(match.length);
 		buf.write_varint(match.gap_openings);
 		buf.write_varint(match.gaps);
 	}

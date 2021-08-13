@@ -287,7 +287,7 @@ Hsp::Hsp(const IntermediateRecord &r, unsigned query_source_len) :
 		gap_openings = r.gap_openings;
 		mismatches = r.mismatches;
 		positives = r.positives;
-		length = identities + mismatches + gaps;
+		length = r.length;
 		if (align_mode.mode == Align_mode::blastx)
 			set_translated_query_end(r.query_end, query_source_len);
 		else
