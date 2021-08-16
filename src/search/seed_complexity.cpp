@@ -44,24 +44,25 @@ bool Search::seed_is_complex(const Letter* seq, const Shape& shape, const double
 	return entropy / shape.weight_ >= cut;
 }
 
-bool Search::seed_is_complex_unreduced(Letter* seq, const Shape& shape, const double cut, const bool mask_seeds)
+bool Search::seed_is_complex_unreduced(Letter* seq, const Shape& shape, const double cut, const bool mask_seeds, SeedStats& stats)
 {
-	array<unsigned, AMINO_ACID_COUNT> count;
+	array<unsigned, TRUE_AA> count;
 	count.fill(0);
 	for (unsigned i = 0; i < shape.weight_; ++i) {
 		const Letter l = letter_mask(seq[shape.positions_[i]]);
-		const unsigned r = Reduction::reduction(l);
-		if(r == MASK_LETTER) {
-			if(mask_seeds) *seq |= SEED_MASK;
+		if (l >= TRUE_AA) {
+			if (mask_seeds) *seq |= SEED_MASK;
 			return false;
 		}
 		++count[(int)l];
 	}
+	++stats.good_seed_positions;
 	double entropy = lnfact[shape.weight_];
-	for (unsigned i = 0; i < AMINO_ACID_COUNT; ++i)
+	for (unsigned i = 0; i < TRUE_AA; ++i)
 		entropy -= lnfact[count[i]];
-	if (entropy / shape.weight_ < cut) {
+	if (entropy < cut) {
 		if (mask_seeds) *seq |= SEED_MASK;
+		++stats.low_complexity_seeds;
 		return false;
 	}
 	return true;	

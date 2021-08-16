@@ -258,7 +258,6 @@ struct Config
 	bool short_seqids;
 	bool no_reextend;
 	size_t max_traceback_matrix_size;
-	bool cmask;
 	double seed_cut_;
 	bool no_reorder;
 	string file1;
@@ -266,6 +265,7 @@ struct Config
 	size_t key2;
 	string motif_mask_file;
 	string motif_masking;
+	bool freq_masking;
 
 	Sensitivity sensitivity;
 

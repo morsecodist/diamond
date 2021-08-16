@@ -19,7 +19,7 @@ void makeindex() {
 	Block* block = db.load_seqs(MAX_LETTERS, false);
 
 	task_timer timer("Building index");
-	HashedSeedSet index(*block, nullptr);
+	HashedSeedSet index(*block, nullptr, 0.0);
 
 	timer.go("Writing to disk");
 	OutputFile out(db.file_name() + ".seed_idx");

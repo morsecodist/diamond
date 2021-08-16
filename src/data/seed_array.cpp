@@ -119,7 +119,7 @@ struct BuildCallback
 };
 
 template<typename _filter>
-SeedArray::SeedArray(Block &seqs, size_t shape, const ShapeHistogram &hst, const SeedPartitionRange &range, const vector<size_t> &seq_partition, char *buffer, const _filter *filter, const SeedEncoding code, const std::vector<bool>* skip) :
+SeedArray::SeedArray(Block &seqs, size_t shape, const ShapeHistogram &hst, const SeedPartitionRange &range, const vector<size_t> &seq_partition, char *buffer, const _filter *filter, const SeedEncoding code, const std::vector<bool>* skip, const double seed_cut) :
 	key_bits(seed_bits(code)),
 	data_((Entry*)buffer)
 {
@@ -131,12 +131,13 @@ SeedArray::SeedArray(Block &seqs, size_t shape, const ShapeHistogram &hst, const
 	PtrVector<BuildCallback> cb;
 	for (size_t i = 0; i < seq_partition.size() - 1; ++i)
 		cb.push_back(new BuildCallback(range, iterators[i].data()));
-	enum_seeds(seqs, cb, seq_partition, shape, shape + 1, filter, code, skip, false, false);
+	EnumCfg cfg{ seq_partition,shape, shape + 1 ,code, skip, false, false , seed_cut };
+	enum_seeds(seqs, cb, filter, cfg);
 }
 
-template SeedArray::SeedArray(Block&, size_t, const ShapeHistogram&, const SeedPartitionRange &, const vector<size_t>&, char *buffer, const NoFilter *, const SeedEncoding, const std::vector<bool>*);
-template SeedArray::SeedArray(Block&, size_t, const ShapeHistogram&, const SeedPartitionRange &, const vector<size_t>&, char *buffer, const SeedSet *, const SeedEncoding, const std::vector<bool>*);
-template SeedArray::SeedArray(Block&, size_t, const ShapeHistogram&, const SeedPartitionRange &, const vector<size_t>&, char *buffer, const HashedSeedSet *, const SeedEncoding, const std::vector<bool>*);
+template SeedArray::SeedArray(Block&, size_t, const ShapeHistogram&, const SeedPartitionRange &, const vector<size_t>&, char *buffer, const NoFilter *, const SeedEncoding, const std::vector<bool>*, const double);
+template SeedArray::SeedArray(Block&, size_t, const ShapeHistogram&, const SeedPartitionRange &, const vector<size_t>&, char *buffer, const SeedSet *, const SeedEncoding, const std::vector<bool>*, const double);
+template SeedArray::SeedArray(Block&, size_t, const ShapeHistogram&, const SeedPartitionRange &, const vector<size_t>&, char *buffer, const HashedSeedSet *, const SeedEncoding, const std::vector<bool>*, const double);
 
 struct BufferedWriter2
 {
@@ -196,7 +197,7 @@ struct BuildCallback2
 };
 
 template<typename _filter>
-SeedArray::SeedArray(Block& seqs, size_t shape, const SeedPartitionRange& range, const _filter* filter, const SeedEncoding code, const std::vector<bool>* skip) :
+SeedArray::SeedArray(Block& seqs, size_t shape, const SeedPartitionRange& range, const _filter* filter, const SeedEncoding code, const std::vector<bool>* skip, const double seed_cut) :
 	key_bits(seed_bits(code)),
 	data_(nullptr)
 {
@@ -204,7 +205,8 @@ SeedArray::SeedArray(Block& seqs, size_t shape, const SeedPartitionRange& range,
 	PtrVector<BuildCallback2> cb;
 	for (size_t i = 0; i < seq_partition.size() - 1; ++i)
 		cb.push_back(new BuildCallback2(range));
-	enum_seeds(seqs, cb, seq_partition, shape, shape + 1, filter, code, skip, false, false);
+	EnumCfg cfg{ seq_partition, shape, shape + 1 ,code, skip, false, false, seed_cut };
+	enum_seeds(seqs, cb, filter, cfg);
 
 	array<size_t, Const::seedp> counts;
 	counts.fill(0);
@@ -219,4 +221,4 @@ SeedArray::SeedArray(Block& seqs, size_t shape, const SeedPartitionRange& range,
 	}
 }
 
-template SeedArray::SeedArray(Block&, size_t, const SeedPartitionRange&, const HashedSeedSet*, const SeedEncoding, const std::vector<bool>*);
+template SeedArray::SeedArray(Block&, size_t, const SeedPartitionRange&, const HashedSeedSet*, const SeedEncoding, const std::vector<bool>*, const double);

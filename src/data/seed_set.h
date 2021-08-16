@@ -35,7 +35,7 @@ struct Block;
 
 struct SeedSet
 {
-	SeedSet(Block &seqs, double max_coverage, const std::vector<bool>* skip);
+	SeedSet(Block &seqs, double max_coverage, const std::vector<bool>* skip, const double seed_cut);
 	bool contains(uint64_t key, uint64_t shape) const
 	{
 		return data_[key];
@@ -52,7 +52,7 @@ private:
 struct HashedSeedSet
 {
 	typedef HashSet<Modulo2, Identity> Table;
-	HashedSeedSet(Block &seqs, const std::vector<bool>* skip);
+	HashedSeedSet(Block &seqs, const std::vector<bool>* skip, const double seed_cut);
 	HashedSeedSet(const std::string& index_file);
 	~HashedSeedSet();
 	bool contains(uint64_t key, uint64_t shape) const

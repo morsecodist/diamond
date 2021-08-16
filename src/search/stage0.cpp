@@ -106,19 +106,19 @@ void search_shape(unsigned sid, unsigned query_block, unsigned query_iteration, 
 		task_timer timer("Building reference seed array", true);
 		SeedArray *ref_idx;
 		if (query_seeds_bitset.get())
-			ref_idx = new SeedArray(*cfg.target, sid, ref_hst.get(sid), range, ref_hst.partition(), ref_buffer, query_seeds_bitset.get(), cfg.seed_encoding, nullptr);
+			ref_idx = new SeedArray(*cfg.target, sid, ref_hst.get(sid), range, ref_hst.partition(), ref_buffer, query_seeds_bitset.get(), cfg.seed_encoding, nullptr, cfg.seed_complexity_cut);
 		else if (query_seeds_hashed.get())
-			ref_idx = new SeedArray(*cfg.target, sid, ref_hst.get(sid), range, ref_hst.partition(), ref_buffer, query_seeds_hashed.get(), cfg.seed_encoding, nullptr);
+			ref_idx = new SeedArray(*cfg.target, sid, ref_hst.get(sid), range, ref_hst.partition(), ref_buffer, query_seeds_hashed.get(), cfg.seed_encoding, nullptr, cfg.seed_complexity_cut);
 			//ref_idx = new SeedArray(ref_seqs, sid, range, query_seeds_hashed.get(), true);
 		else
-			ref_idx = new SeedArray(*cfg.target, sid, ref_hst.get(sid), range, ref_hst.partition(), ref_buffer, &no_filter, cfg.seed_encoding, nullptr);
+			ref_idx = new SeedArray(*cfg.target, sid, ref_hst.get(sid), range, ref_hst.partition(), ref_buffer, &no_filter, cfg.seed_encoding, nullptr, cfg.seed_complexity_cut);
 
 		timer.go("Building query seed array");
 		SeedArray* query_idx;
 		if (target_seeds)
-			query_idx = new SeedArray(*cfg.query, sid, range, target_seeds, cfg.seed_encoding, nullptr);
+			query_idx = new SeedArray(*cfg.query, sid, range, target_seeds, cfg.seed_encoding, nullptr, cfg.seed_complexity_cut);
 		else
-			query_idx = new SeedArray(*cfg.query, sid, query_hst.get(sid), range, query_hst.partition(), query_buffer, &no_filter, cfg.seed_encoding, cfg.query_skip.get());
+			query_idx = new SeedArray(*cfg.query, sid, query_hst.get(sid), range, query_hst.partition(), query_buffer, &no_filter, cfg.seed_encoding, cfg.query_skip.get(), cfg.seed_complexity_cut);
 		timer.finish();
 
 		log_stream << "Indexed query seeds = " << query_idx->size() << '/' << query_seqs.letters() << ", reference seeds = " << ref_idx->size() << '/' << ref_seqs.letters() << endl;
@@ -132,9 +132,7 @@ void search_shape(unsigned sid, unsigned query_block, unsigned query_iteration, 
 			t.join();
 		timer.finish();
 
-		if (config.cmask)
-			; // Search::mask_seeds(shapes[sid], range, query_seed_hits, ref_seed_hits, cfg);
-		else {
+		if(config.freq_masking) {
 			timer.go("Building seed filter");
 			frequent_seeds.build(sid, range, query_seed_hits, ref_seed_hits, cfg);
 		}

@@ -45,7 +45,7 @@ size_t SeedHistogram::max_chunk_size(size_t index_chunks) const
 }
 
 template<typename Filter>
-SeedHistogram::SeedHistogram(Block& seqs, bool serial, const Filter* filter, SeedEncoding code, const std::vector<bool>* skip, const bool mask_seeds) :
+SeedHistogram::SeedHistogram(Block& seqs, bool serial, const Filter* filter, SeedEncoding code, const std::vector<bool>* skip, const bool mask_seeds, const double seed_cut) :
 	data_(shapes.count()),
 	p_(seqs.seqs().partition(config.threads_))
 {
@@ -75,12 +75,16 @@ SeedHistogram::SeedHistogram(Block& seqs, bool serial, const Filter* filter, See
 	for (size_t i = 0; i < p_.size() - 1; ++i)
 		cb.push_back(new Callback(i, data_));
 	if (serial)
-		for (unsigned s = 0; s < shapes.count(); ++s)
-			enum_seeds(seqs, cb, p_, s, s + 1, filter, code, skip, false, mask_seeds);
-	else
-		enum_seeds(seqs, cb, p_, 0, shapes.count(), filter, code, skip, false, mask_seeds);
+		for (unsigned s = 0; s < shapes.count(); ++s) {
+			EnumCfg cfg{ p_,s,s + 1, code,skip, false, mask_seeds, seed_cut };
+			enum_seeds(seqs, cb, filter, cfg);
+		}
+	else {
+		EnumCfg cfg{ p_,0,shapes.count(), code,skip, false, mask_seeds, seed_cut };
+		enum_seeds(seqs, cb, filter, cfg);
+	}
 }
 
-template SeedHistogram::SeedHistogram(Block&, bool, const NoFilter*, SeedEncoding, const std::vector<bool>*, const bool);
-template SeedHistogram::SeedHistogram(Block&, bool, const SeedSet*, SeedEncoding, const std::vector<bool>*, const bool);
-template SeedHistogram::SeedHistogram(Block&, bool, const HashedSeedSet*, SeedEncoding, const std::vector<bool>*, const bool);
+template SeedHistogram::SeedHistogram(Block&, bool, const NoFilter*, SeedEncoding, const std::vector<bool>*, const bool, const double);
+template SeedHistogram::SeedHistogram(Block&, bool, const SeedSet*, SeedEncoding, const std::vector<bool>*, const bool, const double);
+template SeedHistogram::SeedHistogram(Block&, bool, const HashedSeedSet*, SeedEncoding, const std::vector<bool>*, const bool, const double);

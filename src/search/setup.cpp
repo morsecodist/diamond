@@ -39,7 +39,7 @@ const map<Sensitivity, SensitivityTraits> sensitivity_traits {
 	{ Sensitivity::MID_SENSITIVE,   {true,  true,  20.0,  11,   10000,  10000,  0,     4,        16,   nullptr }},
 	{ Sensitivity::SENSITIVE,       {true,  true,  20.0,  11,   10000,  10000,  1,     4,        16,   "11111" }},
 	{ Sensitivity::MORE_SENSITIVE,  {true,  false, 200.0, 11,   10000,  10000,  1,     4,        16,   "11111" }},
-	{ Sensitivity::VERY_SENSITIVE,  {true,  false, 15.0,  9,    100000, 30000,  1,     1,        16,   nullptr }},
+	{ Sensitivity::VERY_SENSITIVE,  {true,  false, 15.0,  9,    100000, 30000,  1,     1,        16,   "1111" }},
 	{ Sensitivity::ULTRA_SENSITIVE, {true,  false, 20.0,  9,    300000, 30000,  1,     1,        64,   nullptr }}
 };
 

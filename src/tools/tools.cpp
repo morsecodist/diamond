@@ -117,7 +117,8 @@ void list_seeds() {
 	auto parts = block->seqs().partition(1);
 	::shapes = ShapeConfig(config.shape_mask.empty() ? shape_codes.at(Sensitivity::DEFAULT) : config.shape_mask, config.shapes);
 	Reduction::reduction = Reduction("A R N D C Q E G H I L K M F P S T W Y V");
-	enum_seeds(*block, cb, parts, 0, 1, &no_filter, SeedEncoding::SPACED_FACTOR, nullptr, false, false);
+	EnumCfg cfg{ parts, 0, 1, SeedEncoding::SPACED_FACTOR, nullptr, false, false, config.seed_cut_ };
+	enum_seeds(*block, cb, &no_filter, cfg);
 	ips4o::parallel::sort(seeds.begin(), seeds.end());
 
 	auto it = merge_keys(seeds.begin(), seeds.end(), [](uint64_t seed) {return seed; });

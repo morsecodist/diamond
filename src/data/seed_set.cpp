@@ -61,14 +61,16 @@ struct Seed_set_callback
 	vector<bool> *data;
 };
 
-SeedSet::SeedSet(Block &seqs, double max_coverage, const std::vector<bool>* skip):
+SeedSet::SeedSet(Block &seqs, double max_coverage, const std::vector<bool>* skip, const double seed_cut):
 	data_((size_t)pow(1llu<<Reduction::reduction.bit_size(), shapes[0].length_))
 {
 	if (!shapes[0].contiguous())
 		throw std::runtime_error("Contiguous seed required.");
 	PtrVector<Seed_set_callback> v;
 	v.push_back(new Seed_set_callback(data_, size_t(max_coverage*pow(Reduction::reduction.size(), shapes[0].length_))));
-	enum_seeds(seqs, v, seqs.seqs().partition(1), 0, 1, &no_filter, SeedEncoding::CONTIGUOUS, skip, true, false);
+	const auto p = seqs.seqs().partition(1);
+	const EnumCfg cfg{ p, 0, 1, SeedEncoding::CONTIGUOUS, skip, true, false, seed_cut };
+	enum_seeds(seqs, v, &no_filter, cfg);
 	coverage_ = (double)v.back().coverage / pow(Reduction::reduction.size(), shapes[0].length_);
 }
 
@@ -87,13 +89,15 @@ struct Hashed_seed_set_callback
 	PtrVector<HashSet<Modulo2, Identity> > &dst;
 };
 
-HashedSeedSet::HashedSeedSet(Block &seqs, const std::vector<bool>* skip)
+HashedSeedSet::HashedSeedSet(Block &seqs, const std::vector<bool>* skip, const double seed_cut)
 {
 	for (size_t i = 0; i < shapes.count(); ++i)
 		data_.push_back(new Table(next_power_of_2(seqs.seqs().letters() * HASH_TABLE_FACTOR)));
 	PtrVector<Hashed_seed_set_callback> v;
 	v.push_back(new Hashed_seed_set_callback(data_));
-	enum_seeds(seqs, v, seqs.seqs().partition(1), 0, shapes.count(), &no_filter, SeedEncoding::HASHED, skip, false, false);
+	const auto p = seqs.seqs().partition(1);
+	const EnumCfg cfg{ p, 0, shapes.count(),SeedEncoding::HASHED, skip, false, false,seed_cut };
+	enum_seeds(seqs, v, &no_filter, cfg);
 
 	vector<size_t> sizes;
 	for (size_t i = 0; i < shapes.count(); ++i)
@@ -102,7 +106,7 @@ HashedSeedSet::HashedSeedSet(Block &seqs, const std::vector<bool>* skip)
 
 	for (size_t i = 0; i < shapes.count(); ++i)
 		data_.push_back(new Table(next_power_of_2(sizes[i] * HASH_TABLE_FACTOR)));
-	enum_seeds(seqs, v, seqs.seqs().partition(1), 0, shapes.count(), &no_filter, SeedEncoding::HASHED, skip, false, false);
+	enum_seeds(seqs, v, &no_filter, cfg);
 
 	for (size_t i = 0; i < shapes.count(); ++i) {
 		data_[i].finish();

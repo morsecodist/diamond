@@ -62,8 +62,17 @@ private:
 
 namespace Search {
 
+struct SeedStats {
+	SeedStats():
+		letters_soft_masked(0),
+		good_seed_positions(0),
+		low_complexity_seeds(0)
+	{}
+	size_t letters_soft_masked, good_seed_positions, low_complexity_seeds;
+};
+
 bool seed_is_complex(const Letter* seq, const Shape& shape, const double cut);
-bool seed_is_complex_unreduced(Letter* seq, const Shape& shape, const double cut, const bool mask_seeds);
+bool seed_is_complex_unreduced(Letter* seq, const Shape& shape, const double cut, const bool mask_seeds, SeedStats& stats);
 //void mask_seeds(const Shape& shape, const SeedPartitionRange& range, DoubleArray<SeedArray::Entry::Value>* query_seed_hits, DoubleArray<SeedArray::Entry::Value>* ref_seed_hits, Search::Config& cfg);
 
 }
