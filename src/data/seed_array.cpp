@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "seed_set.h"
 #include "enum_seeds.h"
 #include "../util/data_structures/deque.h"
+#include "../search/seed_complexity.h"
 
 using std::array;
 
@@ -132,7 +133,7 @@ SeedArray::SeedArray(Block &seqs, size_t shape, const ShapeHistogram &hst, const
 	for (size_t i = 0; i < seq_partition.size() - 1; ++i)
 		cb.push_back(new BuildCallback(range, iterators[i].data()));
 	EnumCfg cfg{ seq_partition,shape, shape + 1 ,code, skip, false, false , seed_cut };
-	enum_seeds(seqs, cb, filter, cfg);
+	stats_ = enum_seeds(seqs, cb, filter, cfg);
 }
 
 template SeedArray::SeedArray(Block&, size_t, const ShapeHistogram&, const SeedPartitionRange &, const vector<size_t>&, char *buffer, const NoFilter *, const SeedEncoding, const std::vector<bool>*, const double);
@@ -206,7 +207,7 @@ SeedArray::SeedArray(Block& seqs, size_t shape, const SeedPartitionRange& range,
 	for (size_t i = 0; i < seq_partition.size() - 1; ++i)
 		cb.push_back(new BuildCallback2(range));
 	EnumCfg cfg{ seq_partition, shape, shape + 1 ,code, skip, false, false, seed_cut };
-	enum_seeds(seqs, cb, filter, cfg);
+	stats_ = enum_seeds(seqs, cb, filter, cfg);
 
 	array<size_t, Const::seedp> counts;
 	counts.fill(0);

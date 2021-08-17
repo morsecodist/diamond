@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 #include "seed_histogram.h"
 #include "../basic/packed_loc.h"
+#include "../search/seed_complexity.h"
 
 #pragma pack(1)
 // #define KEEP_TARGET_ID
@@ -124,6 +125,10 @@ struct SeedArray
 		}
 	}
 
+	const Search::SeedStats& stats() const {
+		return stats_;
+	}
+
 	static char *alloc_buffer(const SeedHistogram &hst, size_t index_chunks);
 
 	const size_t key_bits;
@@ -133,6 +138,7 @@ private:
 	Entry *data_;
 	size_t begin_[Const::seedp + 1];
 	std::array<std::vector<Entry>, Const::seedp> entries_;
+	Search::SeedStats stats_;
 
 };
 

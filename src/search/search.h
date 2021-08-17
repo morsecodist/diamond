@@ -49,6 +49,7 @@ struct SensitivityTraits {
 	const unsigned index_chunks;
 	const unsigned query_bins;
 	const char*    contiguous_seed;
+	const double   seed_cut;
 };
 
 extern const std::map<Sensitivity, SensitivityTraits> sensitivity_traits;

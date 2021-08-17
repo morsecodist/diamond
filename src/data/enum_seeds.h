@@ -10,7 +10,7 @@ struct EnumCfg {
 	const std::vector<size_t>& partition;
 	const size_t shape_begin, shape_end;
 	const SeedEncoding code;
-	const std::vector<bool>* skip;
+	const std::vector<bool>* const skip;
 	const bool filter_masked_seeds, mask_seeds;
 	const double seed_cut;
 };

@@ -1,6 +1,6 @@
 /****
 DIAMOND protein aligner
-Copyright (C) 2013-2020 Max Planck Society for the Advancement of Science e.V.
+Copyright (C) 2013-2021 Max Planck Society for the Advancement of Science e.V.
                         Benjamin Buchfink
                         Eberhard Karls Universitaet Tuebingen
 						
@@ -29,18 +29,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 using std::endl;
 using std::map;
 
-double SeedComplexity::prob_[AMINO_ACID_COUNT];
 const double SINGLE_INDEXED_SEED_SPACE_MAX_COVERAGE = 0.15;
 
 const map<Sensitivity, SensitivityTraits> sensitivity_traits {
-	//                               qidx   motifm freqsd minid ug_ev   ug_ev_s gf_ev  idx_chunk qbins ctg_seed
-	{ Sensitivity::FAST,            {true,  true,  50.0,  11,   10000,  10000,  0,     4,        16,   nullptr }},
-	{ Sensitivity::DEFAULT,         {true,  true,  50.0,  11,   10000,  10000,  0,     4,        16,   "111111" }},
-	{ Sensitivity::MID_SENSITIVE,   {true,  true,  20.0,  11,   10000,  10000,  0,     4,        16,   nullptr }},
-	{ Sensitivity::SENSITIVE,       {true,  true,  20.0,  11,   10000,  10000,  1,     4,        16,   "11111" }},
-	{ Sensitivity::MORE_SENSITIVE,  {true,  false, 200.0, 11,   10000,  10000,  1,     4,        16,   "11111" }},
-	{ Sensitivity::VERY_SENSITIVE,  {true,  false, 15.0,  9,    100000, 30000,  1,     1,        16,   "1111" }},
-	{ Sensitivity::ULTRA_SENSITIVE, {true,  false, 20.0,  9,    300000, 30000,  1,     1,        64,   nullptr }}
+	//                               qidx   motifm freqsd minid ug_ev   ug_ev_s gf_ev  idx_chunk qbins ctg_seed  seed_cut
+	{ Sensitivity::FAST,            {true,  true,  50.0,  11,   10000,  10000,  0,     4,        16,   nullptr,  1.3 }},
+	{ Sensitivity::DEFAULT,         {true,  true,  50.0,  11,   10000,  10000,  0,     4,        16,   "111111", 1.3 }},
+	{ Sensitivity::MID_SENSITIVE,   {true,  true,  20.0,  11,   10000,  10000,  0,     4,        16,   nullptr,  1.3 }},
+	{ Sensitivity::SENSITIVE,       {true,  true,  20.0,  11,   10000,  10000,  1,     4,        16,   "11111",  1.44 }},
+	{ Sensitivity::MORE_SENSITIVE,  {true,  false, 200.0, 11,   10000,  10000,  1,     4,        16,   "11111",  1.44 }},
+	{ Sensitivity::VERY_SENSITIVE,  {true,  false, 15.0,  9,    100000, 30000,  1,     1,        16,   "1111",   1.3 }},
+	{ Sensitivity::ULTRA_SENSITIVE, {true,  false, 20.0,  9,    300000, 30000,  1,     1,        64,   nullptr,  1.3 }}
 };
 
 const map<Sensitivity, vector<Sensitivity>> iterated_sens{
@@ -222,4 +221,6 @@ void setup_search(Sensitivity sens, Search::Config& cfg)
 		::shapes = ShapeConfig(config.shape_mask.empty() ? shape_codes.at(sens) : config.shape_mask, config.shapes);
 
 	config.gapped_filter_diag_score = score_matrix.rawscore(config.gapped_filter_diag_bit_score);
+	const double seed_cut = config.seed_cut_ == 0.0 ? traits.seed_cut : config.seed_cut_;
+	cfg.seed_complexity_cut = seed_cut * std::log(2.0) * ::shapes[0].weight_;
 }

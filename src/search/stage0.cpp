@@ -121,7 +121,10 @@ void search_shape(unsigned sid, unsigned query_block, unsigned query_iteration, 
 			query_idx = new SeedArray(*cfg.query, sid, query_hst.get(sid), range, query_hst.partition(), query_buffer, &no_filter, cfg.seed_encoding, cfg.query_skip.get(), cfg.seed_complexity_cut);
 		timer.finish();
 
-		log_stream << "Indexed query seeds = " << query_idx->size() << '/' << query_seqs.letters() << ", reference seeds = " << ref_idx->size() << '/' << ref_seqs.letters() << endl;
+		log_stream << "Indexed query seeds = " << Util::String::ratio_percentage(query_idx->size(), query_seqs.letters())
+			<< ", reference seeds = " << Util::String::ratio_percentage(ref_idx->size(), ref_seqs.letters()) << endl;
+		log_stream << "Low complexity seeds = " << Util::String::ratio_percentage(query_idx->stats().low_complexity_seeds, query_idx->stats().good_seed_positions)
+			<< ", " << Util::String::ratio_percentage(ref_idx->stats().low_complexity_seeds, ref_idx->stats().good_seed_positions) << endl;
 
 		timer.go("Computing hash join");
 		atomic<unsigned> seedp(range.begin());
