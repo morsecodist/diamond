@@ -48,7 +48,8 @@ static bool looks_like_dna(const Sequence& seq) {
 Block::Block(Alphabet alphabet):
 	seqs_(alphabet),
 	source_seqs_(Alphabet::STD),
-	unmasked_seqs_(alphabet)
+	unmasked_seqs_(alphabet),
+	soft_mased_(false)
 {
 }
 
@@ -115,7 +116,8 @@ Block::Block(std::list<TextInputFile>::iterator file_begin,
 	size_t modulo):
 	seqs_(Alphabet::STD),
 	source_seqs_(Alphabet::STD),
-	unmasked_seqs_(Alphabet::STD)
+	unmasked_seqs_(Alphabet::STD),
+	soft_masked_(false)
 {
 	static constexpr size_t CHECK_FOR_DNA_COUNT = 10;
 	size_t letters = 0, n = 0;
