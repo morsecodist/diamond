@@ -106,19 +106,19 @@ void search_shape(unsigned sid, unsigned query_block, unsigned query_iteration, 
 		task_timer timer("Building reference seed array", true);
 		SeedArray *ref_idx;
 		if (query_seeds_bitset.get())
-			ref_idx = new SeedArray(*cfg.target, sid, ref_hst.get(sid), range, ref_hst.partition(), ref_buffer, query_seeds_bitset.get(), cfg.seed_encoding, nullptr, cfg.seed_complexity_cut);
+			ref_idx = new SeedArray(*cfg.target, sid, ref_hst.get(sid), range, ref_hst.partition(), ref_buffer, query_seeds_bitset.get(), cfg.seed_encoding, nullptr, cfg.seed_complexity_cut, cfg.soft_masking);
 		else if (query_seeds_hashed.get())
-			ref_idx = new SeedArray(*cfg.target, sid, ref_hst.get(sid), range, ref_hst.partition(), ref_buffer, query_seeds_hashed.get(), cfg.seed_encoding, nullptr, cfg.seed_complexity_cut);
+			ref_idx = new SeedArray(*cfg.target, sid, ref_hst.get(sid), range, ref_hst.partition(), ref_buffer, query_seeds_hashed.get(), cfg.seed_encoding, nullptr, cfg.seed_complexity_cut, cfg.soft_masking);
 			//ref_idx = new SeedArray(ref_seqs, sid, range, query_seeds_hashed.get(), true);
 		else
-			ref_idx = new SeedArray(*cfg.target, sid, ref_hst.get(sid), range, ref_hst.partition(), ref_buffer, &no_filter, cfg.seed_encoding, nullptr, cfg.seed_complexity_cut);
+			ref_idx = new SeedArray(*cfg.target, sid, ref_hst.get(sid), range, ref_hst.partition(), ref_buffer, &no_filter, cfg.seed_encoding, nullptr, cfg.seed_complexity_cut, cfg.soft_masking);
 
 		timer.go("Building query seed array");
 		SeedArray* query_idx;
 		if (target_seeds)
-			query_idx = new SeedArray(*cfg.query, sid, range, target_seeds, cfg.seed_encoding, nullptr, cfg.seed_complexity_cut);
+			query_idx = new SeedArray(*cfg.query, sid, range, target_seeds, cfg.seed_encoding, nullptr, cfg.seed_complexity_cut, cfg.soft_masking);
 		else
-			query_idx = new SeedArray(*cfg.query, sid, query_hst.get(sid), range, query_hst.partition(), query_buffer, &no_filter, cfg.seed_encoding, cfg.query_skip.get(), cfg.seed_complexity_cut);
+			query_idx = new SeedArray(*cfg.query, sid, query_hst.get(sid), range, query_hst.partition(), query_buffer, &no_filter, cfg.seed_encoding, cfg.query_skip.get(), cfg.seed_complexity_cut, cfg.soft_masking);
 		timer.finish();
 
 		log_stream << "Indexed query seeds = " << Util::String::ratio_percentage(query_idx->size(), query_seqs.letters())

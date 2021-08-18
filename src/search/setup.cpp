@@ -38,7 +38,7 @@ const map<Sensitivity, SensitivityTraits> sensitivity_traits {
 	{ Sensitivity::MID_SENSITIVE,   {true,  true,  20.0,  11,   10000,  10000,  0,     4,        16,   nullptr,  1.3 }},
 	{ Sensitivity::SENSITIVE,       {true,  true,  20.0,  11,   10000,  10000,  1,     4,        16,   "11111",  1.44 }},
 	{ Sensitivity::MORE_SENSITIVE,  {true,  false, 200.0, 11,   10000,  10000,  1,     4,        16,   "11111",  1.44 }},
-	{ Sensitivity::VERY_SENSITIVE,  {true,  false, 15.0,  9,    100000, 30000,  1,     1,        16,   "1111",   1.3 }},
+	{ Sensitivity::VERY_SENSITIVE,  {true,  false, 15.0,  9,    100000, 30000,  1,     1,        16,   nullptr,  1.3 }},
 	{ Sensitivity::ULTRA_SENSITIVE, {true,  false, 20.0,  9,    300000, 30000,  1,     1,        64,   nullptr,  1.3 }}
 };
 
@@ -223,4 +223,18 @@ void setup_search(Sensitivity sens, Search::Config& cfg)
 	config.gapped_filter_diag_score = score_matrix.rawscore(config.gapped_filter_diag_bit_score);
 	const double seed_cut = config.seed_cut_ == 0.0 ? traits.seed_cut : config.seed_cut_;
 	cfg.seed_complexity_cut = seed_cut * std::log(2.0) * ::shapes[0].weight_;
+
+	if (config.motif_masking.empty())
+		cfg.soft_masking = (!config.swipe_all && traits.motif_masking) ? MaskingAlgo::MOTIF : MaskingAlgo::NONE;
+	else {
+		if (config.motif_masking == "0")
+			cfg.soft_masking = MaskingAlgo::NONE;
+		else if (config.motif_masking == "1") {
+			if (config.swipe_all)
+				throw std::runtime_error("Soft masking is not supported for --swipe.");
+			cfg.soft_masking = MaskingAlgo::MOTIF;
+		}
+		else
+			throw std::runtime_error("Permitted values for --motif-masking: 0, 1");
+	}
 }

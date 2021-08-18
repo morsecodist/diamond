@@ -5,6 +5,7 @@
 #include "../util/ptr_vector.h"
 #include "../basic/seed_iterator.h"
 #include "../basic/shape_config.h"
+#include "../basic/masking.h"
 
 struct EnumCfg {
 	const std::vector<size_t>& partition;
@@ -13,6 +14,7 @@ struct EnumCfg {
 	const std::vector<bool>* const skip;
 	const bool filter_masked_seeds, mask_seeds;
 	const double seed_cut;
+	const MaskingAlgo soft_masking;
 };
 
 template<typename F, typename Filter>

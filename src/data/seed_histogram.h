@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 #include "flags.h"
 #include "../basic/const.h"
+#include "../basic/masking.h"
 
 typedef std::vector<std::array<unsigned, Const::seedp>> ShapeHistogram;
 
@@ -86,7 +87,7 @@ struct SeedHistogram
 	SeedHistogram();
 	
 	template<typename Filter>
-	SeedHistogram(Block& seqs, bool serial, const Filter* filter, SeedEncoding code, const std::vector<bool>* skip, const bool mask_seeds, const double seed_cut);
+	SeedHistogram(Block& seqs, bool serial, const Filter* filter, SeedEncoding code, const std::vector<bool>* skip, const bool mask_seeds, const double seed_cut, const MaskingAlgo soft_masking);
 
 	const ShapeHistogram& get(unsigned sid) const
 	{ return data_[sid]; }

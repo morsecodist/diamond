@@ -76,22 +76,6 @@ Config::Config() :
 		target_masking = MaskingAlgo::TANTAN;
 	}
 
-	seed_complexity_cut = config.seed_cut_;
-
-	if (config.motif_masking.empty())
-		soft_masking = (!config.swipe_all && sensitivity_traits.at(sensitivity.back()).motif_masking) ? MaskingAlgo::MOTIF : MaskingAlgo::NONE;
-	else {
-		if (config.motif_masking == "0")
-			soft_masking = MaskingAlgo::NONE;
-		else if (config.motif_masking == "1") {
-			if (config.swipe_all)
-				throw std::runtime_error("Soft masking is not supported for --swipe.");
-			soft_masking = MaskingAlgo::MOTIF;
-		}
-		else
-			throw std::runtime_error("Permitted values for --motif-masking: 0, 1");
-	}
-
 	if (config.ext_.empty()) {
 		if (config.global_ranking_targets || config.swipe_all)
 			extension_mode = Extension::Mode::FULL;

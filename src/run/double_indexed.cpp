@@ -140,11 +140,11 @@ void run_ref_chunk(SequenceFile &db_file,
 	if (!config.swipe_all) {
 		timer.go("Building reference histograms");
 		if(query_seeds_bitset.get())
-			cfg.target->hst() = SeedHistogram(*cfg.target, true, query_seeds_bitset.get(), cfg.seed_encoding, nullptr, false, cfg.seed_complexity_cut);
+			cfg.target->hst() = SeedHistogram(*cfg.target, true, query_seeds_bitset.get(), cfg.seed_encoding, nullptr, false, cfg.seed_complexity_cut, cfg.soft_masking);
 		else if (query_seeds_hashed.get())
-			cfg.target->hst() = SeedHistogram(*cfg.target, true, query_seeds_hashed.get(), cfg.seed_encoding, nullptr, false, cfg.seed_complexity_cut);
+			cfg.target->hst() = SeedHistogram(*cfg.target, true, query_seeds_hashed.get(), cfg.seed_encoding, nullptr, false, cfg.seed_complexity_cut, cfg.soft_masking);
 		else
-			cfg.target->hst() = SeedHistogram(*cfg.target, false, &no_filter, cfg.seed_encoding, nullptr, false, cfg.seed_complexity_cut);
+			cfg.target->hst() = SeedHistogram(*cfg.target, false, &no_filter, cfg.seed_encoding, nullptr, false, cfg.seed_complexity_cut, cfg.soft_masking);
 
 		timer.go("Allocating buffers");
 		char *ref_buffer = SeedArray::alloc_buffer(cfg.target->hst(), cfg.index_chunks);
@@ -263,7 +263,8 @@ void run_query_iteration(const unsigned query_chunk,
 
 	if (current_query_chunk == 0 && query_iteration == 0) {
 		message_stream << "Algorithm: " << to_string(config.algo) << endl;
-		verbose_stream << "Seed frequency SD: " << options.freq_sd << endl;
+		if (config.freq_masking)
+			verbose_stream << "Seed frequency SD: " << options.freq_sd << endl;
 		verbose_stream << "Shape configuration: " << ::shapes << endl;
 	}	
 
@@ -275,7 +276,7 @@ void run_query_iteration(const unsigned query_chunk,
 	char* query_buffer = nullptr;
 	if (!config.swipe_all && !config.target_indexed) {
 		timer.go("Building query histograms");
-		options.query->hst() = SeedHistogram(*options.query, false, &no_filter, options.seed_encoding, options.query_skip.get(), true, options.seed_complexity_cut);
+		options.query->hst() = SeedHistogram(*options.query, false, &no_filter, options.seed_encoding, options.query_skip.get(), true, options.seed_complexity_cut, options.soft_masking);
 
 		timer.go("Allocating buffers");
 		query_buffer = SeedArray::alloc_buffer(options.query->hst(), options.index_chunks);
