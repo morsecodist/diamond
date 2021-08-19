@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <memory>
 #include <algorithm>
 #include <cstdio>
+#include <dirent.h>
 #include "../data/reference.h"
 #include "../data/queries.h"
 #include "../basic/statistics.h"
@@ -362,6 +363,21 @@ void run_query_chunk(const unsigned query_chunk,
 	OutputFile *aligned_file,
 	Config &options)
 {
+        vector<string> foo;
+        DIR *dir = opendir(config.tmpdir.c_str());
+        if (dir == NULL) 
+        {
+        }
+        auto entry = readdir(dir);
+        while (entry != NULL) 
+        {
+                std::string str(entry->d_name);
+                if (str != "." && str != "..") {
+                        foo.push_back(config.tmpdir + "/" + str);
+                }
+                entry = readdir(dir);
+        }
+        closedir(dir);
 	auto P = Parallelizer::get();
 	task_timer timer;
 	auto& db_file = *options.db;
@@ -455,8 +471,7 @@ void run_query_chunk(const unsigned query_chunk,
 			}
 			P->delete_stack(stack_join_todo);
 		} else {
-			if (!tmp_file.empty())
-				join_blocks(current_ref_block, master_out, tmp_file, options, db_file);
+                        join_blocks(current_ref_block, master_out, tmp_file, options, db_file, foo);
 		}
 	}
 
@@ -586,41 +601,63 @@ void master_thread(task_timer &total_timer, Config &options)
 		aligned_file = unique_ptr<OutputFile>(new OutputFile(config.aligned_file));
 	timer.finish();
 
-	for (;; ++current_query_chunk) {
-		task_timer timer("Loading query sequences", true);
+        if (false) {
+                vector<string> tmp_file_names;
+                DIR *dir = opendir(config.tmpdir.c_str());
+                if (dir == NULL) 
+                {
+                }
+                auto entry = readdir(dir);
+                while (entry != NULL) 
+                {
+                        std::string str(entry->d_name);
+                        if (str != "." && str != "..") {
+                                tmp_file_names.push_back(config.tmpdir + "/" + str);
+                        }
+                        entry = readdir(dir);
+                }
+                closedir(dir);
+                PtrVector<TempFile> tmp_file;
+                current_query_chunk = db_file->get_n_partition_chunks();
+                join_blocks(current_query_chunk, *options.out, tmp_file, options, *db_file, tmp_file_names);
+                return;
+        } else {
+                for (;; ++current_query_chunk) {
+                        task_timer timer("Loading query sequences", true);
 
-		if (options.self) {
-			db_file->set_seqinfo_ptr(query_file_offset);
-			options.query.reset(db_file->load_seqs((size_t)(config.chunk_size * 1e9), true, options.db_filter.get()));
-			query_file_offset = db_file->tell_seq();
-		}
-		else
-			options.query.reset(new Block(options.query_file->begin(), options.query_file->end(), *format_n, (size_t)(config.chunk_size * 1e9), input_value_traits, config.store_query_quality, false, paired_mode ? 2 : 1));
+                        if (options.self) {
+                                db_file->set_seqinfo_ptr(query_file_offset);
+                                options.query.reset(db_file->load_seqs((size_t)(config.chunk_size * 1e9), true, options.db_filter.get()));
+                                query_file_offset = db_file->tell_seq();
+                        }
+                        else
+                                options.query.reset(new Block(options.query_file->begin(), options.query_file->end(), *format_n, (size_t)(config.chunk_size * 1e9), input_value_traits, config.store_query_quality, false, paired_mode ? 2 : 1));
 
-		if (options.query->empty())
-			break;
-		timer.finish();
-		options.query->seqs().print_stats();
-		if ((config.mp_query_chunk >= 0) && (current_query_chunk != (unsigned)config.mp_query_chunk))
-			continue;
+                        if (options.query->empty())
+                                break;
+                        timer.finish();
+                        options.query->seqs().print_stats();
+                        if ((config.mp_query_chunk >= 0) && (current_query_chunk != (unsigned)config.mp_query_chunk))
+                                continue;
 
-		if (current_query_chunk == 0 && *output_format != Output_format::daa)
-			output_format->print_header(*options.out, align_mode.mode, config.matrix.c_str(), score_matrix.gap_open(), score_matrix.gap_extend(), config.max_evalue, options.query->ids()[0],
-				unsigned(align_mode.query_translated ? options.query->source_seqs()[0].length() : options.query->seqs()[0].length()));
+                        if (current_query_chunk == 0 && *output_format != Output_format::daa)
+                                output_format->print_header(*options.out, align_mode.mode, config.matrix.c_str(), score_matrix.gap_open(), score_matrix.gap_extend(), config.max_evalue, options.query->ids()[0],
+                                        unsigned(align_mode.query_translated ? options.query->source_seqs()[0].length() : options.query->seqs()[0].length()));
 
-		if (config.masking == 1 && !options.self) {
-			timer.go("Masking queries");
-			mask_seqs(options.query->seqs(), Masking::get());
-			timer.finish();
-		}
+                        if (config.masking == 1 && !options.self) {
+                                timer.go("Masking queries");
+                                mask_seqs(options.query->seqs(), Masking::get());
+                                timer.finish();
+                        }
 
-		run_query_chunk(current_query_chunk, *options.out, unaligned_file.get(), aligned_file.get(), options);
+                        run_query_chunk(current_query_chunk, *options.out, unaligned_file.get(), aligned_file.get(), options);
 
-		if (file_exists("stop")) {
-			message_stream << "Encountered \'stop\' file, shutting down run" << endl;
-			break;
-		}
-	}
+                        if (file_exists("stop")) {
+                                message_stream << "Encountered \'stop\' file, shutting down run" << endl;
+                                break;
+                        }
+                }
+        }
 
 	if (options.query_file.unique()) {
 		timer.go("Closing the input file");
