@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <limits>
 #include <fstream>
+#include <sys/stat.h>
 #include "../basic/config.h"
 #include "../util/seq_file_format.h"
 #include "../util/log_stream.h"
@@ -254,137 +255,166 @@ static void push_seq(const Sequence &seq, const char *id, size_t id_len, uint64_
 
 void DatabaseFile::make_db(TempFile **tmp_out, list<TextInputFile> *input_file)
 {
-	config.file_buffer_size = 4 * MEGABYTES;
-	if (config.input_ref_file.size() > 1)
-		throw std::runtime_error("Too many arguments provided for option --in.");
-	const string input_file_name = config.input_ref_file.empty() ? string() : config.input_ref_file.front();
-	if (input_file_name.empty() && !input_file)
-		std::cerr << "Input file parameter (--in) is missing. Input will be read from stdin." << endl;
-	if(!input_file && !input_file_name.empty())
-		message_stream << "Database input file: " << input_file_name << endl;
+        config.file_buffer_size = 4 * MEGABYTES;
+        if (config.input_ref_file.size() > 1)
+                throw std::runtime_error("Too many arguments provided for option --in.");
+        const string input_file_name = config.input_ref_file.empty() ? string() : config.input_ref_file.front();
+        if (input_file_name.empty() && !input_file)
+                std::cerr << "Input file parameter (--in) is missing. Input will be read from stdin." << endl;
+        if(!input_file && !input_file_name.empty())
+                message_stream << "Database input file: " << input_file_name << endl;
 
-	task_timer total;
-	task_timer timer("Opening the database file", true);
-	list<TextInputFile>* db_file;
-	if (input_file)
-		db_file = input_file;
-	else {
-		db_file = new list<TextInputFile>;
-		db_file->emplace_back(input_file_name);
-	}
+        task_timer total;
+        task_timer timer("Opening the database file", true);
+        list<TextInputFile>* db_file;
+        if (input_file)
+                db_file = input_file;
+        else {
+                db_file = new list<TextInputFile>;
+                db_file->emplace_back(input_file_name);
+        }
 
-	OutputFile *out = tmp_out ? new TempFile() : new OutputFile(config.database);
-	ReferenceHeader header;
-	ReferenceHeader2 header2;
-
-	*out << header;
-	*out << header2;
-
-	size_t letters = 0, n = 0, n_seqs = 0, total_seqs = 0;
-	uint64_t offset = out->tell();
-
-	Block* block;
-	const FASTA_format format;
-	vector<SeqInfo> pos_array;
-	ExternalSorter<pair<string, uint32_t>> accessions;
-
-	try {
-		while (true) {
-			timer.go("Loading sequences");
-			block = new Block(db_file->begin(), db_file->end(), format, (size_t)(1e9), amino_acid_traits, false);
-			if (block->empty()) {
-				delete block;
-				break;
-			}
-			n = block->seqs().size();
-
-			timer.go("Masking sequences");
-			mask_seqs(block->seqs(), Masking::get(), false, MaskingAlgo::SEG);
-
-			timer.go("Writing sequences");
-			for (size_t i = 0; i < n; ++i) {
-				Sequence seq = block->seqs()[i];
-				if (seq.length() == 0)
-					throw std::runtime_error("File format error: sequence of length 0 at line " + std::to_string(db_file->front().line_count));
-				push_seq(seq, block->ids()[i], block->ids().length(i), offset, pos_array, *out, letters, n_seqs);
-			}
-			if (!config.prot_accession2taxid.empty()) {
-				timer.go("Writing accessions");
-				for (size_t i = 0; i < n; ++i) {
-					vector<string> acc = accession_from_title(block->ids()[i]);
-					for (const string& s : acc)
-						accessions.push(std::make_pair(s, total_seqs + i));
+        size_t file_chunk = 0;
+        Block* block = nullptr;
+        const FASTA_format format;
+        while (!(block != nullptr && block->empty())) {
+                timer.go("Loading sequences");
+                block = new Block(db_file->begin(), db_file->end(), format, (size_t)(1e9), amino_acid_traits, false);
+                if (block->empty()) {
+                        delete block;
+                        break;
+                }
+                string db_out_file = config.database;
+		if (config.scatter_gather) {
+                    db_out_file = join_path(config.database, append_label(config.database + "_", file_chunk));
+                    auto_append_extension(db_out_file, ".dmnd");
+#ifndef WIN32
+			errno = 0;
+			int s = mkdir(config.database.c_str(), 00770);
+			if (s != 0) {
+				if (errno == EEXIST) {
+					// directory did already exist
+				} else {
+					throw(std::runtime_error("could not create database output directory " + config.database));
 				}
 			}
-			timer.go("Hashing sequences");
-			for (size_t i = 0; i < n; ++i) {
-				Sequence seq = block->seqs()[i];
-				MurmurHash3_x64_128(seq.data(), (int)seq.length(), header2.hash, header2.hash);
-				MurmurHash3_x64_128(block->ids()[i], block->ids().length(i), header2.hash, header2.hash);
-			}
-			delete block;
-			total_seqs += n;
+#endif
 		}
-	}
-	catch (std::exception&) {
-		out->close();
-		out->remove();
-		throw;
-	}
 
-	timer.finish();
+                OutputFile *out = tmp_out ? new TempFile() : new OutputFile(db_out_file);
+                ReferenceHeader header;
+                ReferenceHeader2 header2;
 
-	timer.go("Writing trailer");
-	header.pos_array_offset = offset;
-	pos_array.emplace_back(offset, 0);
-	for (const SeqInfo& r : pos_array)
-		*out << r;
-	pos_array.clear();
-	pos_array.shrink_to_fit();
-	timer.finish();
+                *out << header;
+                *out << header2;
 
-	Table stats;
-	stats("Database sequences", n_seqs);
-	stats("Database letters", letters);
-	taxonomy.init();
-	if (!config.prot_accession2taxid.empty()) {
-		header2.taxon_array_offset = out->tell();
-		TaxonList::build(*out, accessions, n_seqs, stats);
-		header2.taxon_array_size = out->tell() - header2.taxon_array_offset;
-	}
-	if (!config.nodesdmp.empty()) {
-		header2.taxon_nodes_offset = out->tell();
-		TaxonomyNodes::build(*out);
-	}
-	if (!config.namesdmp.empty()) {
-		header2.taxon_names_offset = out->tell();
-		*out << taxonomy.name_;
-	}
+                size_t letters = 0, n = 0, n_seqs = 0, total_seqs = 0;
+                uint64_t offset = out->tell();
 
-	if (!input_file) {
-		timer.go("Closing the input file");
-		db_file->front().close();
-		delete db_file;
-	}
+                vector<SeqInfo> pos_array;
+                ExternalSorter<pair<string, uint32_t>> accessions;
 
-	timer.go("Closing the database file");
-	header.letters = letters;
-	header.sequences = n_seqs;
-	out->seek(0);
-	*out << header;
-	*out << header2;
-	if (tmp_out) {
-		*tmp_out = static_cast<TempFile*>(out);
-	} else {
-		out->close();
-		delete out;
-	}
+                try {
+                        size_t n_blocks = 0;
+                        while (!config.scatter_gather || n_blocks * 1e9 < config.chunk_size) {
+                                n_blocks++;
+                                if (block->empty()) {
+                                        delete block;
+                                        break;
+                                }
+                                n = block->seqs().size();
 
-	timer.finish();
-	stats("Database hash", hex_print(header2.hash, 16));
-	stats("Total time", total.get(), "s");
+                                timer.go("Masking sequences");
+                                mask_seqs(block->seqs(), Masking::get(), false, MaskingAlgo::SEG);
 
-	message_stream << endl << stats;
+                                timer.go("Writing sequences");
+                                for (size_t i = 0; i < n; ++i) {
+                                        Sequence seq = block->seqs()[i];
+                                        if (seq.length() == 0)
+                                                throw std::runtime_error("File format error: sequence of length 0 at line " + std::to_string(db_file->front().line_count));
+                                        push_seq(seq, block->ids()[i], block->ids().length(i), offset, pos_array, *out, letters, n_seqs);
+                                }
+                                if (!config.prot_accession2taxid.empty()) {
+                                        timer.go("Writing accessions");
+                                        for (size_t i = 0; i < n; ++i) {
+                                                vector<string> acc = accession_from_title(block->ids()[i]);
+                                                for (const string& s : acc)
+                                                        accessions.push(std::make_pair(s, total_seqs + i));
+                                        }
+                                }
+                                timer.go("Hashing sequences");
+                                for (size_t i = 0; i < n; ++i) {
+                                        Sequence seq = block->seqs()[i];
+                                        MurmurHash3_x64_128(seq.data(), (int)seq.length(), header2.hash, header2.hash);
+                                        MurmurHash3_x64_128(block->ids()[i], block->ids().length(i), header2.hash, header2.hash);
+                                }
+                                delete block;
+                                total_seqs += n;
+                                block = new Block(db_file->begin(), db_file->end(), format, (size_t)(1e9), amino_acid_traits, false);
+                        }
+                }
+                catch (std::exception&) {
+                        out->close();
+                        out->remove();
+                        throw;
+                }
+
+                timer.finish();
+
+                timer.go("Writing trailer");
+                header.pos_array_offset = offset;
+                pos_array.emplace_back(offset, 0);
+                for (const SeqInfo& r : pos_array)
+                        *out << r;
+                pos_array.clear();
+                pos_array.shrink_to_fit();
+                timer.finish();
+
+                Table stats;
+                stats("Database sequences", n_seqs);
+                stats("Database letters", letters);
+                taxonomy.init();
+                if (!config.prot_accession2taxid.empty()) {
+                        header2.taxon_array_offset = out->tell();
+                        TaxonList::build(*out, accessions, n_seqs, stats);
+                        header2.taxon_array_size = out->tell() - header2.taxon_array_offset;
+                }
+                if (!config.nodesdmp.empty()) {
+                        header2.taxon_nodes_offset = out->tell();
+                        TaxonomyNodes::build(*out);
+                }
+                if (!config.namesdmp.empty()) {
+                        header2.taxon_names_offset = out->tell();
+                        *out << taxonomy.name_;
+                }
+
+
+                timer.go("Closing the database file");
+                header.letters = letters;
+                header.sequences = n_seqs;
+                out->seek(0);
+                *out << header;
+                *out << header2;
+                if (tmp_out) {
+                        *tmp_out = static_cast<TempFile*>(out);
+                } else {
+                        out->close();
+                        delete out;
+                }
+
+                timer.finish();
+                stats("Database hash", hex_print(header2.hash, 16));
+                stats("Total time", total.get(), "s");
+
+                message_stream << endl << stats;
+                file_chunk++;
+        }
+
+        if (!input_file) {
+                timer.go("Closing the input file");
+                db_file->front().close();
+                delete db_file;
+        }
 }
 
 void DatabaseFile::set_seqinfo_ptr(size_t i) {
