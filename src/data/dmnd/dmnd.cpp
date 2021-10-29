@@ -276,12 +276,12 @@ void DatabaseFile::make_db(TempFile **tmp_out, list<TextInputFile> *input_file)
 
         size_t file_chunk = 0;
         Block* block = nullptr;
+        size_t size_quanta = (size_t)(1e6);
         const FASTA_format format;
         while (!(block != nullptr && block->empty())) {
                 timer.go("Loading sequences");
-                block = new Block(db_file->begin(), db_file->end(), format, (size_t)(1e9), amino_acid_traits, false);
+                block = new Block(db_file->begin(), db_file->end(), format, size_quanta, amino_acid_traits, false);
                 if (block->empty()) {
-                        delete block;
                         break;
                 }
                 string db_out_file = config.database;
@@ -316,10 +316,9 @@ void DatabaseFile::make_db(TempFile **tmp_out, list<TextInputFile> *input_file)
 
                 try {
                         size_t n_blocks = 0;
-                        while (!config.scatter_gather || n_blocks * 1e9 < config.chunk_size) {
+                        while (!config.scatter_gather || letters < config.chunk_size) {
                                 n_blocks++;
                                 if (block->empty()) {
-                                        delete block;
                                         break;
                                 }
                                 n = block->seqs().size();
@@ -350,7 +349,7 @@ void DatabaseFile::make_db(TempFile **tmp_out, list<TextInputFile> *input_file)
                                 }
                                 delete block;
                                 total_seqs += n;
-                                block = new Block(db_file->begin(), db_file->end(), format, (size_t)(1e9), amino_acid_traits, false);
+                                block = new Block(db_file->begin(), db_file->end(), format, size_quanta, amino_acid_traits, false);
                         }
                 }
                 catch (std::exception&) {
@@ -371,6 +370,9 @@ void DatabaseFile::make_db(TempFile **tmp_out, list<TextInputFile> *input_file)
                 timer.finish();
 
                 Table stats;
+                if (config.scatter_gather) {
+                        stats("Database chunk", file_chunk);
+                }
                 stats("Database sequences", n_seqs);
                 stats("Database letters", letters);
                 taxonomy.init();
@@ -403,17 +405,26 @@ void DatabaseFile::make_db(TempFile **tmp_out, list<TextInputFile> *input_file)
                 }
 
                 timer.finish();
+                if (!config.scatter_gather) {
+                        stats("Total time", total.get(), "s");
+                }
                 stats("Database hash", hex_print(header2.hash, 16));
-                stats("Total time", total.get(), "s");
 
-                message_stream << endl << stats;
+                message_stream << endl << stats << endl;
                 file_chunk++;
         }
+        delete block;
 
         if (!input_file) {
                 timer.go("Closing the input file");
                 db_file->front().close();
                 delete db_file;
+        }
+        if (config.scatter_gather) {
+                Table stats;
+                stats("Chunks", file_chunk);
+                stats("Total time", total.get(), "s");
+                message_stream << endl << stats;
         }
 }
 

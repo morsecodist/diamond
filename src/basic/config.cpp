@@ -385,7 +385,8 @@ Config::Config(int argc, const char **argv, bool check_io)
 		("log-evalue-scale", 0, "", log_evalue_scale, 1.0 / std::log(2.0))
 		("bootstrap", 0, "", bootstrap)
 		("single-chunk", false, "", single_chunk)
-		("join-chunks", 0, "", join_chunks);
+		("join-chunks", 0, "", join_chunks)
+                ("scatter-gather", false, "", scatter_gather);
 
 	Options_group view_options("View options");
 	view_options.add()
@@ -577,8 +578,8 @@ Config::Config(int argc, const char **argv, bool check_io)
 		case Config::makedb:
 			if (database == "")
 				throw std::runtime_error("Missing parameter: database file (--db/-d)");
-			if (chunk_size != 0.0)
-				throw std::runtime_error("Invalid option: --block-size/-b. Block size is set for the alignment commands.");
+			if (chunk_size != 0.0 && !scatter_gather)
+				throw std::runtime_error("Invalid option: --block-size/-b. Block size is set for the alignment commands or in scatter gather mode.");
 			break;
 		case Config::blastp:
 		case Config::blastx:
@@ -640,7 +641,7 @@ Config::Config(int argc, const char **argv, bool check_io)
 	log_stream << invocation << endl;
 
 	if (!no_auto_append) {
-		if (command == Config::makedb)
+		if (command == Config::makedb && !scatter_gather)
 			auto_append_extension(database, ".dmnd");
 		if (command == Config::view)
 			auto_append_extension(daa_file, ".daa");
