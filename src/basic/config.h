@@ -189,7 +189,7 @@ struct Config
 	bool bootstrap;
 	bool single_chunk;
 	size_t join_chunks;
-        bool scatter_gather;
+	bool scatter_gather;
 	size_t chaining_maxnodes;
 	int cutoff_score_8bit;
 	double inner_culling_overlap;

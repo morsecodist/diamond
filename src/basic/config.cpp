@@ -386,7 +386,7 @@ Config::Config(int argc, const char **argv, bool check_io)
 		("bootstrap", 0, "", bootstrap)
 		("single-chunk", false, "", single_chunk)
 		("join-chunks", 0, "", join_chunks)
-                ("scatter-gather", false, "", scatter_gather);
+		("scatter-gather", false, "", scatter_gather);
 
 	Options_group view_options("View options");
 	view_options.add()
