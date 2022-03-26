@@ -39,7 +39,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 static Compressor detect_compressor(const char* b) {
 	if ((b[0] == '\x1F' && b[1] == '\x8B')         // gzip header
 		|| (b[0] == '\x78' && (b[1] == '\x01'      // zlib header
-			|| b[1] == '\x9C'
+		        || b[1] == '\x9C'
 			|| b[1] == '\xDA')))
 		return Compressor::ZLIB;
 	if (b[0] == '\x28' && b[1] == '\xb5' && b[2] == '\x2f' && b[3] == '\xfd')
@@ -91,7 +91,7 @@ InputFile::InputFile(const string &file_name, int flags) :
 	if (n < 4)
 		return;
 	const auto c = detect_compressor(b);
-	if(c != Compressor::NONE)
+	if(c != Compressor::NONE && !(flags & NO_COMPRESSION_CHECK))
 		buffer_ = new InputStreamBuffer(make_decompressor(c, buffer_));
 }
 

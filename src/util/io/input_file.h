@@ -39,7 +39,7 @@ const size_t KILOBYTES = 1 << 10;
 struct InputFile : public Deserializer
 {
 
-	enum { BUFFERED = 1, NO_AUTODETECT = 2 };
+	enum { BUFFERED = 1, NO_AUTODETECT = 2, NO_COMPRESSION_CHECK = 4};
 
 	InputFile(const string &file_name, int flags = 0);
 	InputFile(TempFile &tmp_file, int flags = 0);
