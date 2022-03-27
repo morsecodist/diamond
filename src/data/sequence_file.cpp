@@ -289,7 +289,7 @@ void SequenceFile::load_dictionary(const size_t query_block, const size_t ref_bl
 			dict_self_aln_score_ = vector<vector<double>>(ref_blocks);
 		reserve_dict(ref_blocks);
 		for (size_t i = 0; i < ref_blocks; ++i) {
-			InputFile f(dict_file_name(query_block, i), 4);
+			InputFile f(dict_file_name(query_block, i), InputFile::NO_COMPRESSION_CHECK);
 			load_dict_block(&f, i);
 			f.close_and_delete();
 		}
