@@ -91,7 +91,7 @@ InputFile::InputFile(const string &file_name, int flags) :
 	if (n < 4)
 		return;
 	const auto c = detect_compressor(b);
-	if(c != Compressor::NONE)
+	if(c != Compressor::NONE && !(flags & NO_COMPRESSION_CHECK))
 		buffer_ = new InputStreamBuffer(make_decompressor(c, buffer_));
 }
 
